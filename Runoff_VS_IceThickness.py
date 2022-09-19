@@ -118,35 +118,22 @@ for indiv_index in flowlines_polygones.index:
     plt.show()
     
     for indiv_year in list([2010,2011,2012,2013,2014,2017,2018]):#list([2012,2016,2019]):#np.asarray(within_points_Ys.year):
+        #Select ice slabs data of the current indiv_year
         subset_iceslabs=within_points_ice[within_points_ice.year==indiv_year]
-        #Create a blank dataframe
-        subset_iceslabs_retained=pd.DataFrame()
-        #plot
+        
+        #Display the tracks of the current year within the polygon
+        ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=10)
+        
+        #Display the Ys of the current indiv_year
+        ax2.scatter(within_points_Ys[within_points_Ys.year==indiv_year]['X'],within_points_Ys[within_points_Ys.year==indiv_year]['Y'],color='black',s=10)
+        
         '''
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],c=subset_iceslabs['20m_ice_content_m'],s=10)
         ax2.scatter(within_points_Emax[within_points_Emax.year==indiv_year]['x'],within_points_Emax[within_points_Emax.year==indiv_year]['y'],color='blue',s=10)
-        
+        #Display the whole track
+        ax2.scatter(df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lon_3413'],df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lat_3413'],color='black',s=10)
         '''
-        ax2.scatter(within_points_Ys[within_points_Ys.year==indiv_year]['X'],within_points_Ys[within_points_Ys.year==indiv_year]['Y'],color='black',s=10)
-        
-        #To do:
-        # - exclude ice slabs thickness transect not good for processing: compare variation of lon VS lat??
-        for indiv_track in np.unique(subset_iceslabs['Track_name']):
-            vari=np.abs(np.mean(np.diff(subset_iceslabs[subset_iceslabs.Track_name==indiv_track]['lat_3413']))/np.mean(np.diff(subset_iceslabs[subset_iceslabs.Track_name==indiv_track]['lon_3413'])))
-            print('vari: ',str(np.round(vari,2)))
-            if (vari <1): #If vari=1, angle is ~45°
-                '''
-                #Display the whole track
-                ax2.scatter(df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lon_3413'],df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lat_3413'],color='black',s=10)
-                '''
-                #Display the track within the polygon
-                ax2.scatter(subset_iceslabs[subset_iceslabs.Track_name==indiv_track]['lon_3413'],subset_iceslabs[subset_iceslabs.Track_name==indiv_track]['lat_3413'],color='purple',s=10)
-                #Append the dataframe
-                subset_iceslabs_retained=pd.concat([subset_iceslabs_retained,subset_iceslabs[subset_iceslabs.Track_name==indiv_track]])
-            else:
-                #Display the track that is not retained within the polygon
-                ax2.scatter(subset_iceslabs[subset_iceslabs.Track_name==indiv_track]['lon_3413'],subset_iceslabs[subset_iceslabs.Track_name==indiv_track]['lat_3413'],color='red',s=10)
-                
+
         if (len(subset_iceslabs_retained)==0):
             #No slab for this particular year, continue
             continue
@@ -160,13 +147,13 @@ for indiv_index in flowlines_polygones.index:
             Ys_point_elevation=val[0]
         
         #Keep only data where elevation is within elevation+/-buffer
-        subset_iceslabs_retained_buffered=subset_iceslabs_retained[np.logical_and(subset_iceslabs_retained['elevation']<=(Ys_point_elevation+buffer),subset_iceslabs_retained['elevation']>=(Ys_point_elevation-buffer))]
+        subset_iceslabs_buffered=subset_iceslabs[np.logical_and(subset_iceslabs['elevation']<=(Ys_point_elevation+buffer),subset_iceslabs['elevation']>=(Ys_point_elevation-buffer))]
         
         #Display the ice slabs points that are inside this buffer
-        ax2.scatter(subset_iceslabs_retained_buffered['lon_3413'],subset_iceslabs_retained_buffered['lat_3413'],color='green',s=10)
+        ax2.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
         
         #Display the slab thickness distribution
-        ax3.hist(subset_iceslabs_retained_buffered['20m_ice_content_m'])
+        ax3.hist(subset_iceslabs_buffered['20m_ice_content_m'])
         print(indiv_year)
         plt.show()
         pdb.set_trace()
