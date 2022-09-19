@@ -70,9 +70,9 @@ flowlines_polygones.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
 ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c=df_2010_2018_high['20m_ice_content_m'],s=0.1)
 ax1.scatter(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y'],c=table_complete_annual_max_Ys['year'],s=10,cmap='magma')
 ax1.scatter(Emax_TedMach['x'],Emax_TedMach['y'],c=Emax_TedMach['year'],s=5,cmap='magma')
-
 plt.show()
-#Define width of the buffer for ice slabs pick up
+
+#Define width of the buffer for ice slabs pick up (elevation-wise, in meters)
 buffer=10
 
 #Define df_2010_2018_high, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
@@ -117,15 +117,32 @@ for indiv_index in flowlines_polygones.index:
     
     plt.show()
     
-    for indiv_year in list([2010,2011,2012,2013,2014,2017,2018]):#list([2012,2016,2019]):#np.asarray(within_points_Ys.year):
-        #Select ice slabs data of the current indiv_year
-        subset_iceslabs=within_points_ice[within_points_ice.year==indiv_year]
+    for indiv_year in list([2010,2011,2012,2013,2014,2016,2017,2018]):#list([2012,2016,2019]):#np.asarray(within_points_Ys.year):
+        
+        #Define the yearly Ys point
+        Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
+        
+        #Extract elevation of Ys
+        for val in GrIS_DEM.sample(Ys_point): 
+            #Calculate the corresponding elevation
+            Ys_point_elevation=val[0]
+        
+        #Display the Ys of the current indiv_year
+        ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='black',s=10)
+        
+        if (indiv_year == 2016):
+            #Select ice slabs data of the closest indiv_year, i.e. 2014
+            subset_iceslabs=within_points_ice[within_points_ice.year==2014]
+        else:
+            #Select ice slabs data of the current indiv_year
+            subset_iceslabs=within_points_ice[within_points_ice.year==indiv_year]
+        
+        if (len(subset_iceslabs)==0):
+            #No slab for this particular year, continue
+            continue
         
         #Display the tracks of the current year within the polygon
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=10)
-        
-        #Display the Ys of the current indiv_year
-        ax2.scatter(within_points_Ys[within_points_Ys.year==indiv_year]['X'],within_points_Ys[within_points_Ys.year==indiv_year]['Y'],color='black',s=10)
         
         '''
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],c=subset_iceslabs['20m_ice_content_m'],s=10)
@@ -133,18 +150,6 @@ for indiv_index in flowlines_polygones.index:
         #Display the whole track
         ax2.scatter(df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lon_3413'],df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lat_3413'],color='black',s=10)
         '''
-
-        if (len(subset_iceslabs_retained)==0):
-            #No slab for this particular year, continue
-            continue
-        
-        #Define Ys point
-        Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
-        
-        #Extract elevation of Ys
-        for val in GrIS_DEM.sample(Ys_point): 
-            #Calculate the corresponding elevation
-            Ys_point_elevation=val[0]
         
         #Keep only data where elevation is within elevation+/-buffer
         subset_iceslabs_buffered=subset_iceslabs[np.logical_and(subset_iceslabs['elevation']<=(Ys_point_elevation+buffer),subset_iceslabs['elevation']>=(Ys_point_elevation-buffer))]
@@ -158,7 +163,6 @@ for indiv_index in flowlines_polygones.index:
         plt.show()
         pdb.set_trace()
         
-        #if vari > than x, add a label in df_2010_2018_csv to indicate not to use it, or just discard it
         # - do yearly maps!
     
     #Create a dataset of iceslabs, Emax and Ys for this stripe
@@ -167,9 +171,6 @@ for indiv_index in flowlines_polygones.index:
 
 #1. Select flowlines
 
-
-
-#2. Pick up all perpendicular to contours transects
 
 #3. Extract Emax and Ys for each year in each polygone
 
