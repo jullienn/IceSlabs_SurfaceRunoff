@@ -80,21 +80,87 @@ points_ice = gpd.GeoDataFrame(df_2010_2018_high, geometry = gpd.points_from_xy(d
 points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_TedMach['x'],Emax_TedMach['y']),crs="EPSG:3413")
 points_Ys = gpd.GeoDataFrame(table_complete_annual_max_Ys, geometry = gpd.points_from_xy(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y']),crs="EPSG:3413")
 
+#Define an empty summary dataframe
+subset_iceslabs_buffered_summary=pd.DataFrame()
+
+#Plot to check
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(20, 6)
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+ax2 = plt.subplot(gs[0:20, 0:3],projection=crs)
+ax3 = plt.subplot(gs[0:1, 3:6])
+ax4 = plt.subplot(gs[1:2, 3:6])
+ax5 = plt.subplot(gs[2:3, 3:6])
+ax6 = plt.subplot(gs[3:4, 3:6])
+ax7 = plt.subplot(gs[4:5, 3:6])
+ax8 = plt.subplot(gs[5:6, 3:6])
+ax9 = plt.subplot(gs[6:7, 3:6])
+ax10 = plt.subplot(gs[7:8, 3:6])
+ax11 = plt.subplot(gs[8:9, 3:6])
+ax12 = plt.subplot(gs[9:10, 3:6])
+ax13 = plt.subplot(gs[10:11, 3:6])
+ax14 = plt.subplot(gs[11:12, 3:6])
+ax15 = plt.subplot(gs[12:13, 3:6])
+ax16 = plt.subplot(gs[13:14, 3:6])
+ax17 = plt.subplot(gs[14:15, 3:6])
+ax18 = plt.subplot(gs[15:16, 3:6])
+ax19 = plt.subplot(gs[16:17, 3:6])
+ax20 = plt.subplot(gs[17:18, 3:6])
+ax21 = plt.subplot(gs[18:19, 3:6])
+ax22 = plt.subplot(gs[19:20, 3:6])
+
+#Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
+#This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
+my_pal = {'2010': "#1a9850", '2011': "#66bd63", '2012': "#a6d96a", '2013':"#d9ef8b", '2014':"#fee08b", '2016':"#fdae61", '2017':"#f46d43", '2018':"#d73027", '2019':"#d73027"}
+
 for indiv_index in flowlines_polygones.index:
     
-    if (indiv_index != 10):
-        continue
+    #Define axis to plot distribution
+    if (indiv_index == 19):
+        ax_distrib=ax3
+    elif (indiv_index == 18):
+        ax_distrib=ax4
+    elif (indiv_index == 17):
+        ax_distrib=ax5
+    elif (indiv_index == 16):
+        ax_distrib=ax6
+    elif (indiv_index == 15):
+        ax_distrib=ax7
+    elif (indiv_index == 14):
+        ax_distrib=ax8
+    elif (indiv_index == 13):
+        ax_distrib=ax9
+    elif (indiv_index == 12):
+        ax_distrib=ax10
+    elif (indiv_index == 11):
+        ax_distrib=ax11
+    elif (indiv_index == 10):
+        ax_distrib=ax12
+    elif (indiv_index == 9):
+        ax_distrib=ax13
+    elif (indiv_index == 8):
+        ax_distrib=ax14
+    elif (indiv_index == 7):
+        ax_distrib=ax15
+    elif (indiv_index == 6):
+        ax_distrib=ax16
+    elif (indiv_index == 5):
+        ax_distrib=ax17
+    elif (indiv_index == 4):
+        ax_distrib=ax18
+    elif (indiv_index == 3):
+        ax_distrib=ax19
+    elif (indiv_index == 2):
+        ax_distrib=ax20
+    elif (indiv_index == 1):
+        ax_distrib=ax21
+    elif (indiv_index == 0):
+        ax_distrib=ax22
+    else:
+        print('Should not arrive here')
     
     print(indiv_index)
     indiv_polygon=flowlines_polygones[flowlines_polygones.index==indiv_index]
-    
-    #Plot to check
-    fig = plt.figure(figsize=(10,6))
-    gs = gridspec.GridSpec(10, 9)
-    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-    ax1 = plt.subplot(gs[0:10, 0:3],projection=crs)
-    ax2 = plt.subplot(gs[0:10, 3:6],projection=crs)
-    ax3 = plt.subplot(gs[0:10, 6:9])
 
     #Display GrIS drainage bassins
     indiv_polygon.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
@@ -105,11 +171,13 @@ for indiv_index in flowlines_polygones.index:
     #plot
     ax1.scatter(within_points_ice['lon_3413'],within_points_ice['lat_3413'],c=within_points_ice['20m_ice_content_m'],s=0.1)
     
+    '''
     #Intersection between Emax and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_Emax = gpd.sjoin(points_Emax, indiv_polygon, op='within')
     #plot
     ax1.scatter(within_points_Emax['x'],within_points_Emax['y'],c=within_points_Emax['year'],s=5,cmap='magma')
-
+    '''
+    
     #Intersection between Ys and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_Ys = gpd.sjoin(points_Ys, indiv_polygon, op='within')
     #plot
@@ -117,22 +185,46 @@ for indiv_index in flowlines_polygones.index:
     
     plt.show()
     
-    for indiv_year in list([2010,2011,2012,2013,2014,2016,2017,2018]):#list([2012,2016,2019]):#np.asarray(within_points_Ys.year):
-        
+    for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         #Define the yearly Ys point
         Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
+        
+        if (len(Ys_point)==0):
+            continue
         
         #Extract elevation of Ys
         for val in GrIS_DEM.sample(Ys_point): 
             #Calculate the corresponding elevation
             Ys_point_elevation=val[0]
         
-        #Display the Ys of the current indiv_year
-        ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='black',s=10)
-        
-        if (indiv_year == 2016):
-            #Select ice slabs data of the closest indiv_year, i.e. 2014
-            subset_iceslabs=within_points_ice[within_points_ice.year==2014]
+        #17h40, 18h45-
+        if (indiv_year == 2011):
+            #Select ice slabs data from 2010 and 2011
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
+        elif(indiv_year == 2012):
+            #Select ice slabs data from 2010, 2011, 2012
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,(within_points_ice.year==2011)|(within_points_ice.year==2012))]
+        elif(indiv_year == 2013):
+            #Select ice slabs data from 2011, 2012, 2013
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2011,(within_points_ice.year==2012)|(within_points_ice.year==2013))]
+        elif(indiv_year == 2014):
+            #Select ice slabs data from 2012, 2013, 2014
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
+        elif (indiv_year == 2015):
+            #Select ice slabs data of the closest indiv_year, i.e. 2014 and the 2 previous ones
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
+        elif (indiv_year == 2016):
+            #Select ice slabs data of the closest indiv_year, i.e. 2014 and the 2 previous ones
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
+        elif (indiv_year == 2017):
+            #Select ice slabs data from 2017, 2014, 2013
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,(within_points_ice.year==2014)|(within_points_ice.year==2017))]
+        elif (indiv_year == 2018):
+            #Select ice slabs data from 2018, 2017, 2014
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,(within_points_ice.year==2017)|(within_points_ice.year==2018))]
+        elif (indiv_year == 2019):
+            #Select ice slabs data from 2018, 2017, 2014
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,(within_points_ice.year==2017)|(within_points_ice.year==2018))]
         else:
             #Select ice slabs data of the current indiv_year
             subset_iceslabs=within_points_ice[within_points_ice.year==indiv_year]
@@ -140,7 +232,7 @@ for indiv_index in flowlines_polygones.index:
         if (len(subset_iceslabs)==0):
             #No slab for this particular year, continue
             continue
-        
+                
         #Display the tracks of the current year within the polygon
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=10)
         
@@ -157,13 +249,27 @@ for indiv_index in flowlines_polygones.index:
         #Display the ice slabs points that are inside this buffer
         ax2.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
         
-        #Display the slab thickness distribution
-        ax3.hist(subset_iceslabs_buffered['20m_ice_content_m'])
-        print(indiv_year)
-        plt.show()
-        pdb.set_trace()
+        #Display the Ys of the current indiv_year
+        ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='black',s=10,zorder=1)
         
-        # - do yearly maps!
+        #Display the slab thickness distribution
+        ax_distrib.hist(subset_iceslabs_buffered['20m_ice_content_m'],density=True,color=my_pal[str(indiv_year)],alpha=0.5)
+        ax_distrib.set_xlim(0,16)
+        
+        #Store subset_iceslabs_buffered 
+        subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,subset_iceslabs_buffered])
+        print(indiv_year)
+        fig.suptitle(str(indiv_year)+' - 3 years running slabs')
+        
+        plt.show()
+
+    #Save the figure
+    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Ys_VS_IceSlabs/Ys_VS_IceSlabs'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
+
+    #Display the polygone number
+    #ax_distrib.set_title(str(indiv_index))
+    
+    # - do yearly maps!
     
     #Create a dataset of iceslabs, Emax and Ys for this stripe
     
