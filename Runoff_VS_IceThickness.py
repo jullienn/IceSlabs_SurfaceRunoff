@@ -15,6 +15,7 @@ import datetime as dt
 import matplotlib.gridspec as gridspec
 from sklearn.neighbors import BallTree
 import pickle
+import seaborn as sns
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -46,6 +47,11 @@ path_df_with_elevation='C:/Users/jullienn/switchdrive/Private/research/RT1/final
 f_20102018_high = open(path_df_with_elevation+'final_excel/high_estimate/df_20102018_with_elevation_high_estimate_rignotetalregions', "rb")
 df_2010_2018_high = pickle.load(f_20102018_high)
 f_20102018_high.close()
+
+#Load 2002-2003 dataset
+path_2002_2003='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/2002_2003/'
+df_2002_2003=pd.read_csv(path_2002_2003+'2002_2003_green_excel.csv')
+
 ### ---------------------------- Load dataset ---------------------------- ###
 
 #Load max Ys from Machguth et al., (2022)
@@ -184,6 +190,7 @@ for indiv_index in flowlines_polygones.index:
     ax1.scatter(within_points_Ys['X'],within_points_Ys['Y'],c=within_points_Ys['year'],s=10,cmap='magma')
     
     plt.show()
+    #15h50
     
     for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         #Define the yearly Ys point
@@ -197,7 +204,6 @@ for indiv_index in flowlines_polygones.index:
             #Calculate the corresponding elevation
             Ys_point_elevation=val[0]
         
-        #17h40, 18h45-
         if (indiv_year == 2011):
             #Select ice slabs data from 2010 and 2011
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
@@ -254,6 +260,14 @@ for indiv_index in flowlines_polygones.index:
         
         #Display the slab thickness distribution
         ax_distrib.hist(subset_iceslabs_buffered['20m_ice_content_m'],density=True,color=my_pal[str(indiv_year)],alpha=0.5)
+        
+        #Display the IQR on the distribution
+        if (len(subset_iceslabs_buffered)>0):
+            ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.25),linestyle='--',color='k')
+            ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.5),color='red')
+            ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),linestyle='--',color='k')
+            ax_distrib.text(0.05, 0.5,str(np.round(np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),1))+'m',ha='center', va='center', transform=ax_distrib.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
         ax_distrib.set_xlim(0,16)
         
         #Store subset_iceslabs_buffered 
@@ -262,9 +276,14 @@ for indiv_index in flowlines_polygones.index:
         fig.suptitle(str(indiv_year)+' - 3 years running slabs')
         
         plt.show()
+        
+        #Display IQR and median on plots
+        #Display in shades of grey older iceslabs if any
+        #Display 2002-2003 ice slabs!
+        
 
     #Save the figure
-    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Ys_VS_IceSlabs/Ys_VS_IceSlabs'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
+    #plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Ys_VS_IceSlabs/Ys_VS_IceSlabs'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
 
     #Display the polygone number
     #ax_distrib.set_title(str(indiv_index))
@@ -272,7 +291,9 @@ for indiv_index in flowlines_polygones.index:
     # - do yearly maps!
     
     #Create a dataset of iceslabs, Emax and Ys for this stripe
-    
+
+#sns.displot(data=subset_iceslabs_buffered_summary, x="20m_ice_content_m", col="year_Ys", kde=True)
+
 
 
 #1. Select flowlines
