@@ -194,8 +194,15 @@ for indiv_index in flowlines_polygones.index:
     #plot
     ax1.scatter(within_points_Ys['X'],within_points_Ys['Y'],c=within_points_Ys['year'],s=10,cmap='magma')
     
+    #Display polygon number on plot
+    ax2.text(indiv_polygon.centroid.x+7e4,indiv_polygon.centroid.y-2e4,str(indiv_index),fontsize=15,weight='bold')
+    
+    #Display antecedent ice slabs
+    ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
+    
     plt.show()
-    #15h50
+    #15h50-17h00
+    #18h45-
     
     for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         #Define the yearly Ys point
@@ -246,7 +253,6 @@ for indiv_index in flowlines_polygones.index:
             continue
                 
         #Display antecedent ice slabs
-        ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
         ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10)
         #Display the tracks of the current year within the polygon
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=10)
@@ -275,7 +281,10 @@ for indiv_index in flowlines_polygones.index:
             ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.25),linestyle='--',color='k')
             ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.5),color='red')
             ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),linestyle='--',color='k')
-            ax_distrib.text(0.05, 0.5,str(np.round(np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),1))+'m',ha='center', va='center', transform=ax_distrib.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_distrib.text(0.75, 0.5,+str(np.round(np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),1))+'m',ha='center', va='center', transform=ax_distrib.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        
+        #Display polygon number on distrib plot
+        ax_distrib.text(0.05, 0.5,str(indiv_index),ha='center', va='center', transform=ax_distrib.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
         ax_distrib.set_xlim(0,16)
         
@@ -286,10 +295,9 @@ for indiv_index in flowlines_polygones.index:
         
         plt.show()
 
-        
-        #Display IQR and median on plots
-        #Display in shades of grey older iceslabs if any
-        #Display 2002-2003 ice slabs!
+        #Display IQR and median on plots Done
+        #Display in shades of grey older iceslabs if any Done
+        #Display 2002-2003 ice slabs! Done
         
 
     #Save the figure
