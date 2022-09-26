@@ -51,7 +51,6 @@ f_20102018_high.close()
 #Load 2002-2003 dataset
 path_2002_2003='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/2002_2003/'
 df_2002_2003=pd.read_csv(path_2002_2003+'2002_2003_green_excel.csv')
-
 ### ---------------------------- Load dataset ---------------------------- ###
 
 #Load max Ys from Machguth et al., (2022)
@@ -81,7 +80,8 @@ plt.show()
 #Define width of the buffer for ice slabs pick up (elevation-wise, in meters)
 buffer=10
 
-#Define df_2010_2018_high, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
+#Define df_2002_2003, df_2010_2018_high, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
+points_2002_2003 = gpd.GeoDataFrame(df_2002_2003, geometry = gpd.points_from_xy(df_2002_2003['lon'],df_2002_2003['lat']),crs="EPSG:3413")
 points_ice = gpd.GeoDataFrame(df_2010_2018_high, geometry = gpd.points_from_xy(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413']),crs="EPSG:3413")
 points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_TedMach['x'],Emax_TedMach['y']),crs="EPSG:3413")
 points_Ys = gpd.GeoDataFrame(table_complete_annual_max_Ys, geometry = gpd.points_from_xy(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y']),crs="EPSG:3413")
@@ -171,7 +171,12 @@ for indiv_index in flowlines_polygones.index:
     #Display GrIS drainage bassins
     indiv_polygon.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
     indiv_polygon.plot(ax=ax2,color='orange', edgecolor='black',linewidth=0.5)
-
+    
+    #Intersection between 2002-2003 ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
+    within_points_20022003 = gpd.sjoin(points_2002_2003, indiv_polygon, op='within')
+    #plot
+    ax1.scatter(within_points_20022003['lon'],within_points_20022003['lat'],c='#bdbdbd',s=0.1)
+    
     #Intersection between ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_ice = gpd.sjoin(points_ice, indiv_polygon, op='within')
     #plot
@@ -204,6 +209,7 @@ for indiv_index in flowlines_polygones.index:
             #Calculate the corresponding elevation
             Ys_point_elevation=val[0]
         
+        #Do for 2002-2003!!
         if (indiv_year == 2011):
             #Select ice slabs data from 2010 and 2011
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
@@ -239,9 +245,12 @@ for indiv_index in flowlines_polygones.index:
             #No slab for this particular year, continue
             continue
                 
+        #Display antecedent ice slabs
+        ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
+        ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10)
         #Display the tracks of the current year within the polygon
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=10)
-        
+
         '''
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],c=subset_iceslabs['20m_ice_content_m'],s=10)
         ax2.scatter(within_points_Emax[within_points_Emax.year==indiv_year]['x'],within_points_Emax[within_points_Emax.year==indiv_year]['y'],color='blue',s=10)
@@ -276,6 +285,7 @@ for indiv_index in flowlines_polygones.index:
         fig.suptitle(str(indiv_year)+' - 3 years running slabs')
         
         plt.show()
+
         
         #Display IQR and median on plots
         #Display in shades of grey older iceslabs if any
