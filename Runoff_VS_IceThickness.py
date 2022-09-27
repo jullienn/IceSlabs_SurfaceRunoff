@@ -201,8 +201,6 @@ for indiv_index in flowlines_polygones.index:
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
     plt.show()
-    #15h50-17h00
-    #18h45-
     
     for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         #Define the yearly Ys point
@@ -275,13 +273,13 @@ for indiv_index in flowlines_polygones.index:
         
         #Display the slab thickness distribution
         ax_distrib.hist(subset_iceslabs_buffered['20m_ice_content_m'],density=True,color=my_pal[str(indiv_year)],alpha=0.5)
-        
+                
         #Display the IQR on the distribution
         if (len(subset_iceslabs_buffered)>0):
             ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.25),linestyle='--',color='k')
             ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.5),color='red')
             ax_distrib.axvline(x=np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),linestyle='--',color='k')
-            ax_distrib.text(0.75, 0.5,+str(np.round(np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),1))+'m',ha='center', va='center', transform=ax_distrib.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_distrib.text(0.75, 0.5,str(np.round(np.quantile(subset_iceslabs_buffered['20m_ice_content_m'],0.75),1))+'m',ha='center', va='center', transform=ax_distrib.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         
         #Display polygon number on distrib plot
         ax_distrib.text(0.05, 0.5,str(indiv_index),ha='center', va='center', transform=ax_distrib.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
@@ -289,7 +287,8 @@ for indiv_index in flowlines_polygones.index:
         ax_distrib.set_xlim(0,16)
         
         #Store subset_iceslabs_buffered 
-        subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,subset_iceslabs_buffered])
+        subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,subset_iceslabs_buffered],ignore_index=True)
+        #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
         print(indiv_year)
         fig.suptitle(str(indiv_year)+' - 3 years running slabs')
         
@@ -310,8 +309,13 @@ for indiv_index in flowlines_polygones.index:
     
     #Create a dataset of iceslabs, Emax and Ys for this stripe
 
-#sns.displot(data=subset_iceslabs_buffered_summary, x="20m_ice_content_m", col="year_Ys", kde=True)
+pdb.set_trace()
 
+#To do: Rotate 90 degrees!
+fig = plt.figure(figsize=(10,6))
+fig.suptitle(str(indiv_year)+' - 3 years running slabs')
+violin_plot = sns.violinplot(data=subset_iceslabs_buffered_summary, x="20m_ice_content_m", y="index_right",orient="h")#, kde=True)
+violin_plot.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seaborn-barplot-invert-y-axis-and-keep-x-axis-on-bottom-of-chart-area
 
 
 #1. Select flowlines
