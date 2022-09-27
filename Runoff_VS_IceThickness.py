@@ -142,7 +142,7 @@ for indiv_index in flowlines_polygones.index:
     
     plt.show()
     
-    for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2010]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         #Define the yearly Ys point
         Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
         
@@ -233,14 +233,25 @@ for indiv_index in flowlines_polygones.index:
     # - do yearly maps!
     
 fig.suptitle(str(indiv_year)+' - 3 years running slabs')
+'''
 violin_plot = sns.violinplot(data=subset_iceslabs_buffered_summary, x="20m_ice_content_m", y="index_right",orient="h",axis=ax3,palette=pal_violin)#, kde=True)
-#If count, the width of the violins will be scaled by the number of observations in that bin (https://seaborn.pydata.org/generated/seaborn.violinplot.html) 
+#for scale argument: if count, the width of the violins will be scaled by the number of observations in that bin (https://seaborn.pydata.org/generated/seaborn.violinplot.html) 
 violin_plot.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seaborn-barplot-invert-y-axis-and-keep-x-axis-on-bottom-of-chart-area
 ax3.set_ylim(-0.5, 19.5)
+'''
 
-pdb.set_trace()
+box_plot=sns.boxplot(data=subset_iceslabs_buffered_summary, x="20m_ice_content_m", y="index_right",orient="h",palette=pal_violin)#, kde=True)
+box_plot.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seaborn-barplot-invert-y-axis-and-keep-x-axis-on-bottom-of-chart-area
+
+#Set ylims
+ax3.set_ylim(-0.5, 19.5)
+
+#Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
+figManager = plt.get_current_fig_manager()
+figManager.window.showMaximized()
+    
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Ys_VS_IceSlabs/Ys_VS_IceSlabs_Violin_'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Ys_VS_IceSlabs/Ys_VS_IceSlabs_Boxplot_'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
 
 #1. Select flowlines
 
