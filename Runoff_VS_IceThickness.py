@@ -86,8 +86,12 @@ points_ice = gpd.GeoDataFrame(df_2010_2018_high, geometry = gpd.points_from_xy(d
 points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_TedMach['x'],Emax_TedMach['y']),crs="EPSG:3413")
 points_Ys = gpd.GeoDataFrame(table_complete_annual_max_Ys, geometry = gpd.points_from_xy(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y']),crs="EPSG:3413")
 
-#Define an empty summary dataframe
+#Add a flag column in points_ice to flag data that are above, within and below the elevation band
+points_ice['flag']=[np.nan]*len(points_ice)
+
+#Define empty dataframe
 subset_iceslabs_buffered_summary=pd.DataFrame()
+ice_within_polygon=pd.DataFrame()
 
 #Plot to check
 fig = plt.figure(figsize=(10,6))
@@ -122,6 +126,7 @@ for indiv_index in flowlines_polygones.index:
     
     #Intersection between ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_ice = gpd.sjoin(points_ice, indiv_polygon, op='within')
+
     #plot
     ax1.scatter(within_points_ice['lon_3413'],within_points_ice['lat_3413'],c=within_points_ice['20m_ice_content_m'],s=0.1)
     
@@ -142,7 +147,7 @@ for indiv_index in flowlines_polygones.index:
     
     plt.show()
     
-    for indiv_year in list([2010]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         #Define the yearly Ys point
         Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
         
@@ -157,9 +162,18 @@ for indiv_index in flowlines_polygones.index:
         #Display the Ys of the current indiv_year
         ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='black',s=10,zorder=2)
         
-        #Do for 2002-2003!!
         #Select ice slabs thickness to display distribution
-        if (indiv_year == 2011):
+        if (indiv_year == 2002):
+            #Select ice slabs data from 2002            
+            subset_iceslabs=within_points_20022003[within_points_20022003.year==2002]
+            #Rename lat and lon columns to match existing routine
+            subset_iceslabs=subset_iceslabs.rename(columns={"lat": "lat_3413","lon": "lon_3413"})
+        elif (indiv_year == 2003):
+            #Select ice slabs data from 2002 and 2003
+            subset_iceslabs=within_points_20022003
+            #Rename lat and lon columns to match existing routine
+            subset_iceslabs=subset_iceslabs.rename(columns={"lat": "lat_3413","lon": "lon_3413"})
+        elif (indiv_year == 2011):
             #Select ice slabs data from 2010 and 2011
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
         elif(indiv_year == 2012):
@@ -193,7 +207,7 @@ for indiv_index in flowlines_polygones.index:
         if (len(subset_iceslabs)==0):
             #No slab for this particular year, continue
             continue
-                
+        
         #Display antecedent ice slabs
         ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10)
         #Display the tracks of the current year within the polygon
@@ -206,24 +220,38 @@ for indiv_index in flowlines_polygones.index:
         ax2.scatter(df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lon_3413'],df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lat_3413'],color='black',s=10)
         '''
         
+        #Flag ice slabs elevation
+        subset_iceslabs['flag'].loc[subset_iceslabs['elevation']>(Ys_point_elevation+buffer)]='ABOVE'
+        subset_iceslabs['flag'].loc[subset_iceslabs['elevation']<(Ys_point_elevation-buffer)]='BELOW'
+        subset_iceslabs['flag'].loc[np.logical_and(subset_iceslabs['elevation']<=(Ys_point_elevation+buffer),subset_iceslabs['elevation']>=(Ys_point_elevation-buffer))]='WITHIN'
+        
+        #Store the whole dataset that matches with polygons and related elevation band belonging 
+        ice_within_polygon=pd.concat([ice_within_polygon,subset_iceslabs],ignore_index=True)
+        #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
+    
         #Keep only data where elevation is within elevation+/-buffer
         subset_iceslabs_buffered=subset_iceslabs[np.logical_and(subset_iceslabs['elevation']<=(Ys_point_elevation+buffer),subset_iceslabs['elevation']>=(Ys_point_elevation-buffer))]
         
-        #Store an empty dataframe with the index so that index is displayed in plot even without data 
-        if (len(subset_iceslabs_buffered)==0):
-            #No slab for this particular year at these elevations
-            subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,pd.DataFrame(np.array([[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,indiv_index, np.nan]]),columns=subset_iceslabs_buffered.columns.values)],ignore_index=True)# from https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html and https://www.geeksforgeeks.org/how-to-get-column-names-in-pandas-dataframe/
-            #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
-            print(str(indiv_index)+' has no data')
-            continue
-        
-        #Display the ice slabs points that are inside this buffer
-        ax2.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
-        
-        #Store subset_iceslabs_buffered 
-        subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,subset_iceslabs_buffered],ignore_index=True)
-        #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
         print(indiv_year)
+
+        if (indiv_year in list([2002,2003])):
+            #Display the ice slabs points that are inside this buffer
+            ax2.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
+        else:
+            #Store an empty dataframe with the index so that index is displayed in plot even without data 
+            if (len(subset_iceslabs_buffered)==0):
+                #No slab for this particular year at these elevations
+                subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,pd.DataFrame(np.array([[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,indiv_index, np.nan]]),columns=subset_iceslabs_buffered.columns.values)],ignore_index=True)# from https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html and https://www.geeksforgeeks.org/how-to-get-column-names-in-pandas-dataframe/
+                #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
+                print(str(indiv_index)+' has no data')
+                continue
+            
+            #Display the ice slabs points that are inside this buffer
+            ax2.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
+            
+            #Store subset_iceslabs_buffered 
+            subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,subset_iceslabs_buffered],ignore_index=True)
+            #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
         
         plt.show()
     
@@ -249,14 +277,24 @@ ax3.set_ylim(-0.5, 19.5)
 #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
 figManager = plt.get_current_fig_manager()
 figManager.window.showMaximized()
-    
+
+
+'''
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Ys_VS_IceSlabs/Ys_VS_IceSlabs_Boxplot_'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
+'''
+#Plot ice slabs thickness that are above, below and within Ys elevation band
+fig = plt.figure(figsize=(10,5))
+ax1 = plt.subplot()
 
-#1. Select flowlines
+ax1.hist(ice_within_polygon[ice_within_polygon['flag']=='ABOVE']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+ax1.hist(ice_within_polygon[ice_within_polygon['flag']=='BELOW']['20m_ice_content_m'],color='red',label='Below',alpha=0.5,bins=np.arange(0,17),density=True)
+ax1.hist(ice_within_polygon[ice_within_polygon['flag']=='WITHIN']['20m_ice_content_m'],color='orange',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
+ax1.legend()
+plt.show()
 
+#Save the figure
+#plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Ys_VS_IceSlabs/IceSlabsTicknessDistrib'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
 
-#3. Extract Emax and Ys for each year in each polygone
-
-#4. Extract corresponding ice slab thickness
