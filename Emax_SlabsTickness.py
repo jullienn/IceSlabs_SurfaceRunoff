@@ -112,6 +112,9 @@ pal_violin_plot = ["#bdbdbd","#ffffcc","#fecc5c","#fd8d3c","#f03b20","#bd0026","
                    "#f1eef6","#bae4b3","#74c476","#31a354","#006d2c","#bdd7e7","#6baed6","#3182bd","#08519c","#08306b"] #from https://towardsdatascience.com/how-to-use-your-own-color-palettes-with-seaborn-a45bf5175146
 #sns.set_palette(sns.color_palette(pal_violin_plot))
 
+#Define the radius [m]
+radius=1000
+
 for indiv_index in flowlines_polygones.index:
     
     if (indiv_index !=10):
@@ -252,7 +255,7 @@ for indiv_index in flowlines_polygones.index:
                 Emax_point_elevation=val[0]
             
             #Extract indexes of ice slabs points within 1000m radius around that Emax point
-            indexes=tree.query_ball_point((Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax]),r=1000)
+            indexes=tree.query_ball_point((Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax]),r=radius)
             
             if (len(subset_iceslabs.iloc[indexes])==0):
                 continue
@@ -308,15 +311,12 @@ for indiv_index in flowlines_polygones.index:
             pdb.set_trace()
         
         pdb.set_trace()
-        #Plot ice slabs thickness that are above, below and within Ys elevation band
-        fig = plt.figure(figsize=(10,5))
-        ax1 = plt.subplot()
+        #Plot ice slabs thickness that are above and within Ys elevation band
+        ax3.hist(subset_iceslabs_above_selected['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax3.hist(subset_iceslabs_selected['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+        fig.suptitle(str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
 
-        ax1.hist(subset_iceslabs_above_selected['20m_ice_content_m'],color='red',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax1.hist(subset_iceslabs_selected['20m_ice_content_m'],color='blue',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        fig.suptitle(str(indiv_year)+' - 3 years running slabs')
-
-        ax1.legend()
+        ax3.legend()
         plt.show()
         
         pdb.set_trace()
