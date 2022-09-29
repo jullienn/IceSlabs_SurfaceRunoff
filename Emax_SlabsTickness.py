@@ -277,21 +277,34 @@ for indiv_index in flowlines_polygones.index:
                 '''
                 #WE LEAVE THE POSSIBILITY TO SELECT THE SAME DATA SEVERAL TIMES!
                 ########## ---------- FOR ABOVE, ADD A CONDITION TO SELECT ONLY PERCODICULAR TO ELEVATION DATA ---------- ########
-                #Save the ice slabs points of the transect of interest whose elevation is larger than the max elevation of the select ice slabs point within the radius of Emax point
+                #Select all the data belonging to this track
                 indiv_transect=points_ice[points_ice['Track_name']==indiv_trackname]
-                subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]])
-                #Plot resulting ice slabs points higher than picked ice slabs
-                ax2.scatter(indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]['lon_3413'],indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]['lat_3413'],color='blue',s=10,zorder=2)
+                #Select the ice slabs points of the transect of interest whose elevation is larger than the max elevation of the select ice slabs point within the radius of Emax point
+                iceslabs_above=indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]
+                #Check whether the transect is more or less perpendicular to elevation contour. If yes, keep it, else continue
                 
+                #Calculate the variation of lat/lon
+                vari=np.abs(np.mean(np.diff(iceslabs_above['lat_3413']))/np.mean(np.diff(iceslabs_above['lon_3413'])))
+                print('variation is: ',str(np.round(vari,2)))
+                if (vari <1): #If vari=1, angle is ~45°
+                    #Not so strong variation, we keep it, otherwise we do not
+                    #Save the data that are above and perpendicular to elevation contour
+                    subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,iceslabs_above])
+                    #Plot resulting ice slabs points higher than picked ice slabs
+                    ax2.scatter(iceslabs_above['lon_3413'],iceslabs_above['lat_3413'],color='blue',s=20,zorder=2)
+                
+                plt.show()
+                pdb.set_trace()
+            
             #Save the picked ice slabs points in the vicinity of Emax points
             subset_iceslabs_selected=pd.concat([subset_iceslabs_selected,subset_iceslabs.iloc[indexes]])#There might be points that are picked several times because of the used radius
             #Plot resulting extracted ice slabs points
-            ax2.scatter(subset_iceslabs['lon_3413'].iloc[indexes],subset_iceslabs['lat_3413'].iloc[indexes],color='red',s=10,zorder=2)
+            ax2.scatter(subset_iceslabs['lon_3413'].iloc[indexes],subset_iceslabs['lat_3413'].iloc[indexes],color='red',s=20,zorder=2)
             
             #Plot Emax points
-            ax2.scatter(Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax],color='green',s=10,zorder=2)
-            plt.show()
+            ax2.scatter(Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax],color='green',s=20,zorder=2)
             
+            plt.show()
             pdb.set_trace()
         
         pdb.set_trace()
