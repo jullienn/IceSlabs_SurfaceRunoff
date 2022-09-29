@@ -295,22 +295,33 @@ for indiv_index in flowlines_polygones.index:
                     subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,iceslabs_above])
                     #Plot resulting ice slabs points higher than picked ice slabs
                     ax2.scatter(iceslabs_above['lon_3413'],iceslabs_above['lat_3413'],color='blue',s=20,zorder=2)
-                
-                plt.show()
-                pdb.set_trace()
             
             #Save the picked ice slabs points in the vicinity of Emax points
             subset_iceslabs_selected=pd.concat([subset_iceslabs_selected,subset_iceslabs.iloc[indexes]])#There might be points that are picked several times because of the used radius
             #Plot resulting extracted ice slabs points
-            ax2.scatter(subset_iceslabs['lon_3413'].iloc[indexes],subset_iceslabs['lat_3413'].iloc[indexes],color='red',s=20,zorder=2)
+            ax2.scatter(subset_iceslabs['lon_3413'].iloc[indexes],subset_iceslabs['lat_3413'].iloc[indexes],color='red',s=30,zorder=2)
             
             #Plot Emax points
-            ax2.scatter(Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax],color='green',s=20,zorder=2)
+            ax2.scatter(Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax],color='green',s=20,zorder=10)
             
             plt.show()
-            pdb.set_trace()
         
-        pdb.set_trace()
+        
+        #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'
+        from matplotlib.patches import Patch
+        from matplotlib.lines import Line2D
+        
+        legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
+                           Line2D([0], [0], color='gray', lw=2, label='2010-18 ice slabs'),
+                           Line2D([0], [0], color='purple', lw=2, label='Considered ice slabs (3 years)'),
+                           Line2D([0], [0], color='yellow', lw=2, label='Transect matching with Emax'),
+                           Line2D([0], [0], color='red', lw=2, label='Ice slabs within Emax radius'),
+                           Line2D([0], [0], color='blue', lw=2, label='Ice slabs above Emax radius'),
+                           Line2D([0], [0], color='black', lw=2, label='Emax retrieval', marker='o',linestyle='None'),
+                           Line2D([0], [0], color='green', lw=2, label='Matched Emax retrieval', marker='o',linestyle='None')]
+        ax2.legend(handles=legend_elements,loc='lower left')
+        plt.legend()
+        
         #Plot ice slabs thickness that are above and within Ys elevation band
         ax3.hist(subset_iceslabs_above_selected['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax3.hist(subset_iceslabs_selected['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
@@ -321,7 +332,7 @@ for indiv_index in flowlines_polygones.index:
         
         pdb.set_trace()
         
-        
+        #I think everything that is below that is useless now
         
         #Flag ice slabs elevation
         subset_iceslabs['flag'].loc[subset_iceslabs['elevation']>(Ys_point_elevation+buffer)]='ABOVE'
