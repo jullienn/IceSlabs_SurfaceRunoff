@@ -307,7 +307,7 @@ for indiv_index in flowlines_polygones.index:
         plt.show()
         
         pdb.set_trace()
-
+        
         
         
         #Flag ice slabs elevation
