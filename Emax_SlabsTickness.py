@@ -18,6 +18,8 @@ from sklearn.neighbors import BallTree
 import pickle
 import seaborn as sns
 from scipy import spatial
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -91,10 +93,6 @@ buffer=10
 #Add a flag column in points_ice to flag data that are above, within and below the elevation band
 points_ice['flag']=[np.nan]*len(points_ice)
 
-#Define empty dataframe
-subset_iceslabs_selected=pd.DataFrame()
-subset_iceslabs_above_selected=pd.DataFrame(columns=list(points_ice.keys()))
-
 #Plot to check
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(20, 6)
@@ -113,7 +111,7 @@ pal_violin_plot = ["#bdbdbd","#ffffcc","#fecc5c","#fd8d3c","#f03b20","#bd0026","
 #sns.set_palette(sns.color_palette(pal_violin_plot))
 
 #Define the radius [m]
-radius=1000
+radius=500
 
 for indiv_index in flowlines_polygones.index:
     
@@ -149,6 +147,10 @@ for indiv_index in flowlines_polygones.index:
     
     for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
+        #Define empty dataframe
+        subset_iceslabs_selected=pd.DataFrame()
+        subset_iceslabs_above_selected=pd.DataFrame(columns=list(points_ice.keys()))
+
         #Select data of the desired year
         Emax_points=within_points_Emax[within_points_Emax.year==indiv_year]
         '''
@@ -165,7 +167,7 @@ for indiv_index in flowlines_polygones.index:
         Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
         
         #Display the Ys of the current indiv_year
-        ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='orange',s=10,zorder=2)
+        ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='magenta',s=10,zorder=10)
         
         #Select ice slabs thickness to display distribution
         if (indiv_year == 2002):
@@ -294,23 +296,26 @@ for indiv_index in flowlines_polygones.index:
                     #Save the data that are above and perpendicular to elevation contour
                     subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,iceslabs_above])
                     #Plot resulting ice slabs points higher than picked ice slabs
-                    ax2.scatter(iceslabs_above['lon_3413'],iceslabs_above['lat_3413'],color='blue',s=20,zorder=2)
+                    ax2.scatter(iceslabs_above['lon_3413'],iceslabs_above['lat_3413'],color='blue',s=40,zorder=2)
             
             #Save the picked ice slabs points in the vicinity of Emax points
             subset_iceslabs_selected=pd.concat([subset_iceslabs_selected,subset_iceslabs.iloc[indexes]])#There might be points that are picked several times because of the used radius
             #Plot resulting extracted ice slabs points
-            ax2.scatter(subset_iceslabs['lon_3413'].iloc[indexes],subset_iceslabs['lat_3413'].iloc[indexes],color='red',s=30,zorder=2)
+            ax2.scatter(subset_iceslabs['lon_3413'].iloc[indexes],subset_iceslabs['lat_3413'].iloc[indexes],color='red',s=40,zorder=2)
             
             #Plot Emax points
             ax2.scatter(Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax],color='green',s=20,zorder=10)
             
             plt.show()
+            pdb.set_trace()
         
+        pdb.set_trace()
         
-        #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'
-        from matplotlib.patches import Patch
-        from matplotlib.lines import Line2D
-        
+        #On the map, zoom on Emax points
+        ax2.set_xlim(np.min(Emax_points['x'])-3e3,np.max(Emax_points['x'])+3e3)
+        ax2.set_ylim(np.min(Emax_points['y'])-8e3,np.max(Emax_points['y'])+1e3)
+
+        #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
         legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
                            Line2D([0], [0], color='gray', lw=2, label='2010-18 ice slabs'),
                            Line2D([0], [0], color='purple', lw=2, label='Considered ice slabs (3 years)'),
@@ -318,18 +323,28 @@ for indiv_index in flowlines_polygones.index:
                            Line2D([0], [0], color='red', lw=2, label='Ice slabs within Emax radius'),
                            Line2D([0], [0], color='blue', lw=2, label='Ice slabs above Emax radius'),
                            Line2D([0], [0], color='black', lw=2, label='Emax retrieval', marker='o',linestyle='None'),
-                           Line2D([0], [0], color='green', lw=2, label='Matched Emax retrieval', marker='o',linestyle='None')]
+                           Line2D([0], [0], color='green', lw=2, label='Matched Emax retrieval', marker='o',linestyle='None'),
+                           Line2D([0], [0], color='magenta', lw=2, label='Max Ys', marker='o',linestyle='None')]
         ax2.legend(handles=legend_elements,loc='lower left')
         plt.legend()
         
         #Plot ice slabs thickness that are above and within Ys elevation band
         ax3.hist(subset_iceslabs_above_selected['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax3.hist(subset_iceslabs_selected['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        fig.suptitle(str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
+        ax3.set_xlabel('Ice content [m]')
+        ax3.set_ylabel('Density [ ]')
 
+        fig.suptitle(str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
+        
         ax3.legend()
         plt.show()
         
+        #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
+        
+        #Save the figure
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/custom_radius/Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
         pdb.set_trace()
         
         #I think everything that is below that is useless now
@@ -388,9 +403,7 @@ box_plot.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seabor
 #Set ylims
 ax3.set_ylim(-0.5, 19.5)
 
-#Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
-figManager = plt.get_current_fig_manager()
-figManager.window.showMaximized()
+
 
 
 '''
