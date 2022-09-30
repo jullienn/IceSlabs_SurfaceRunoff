@@ -94,13 +94,6 @@ buffer=10
 #Add a flag column in points_ice to flag data that are above, within and below the elevation band
 points_ice['flag']=[np.nan]*len(points_ice)
 
-#Plot to check
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(20, 6)
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax2 = plt.subplot(gs[0:20, 0:3],projection=crs)
-ax3 = plt.subplot(gs[0:20, 3:6])
-
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
 my_pal = {'2010': "#1a9850", '2011': "#66bd63", '2012': "#a6d96a", '2013':"#d9ef8b", '2014':"#fee08b", '2016':"#fdae61", '2017':"#f46d43", '2018':"#d73027", '2019':"#d73027"}
@@ -111,19 +104,32 @@ pal_violin_plot = ["#bdbdbd","#ffffcc","#fecc5c","#fd8d3c","#f03b20","#bd0026","
                    "#f1eef6","#bae4b3","#74c476","#31a354","#006d2c","#bdd7e7","#6baed6","#3182bd","#08519c","#08306b"] #from https://towardsdatascience.com/how-to-use-your-own-color-palettes-with-seaborn-a45bf5175146
 #sns.set_palette(sns.color_palette(pal_violin_plot))
 
+#Define empty dataframe
+iceslabs_above_selected_overall=pd.DataFrame()
+iceslabs_selected_overall=pd.DataFrame()
+
 #Define the radius [m]
 radius=500
 
 for indiv_index in flowlines_polygones.index:
     
     print(indiv_index)
+    
+    #Prepare plot
+    fig = plt.figure(figsize=(10,6))
+    gs = gridspec.GridSpec(20, 6)
+    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+    ax2 = plt.subplot(gs[0:20, 0:3],projection=crs)
+    ax3 = plt.subplot(gs[0:20, 3:6])
+    
+    #Extract individual polygon
     indiv_polygon=flowlines_polygones[flowlines_polygones.index==indiv_index]
 
     #Display GrIS drainage bassins
     '''
     indiv_polygon.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
     '''
-    indiv_polygon.plot(ax=ax2,color=pal_violin[indiv_index], edgecolor='black',linewidth=0.5)
+    indiv_polygon.plot(ax=ax2,color='#faf6c8', edgecolor='black',linewidth=0.5)
     
     #Intersection between 2002-2003 ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_20022003 = gpd.sjoin(points_2002_2003, indiv_polygon, op='within')
@@ -165,7 +171,9 @@ for indiv_index in flowlines_polygones.index:
         Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
         
         #Display the Ys of the current indiv_year
-        ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='magenta',s=10,zorder=10)
+        if (len(Ys_point>0)):
+            #There is an Ys of that year for this polygon, plot it
+            ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='magenta',s=10,zorder=10)
         
         #Select ice slabs thickness to display distribution
         if (indiv_year == 2002):
@@ -256,7 +264,11 @@ for indiv_index in flowlines_polygones.index:
                     ax2.scatter(indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]['lon_3413'],indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]['lat_3413'],color='blue',s=10,zorder=2)
                 '''
                 #WE LEAVE THE POSSIBILITY TO SELECT THE SAME DATA SEVERAL TIMES!
-                ########## ---------- FOR ABOVE, ADD A CONDITION TO SELECT ONLY PERCODICULAR TO ELEVATION DATA ---------- ########
+                ########## ---------- FOR ABOVE, ADD A CONDITION TO SELECT ONLY PERCODICULAR TO ELEVATION DATA ---------- ######## DONE
+                
+                ########## ---------- FOR ABOVE, ADD A CONDITION TO SELECT ONLY UPSTREAM DATA ?? ---------- ######## 
+                ########## ----------- BECAUSE SOME CASES WHERE DOWNSTREAM DATA ARE SELECTED ... ---------- ######## 
+
                 #Select all the data belonging to this track
                 indiv_transect=points_ice[points_ice['Track_name']==indiv_trackname]
                 #Select the ice slabs points of the transect of interest whose elevation is larger than the max elevation of the select ice slabs point within the radius of Emax point
@@ -272,7 +284,9 @@ for indiv_index in flowlines_polygones.index:
                     subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,iceslabs_above])
                     #Plot resulting ice slabs points higher than picked ice slabs
                     ax2.scatter(iceslabs_above['lon_3413'],iceslabs_above['lat_3413'],color='blue',s=40,zorder=2)
-            
+                
+                pdb.set_trace()
+                
             #Save the picked ice slabs points in the vicinity of Emax points
             subset_iceslabs_selected=pd.concat([subset_iceslabs_selected,subset_iceslabs.iloc[indexes]])#There might be points that are picked several times because of the used radius
             #Plot resulting extracted ice slabs points
@@ -282,10 +296,7 @@ for indiv_index in flowlines_polygones.index:
             ax2.scatter(Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax],color='green',s=20,zorder=10)
             
             plt.show()
-            pdb.set_trace()
-        
-        pdb.set_trace()
-        
+                
         if (len(subset_iceslabs_selected)==0):
             #No data, continue
             plt.close()
@@ -313,6 +324,7 @@ for indiv_index in flowlines_polygones.index:
         ax3.hist(subset_iceslabs_selected['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
         ax3.set_xlabel('Ice content [m]')
         ax3.set_ylabel('Density [ ]')
+        ax3.set_xlim(0,16)
 
         fig.suptitle('Polygon '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
         
@@ -324,14 +336,37 @@ for indiv_index in flowlines_polygones.index:
         figManager.window.showMaximized()
         
         pdb.set_trace()
-
-        #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/custom_radius/polygon'+str(indiv_index)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
-        pdb.set_trace()
-        plt.close()
-
-
         
+        #Save the figure
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/custom_radius/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
+        plt.close()
+        
+        #Save the iceslabs within and above of that polygon into another dataframe for overall plot
+        iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,subset_iceslabs_above_selected])
+        iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,subset_iceslabs_selected])#There might be points that are picked several times because of the used radius
+
+#Prepare plot
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(20, 6)
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+ax4 = plt.subplot(gs[0:20, 0:6])
+
+ax4.hist(iceslabs_above_selected_overall['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+ax4.hist(iceslabs_selected_overall['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+ax4.set_xlabel('Ice content [m]')
+ax4.set_ylabel('Density [ ]')
+fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
+
+ax4.legend()
+plt.show()
+
+#Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
+figManager = plt.get_current_fig_manager()
+figManager.window.showMaximized()
+
+#Save the figure
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/custom_radius/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
+
 '''
 
 if (indiv_year in list([2002,2003])):
