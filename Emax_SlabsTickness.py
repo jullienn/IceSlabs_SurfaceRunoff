@@ -33,7 +33,11 @@ GrIS_DEM = rasterio.open(path_GrIS_DEM)
 #Define path flowlines
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
 #Open flowlignes
-flowlines_polygones=gpd.read_file(path_data+'flowlines_stripes/flowlines_nicolas/Ys_polygons__test_W20km.shp')
+polygons_Machguth2022=gpd.read_file(path_data+'polygons_Machguth2022/Ys_polygons_v3.2b.shp')
+#After manual identification on QGIS, we do not need 0-79, 82-84, 121-124, 146-154, 207-208, 212-217, 223-230, 232, 242-244, 258-267, 277-282, 289-303, 318-333
+nogo_polygon=np.concatenate((np.arange(0,79+1),np.arange(82,84+1),np.arange(121,124+1),np.arange(146,154+1),np.arange(207,208+1),
+                             np.arange(212,217+1),np.arange(223,230+1),np.arange(232,233),np.arange(242,244+1),np.arange(258,267+1),
+                             np.arange(277,282+1),np.arange(289,303+1),np.arange(318,333+1)))
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
@@ -69,19 +73,20 @@ Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
 Emax_plus_Mad_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_plus_mad.csv',delimiter=',',decimal='.')
 Emax_Ted_minus_Mad_Mach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_minus_mad.csv',delimiter=',',decimal='.')
 
-'''
+
 #Plot to check
 fig = plt.figure(figsize=(10,5))
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
 ax1 = plt.subplot(projection=crs)
 
 #Display GrIS drainage bassins
-flowlines_polygones.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
+polygons_Machguth2022.plot(ax=ax1,color='red', edgecolor='black',linewidth=0.5)
 ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c=df_2010_2018_high['20m_ice_content_m'],s=0.1)
 ax1.scatter(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y'],c=table_complete_annual_max_Ys['year'],s=10,cmap='magma')
 ax1.scatter(Emax_TedMach['x'],Emax_TedMach['y'],c=Emax_TedMach['year'],s=5,cmap='magma')
 plt.show()
-'''
+
+
 #Define df_2002_2003, df_2010_2018_high, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
 points_2002_2003 = gpd.GeoDataFrame(df_2002_2003, geometry = gpd.points_from_xy(df_2002_2003['lon'],df_2002_2003['lat']),crs="EPSG:3413")
 points_ice = gpd.GeoDataFrame(df_2010_2018_high, geometry = gpd.points_from_xy(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413']),crs="EPSG:3413")
@@ -111,8 +116,15 @@ iceslabs_selected_overall=pd.DataFrame()
 #Define the radius [m]
 radius=500
 
-for indiv_index in flowlines_polygones.index:
-    
+for indiv_index in polygons_Machguth2022.index:
+    if (indiv_index in nogo_polygon):
+        #Zone excluded form proicessing, continue
+        print(indiv_index,' exluded, continue')
+        continue
+    '''
+    if (indiv_index !=16):
+        continue
+    '''
     print(indiv_index)
     
     #Prepare plot
@@ -123,7 +135,7 @@ for indiv_index in flowlines_polygones.index:
     ax3 = plt.subplot(gs[0:20, 3:6])
     
     #Extract individual polygon
-    indiv_polygon=flowlines_polygones[flowlines_polygones.index==indiv_index]
+    indiv_polygon=polygons_Machguth2022[polygons_Machguth2022.index==indiv_index]
 
     #Display GrIS drainage bassins
     '''
@@ -152,7 +164,7 @@ for indiv_index in flowlines_polygones.index:
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
     plt.show()
-    for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -284,9 +296,7 @@ for indiv_index in flowlines_polygones.index:
                     subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,iceslabs_above])
                     #Plot resulting ice slabs points higher than picked ice slabs
                     ax2.scatter(iceslabs_above['lon_3413'],iceslabs_above['lat_3413'],color='blue',s=40,zorder=2)
-                
-                pdb.set_trace()
-                
+            
             #Save the picked ice slabs points in the vicinity of Emax points
             subset_iceslabs_selected=pd.concat([subset_iceslabs_selected,subset_iceslabs.iloc[indexes]])#There might be points that are picked several times because of the used radius
             #Plot resulting extracted ice slabs points
@@ -336,9 +346,8 @@ for indiv_index in flowlines_polygones.index:
         figManager.window.showMaximized()
         
         pdb.set_trace()
-        
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/custom_radius/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
         plt.close()
         
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
@@ -364,8 +373,9 @@ plt.show()
 figManager = plt.get_current_fig_manager()
 figManager.window.showMaximized()
 
+pdb.set_trace()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/custom_radius/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
 
 '''
 
