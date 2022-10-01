@@ -129,11 +129,16 @@ for indiv_index in polygons_Machguth2022.index:
     
     #Prepare plot
     fig = plt.figure(figsize=(10,6))
+    fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
     gs = gridspec.GridSpec(20, 6)
     #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
     ax2 = plt.subplot(gs[0:20, 0:3],projection=crs)
     ax3 = plt.subplot(gs[0:20, 4:6])
     ax4 = plt.subplot(gs[0:20, 3:4],projection=crs)
+    
+    #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
+    figManager = plt.get_current_fig_manager()
+    figManager.window.showMaximized()
 
     #Extract individual polygon
     indiv_polygon=polygons_Machguth2022[polygons_Machguth2022.index==indiv_index]
@@ -348,42 +353,68 @@ for indiv_index in polygons_Machguth2022.index:
         ax3.legend()
         plt.show()
         
-        #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
-        figManager = plt.get_current_fig_manager()
-        figManager.window.showMaximized()
-        
-        pdb.set_trace()
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500,bbox_inches='tight')
+        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         plt.close()
         
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,subset_iceslabs_above_selected])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,subset_iceslabs_selected])#There might be points that are picked several times because of the used radius
 
+#Display ice slabs distributions as a function of the regions
 #Prepare plot
 fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(20, 6)
+gs = gridspec.GridSpec(15, 10)
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax4 = plt.subplot(gs[0:20, 0:6])
+axNW = plt.subplot(gs[0:5, 0:5])
+axCW = plt.subplot(gs[5:10, 0:5])
+axSW = plt.subplot(gs[10:15, 0:5])
+axNO = plt.subplot(gs[0:5, 5:10])
+axNE = plt.subplot(gs[5:10, 5:10])
+axGrIS = plt.subplot(gs[10:15, 5:10])
 
-#Region is already present =)
-ax4.hist(iceslabs_above_selected_overall['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-ax4.hist(iceslabs_selected_overall['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-ax4.set_xlabel('Ice content [m]')
-ax4.set_ylabel('Density [ ]')
+axNW.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='NW']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+axNW.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='NW']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+axNW.set_xlabel('Ice content [m]')
+axNW.text(0.075, 0.9,'NW',zorder=10, ha='center', va='center', transform=axNW.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axNW.legend()
+
+axCW.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='CW']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+axCW.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='CW']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+axCW.set_xlabel('Ice content [m]')
+axCW.text(0.075, 0.9,'CW',zorder=10, ha='center', va='center', transform=axCW.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+axSW.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='SW']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+axSW.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='SW']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+axSW.set_xlabel('Ice content [m]')
+axSW.set_ylabel('Density [ ]')
+axSW.text(0.075, 0.9,'SW',zorder=10, ha='center', va='center', transform=axSW.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+axNO.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='NO']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+axNO.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='NO']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+axNO.text(0.075, 0.9,'NO',zorder=10, ha='center', va='center', transform=axNO.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axNO.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
+
+axNE.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='NE']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+axNE.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='NE']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+axNE.text(0.075, 0.9,'NE',zorder=10, ha='center', va='center', transform=axNE.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axNE.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
+
+axGrIS.hist(iceslabs_above_selected_overall['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+axGrIS.hist(iceslabs_selected_overall['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+axGrIS.text(0.075, 0.9,'GrIS',zorder=10, ha='center', va='center', transform=axGrIS.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axGrIS.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
+
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
-
-ax4.legend()
 plt.show()
-
-#Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
-figManager = plt.get_current_fig_manager()
-figManager.window.showMaximized()
 
 pdb.set_trace()
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
+
+
+
 
 '''
 
