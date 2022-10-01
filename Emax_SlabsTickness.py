@@ -73,7 +73,7 @@ Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
 Emax_plus_Mad_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_plus_mad.csv',delimiter=',',decimal='.')
 Emax_Ted_minus_Mad_Mach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_minus_mad.csv',delimiter=',',decimal='.')
 
-
+'''
 #Plot to check
 fig = plt.figure(figsize=(10,5))
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
@@ -85,7 +85,7 @@ ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c=df_201
 ax1.scatter(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y'],c=table_complete_annual_max_Ys['year'],s=10,cmap='magma')
 ax1.scatter(Emax_TedMach['x'],Emax_TedMach['y'],c=Emax_TedMach['year'],s=5,cmap='magma')
 plt.show()
-
+'''
 
 #Define df_2002_2003, df_2010_2018_high, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
 points_2002_2003 = gpd.GeoDataFrame(df_2002_2003, geometry = gpd.points_from_xy(df_2002_2003['lon'],df_2002_2003['lat']),crs="EPSG:3413")
@@ -132,16 +132,23 @@ for indiv_index in polygons_Machguth2022.index:
     gs = gridspec.GridSpec(20, 6)
     #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
     ax2 = plt.subplot(gs[0:20, 0:3],projection=crs)
-    ax3 = plt.subplot(gs[0:20, 3:6])
-    
+    ax3 = plt.subplot(gs[0:20, 4:6])
+    ax4 = plt.subplot(gs[0:20, 3:4],projection=crs)
+
     #Extract individual polygon
     indiv_polygon=polygons_Machguth2022[polygons_Machguth2022.index==indiv_index]
 
-    #Display GrIS drainage bassins
+    #Display polygon
     '''
     indiv_polygon.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
     '''
     indiv_polygon.plot(ax=ax2,color='#faf6c8', edgecolor='black',linewidth=0.5)
+    
+    indiv_polygon.plot(ax=ax4,color='#faf6c8', edgecolor='black',linewidth=0.5)
+    ax4.set_xlim(-667470, 738665)
+    ax4.set_ylim(-3365680, -666380)
+    #Display coastlines
+    ax4.coastlines(edgecolor='black',linewidth=0.75)
     
     #Intersection between 2002-2003 ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_20022003 = gpd.sjoin(points_2002_2003, indiv_polygon, op='within')
@@ -360,6 +367,7 @@ gs = gridspec.GridSpec(20, 6)
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
 ax4 = plt.subplot(gs[0:20, 0:6])
 
+#Region is already present =)
 ax4.hist(iceslabs_above_selected_overall['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
 ax4.hist(iceslabs_selected_overall['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
 ax4.set_xlabel('Ice content [m]')
