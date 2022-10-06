@@ -220,6 +220,7 @@ for indiv_index in flowlines_polygones.index:
         ax2.scatter(df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lon_3413'],df_2010_2018_csv[df_2010_2018_csv.Track_name==indiv_track]['lat_3413'],color='black',s=10)
         '''
         
+        pdb.set_trace()
         #Flag ice slabs elevation
         subset_iceslabs['flag'].loc[subset_iceslabs['elevation']>(Ys_point_elevation+buffer)]='ABOVE'
         subset_iceslabs['flag'].loc[subset_iceslabs['elevation']<(Ys_point_elevation-buffer)]='BELOW'

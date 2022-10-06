@@ -133,6 +133,8 @@ buffer=10
 
 #Add a unique_ID_Emax column in points_ice to flag data with its corresponding Emax point
 points_ice['unique_ID_Emax']=[np.nan]*len(points_ice)
+#Add a selected_data_above column in points_ice to flag data which has already been taken in the above category
+points_ice['selected_data_above']=[0]*len(points_ice)
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
@@ -156,10 +158,10 @@ for indiv_index in polygons_Machguth2022.index:
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
-    if (indiv_index !=91):
+    '''
+    if (indiv_index !=94):
         continue
-    
+    '''
     print(indiv_index)
     
     #Prepare plot
@@ -399,9 +401,7 @@ for indiv_index in polygons_Machguth2022.index:
         
         ax2.legend(handles=legend_elements,loc='lower left')
         plt.legend()
-        
-        pdb.set_trace()
-        
+                
         #######################################################################
         ### Prevent the algorithm to select several times the same transect ###
         ###         because of a transect matching with several Emax        ###
@@ -454,12 +454,44 @@ for indiv_index in polygons_Machguth2022.index:
             #Save the iceslabs within and above of that polygon into another dataframe for polygon plot
             iceslabs_above_selected_polygon=pd.concat([iceslabs_above_selected_polygon,above_tosave])
             iceslabs_selected_polygon=pd.concat([iceslabs_selected_polygon,within_tosave])#There might be points that are picked several times because of the used radius
+            
+            #Update the 'selected_data_above' index to specify it has been used in the global dataset but also on the polygon one
+            points_ice.loc[above_tosave.index,['selected_data_above']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+            subset_iceslabs.loc[above_tosave.index,['selected_data_above']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
         
         #######################################################################
         ### Prevent the algorithm to select several times the same transect ###
         ###         because of a transect matching with several Emax        ###
         ### ----------------------------- END ----------------------------- ###
         #######################################################################
+        
+        #From all the transects intersecting with the polygon of interest,
+        #select all the ice slabs data that are higher than the maximum
+        #elevation of Emax in this polygon
+        
+        pdb.set_trace()
+        #Extract corresponding datetrack
+        list_datetracks_polygon=np.unique(subset_iceslabs['Track_name'])
+        #Display the corresponding transects
+        for indiv_trackname_polygon in list(list_datetracks_polygon):
+            
+            #Select the corresponding transect
+            subset_iceslabs_indiv_transect=points_ice[points_ice['Track_name']==indiv_trackname_polygon]
+            #Keep data whose elevation is higher than the max elevation of Emax in this polygon
+            subset_iceslabs_indiv_transect_high=subset_iceslabs_indiv_transect[subset_iceslabs_indiv_transect['elevation']>=np.max(Emax_points.elevation_WGS84)]
+            #Keep only data which has not been selected before
+            subset_iceslabs_indiv_transect_high_select=subset_iceslabs_indiv_transect_high[subset_iceslabs_indiv_transect_high['selected_data_above']==0]
+            
+            if (len(subset_iceslabs_indiv_transect_high_select)>0):
+                #Update the 'selected_data_above' index to specify it has been used
+                points_ice.loc[subset_iceslabs_indiv_transect_high_select.index,['selected_data_above']]=[1]*len(subset_iceslabs_indiv_transect_high_select)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+                #.loc[] is with index, iloc.[] is position
+                
+                #Display the results
+                ax2.scatter(subset_iceslabs_indiv_transect_high_select['lon_3413'],subset_iceslabs_indiv_transect_high_select['lat_3413'],color='cyan',s=10,zorder=2)
+                
+                #Save the iceslabs above from that polygon into another dataframe for polygon plot
+                iceslabs_above_selected_polygon=pd.concat([iceslabs_above_selected_polygon,subset_iceslabs_indiv_transect_high_select])
         
         #Plot ice slabs thickness that are above and within Ys elevation band
         ax3.hist(iceslabs_above_selected_polygon['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
@@ -472,15 +504,18 @@ for indiv_index in polygons_Machguth2022.index:
         
         ax3.legend()
         plt.show()
+        pdb.set_trace()
+
         
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,iceslabs_above_selected_polygon])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,iceslabs_selected_polygon])#There might be points that are picked several times because of the used radius
         
+        '''
         #Save the figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m_UniqueEmax.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        
+        '''
         plt.close()
 
 #Display ice slabs distributions as a function of the regions
