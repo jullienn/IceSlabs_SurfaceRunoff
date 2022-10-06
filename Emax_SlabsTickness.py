@@ -133,8 +133,8 @@ buffer=10
 
 #Add a unique_ID_Emax column in points_ice to flag data with its corresponding Emax point
 points_ice['unique_ID_Emax']=[np.nan]*len(points_ice)
-#Add a selected_data_above column in points_ice to flag data which has already been taken in the above category
-points_ice['selected_data_above']=[0]*len(points_ice)
+#Add a selected_data column in points_ice to flag data which has already been taken in the above category
+points_ice['selected_data']=[0]*len(points_ice)
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
@@ -455,9 +455,13 @@ for indiv_index in polygons_Machguth2022.index:
             iceslabs_above_selected_polygon=pd.concat([iceslabs_above_selected_polygon,above_tosave])
             iceslabs_selected_polygon=pd.concat([iceslabs_selected_polygon,within_tosave])#There might be points that are picked several times because of the used radius
             
-            #Update the 'selected_data_above' index to specify it has been used in the global dataset but also on the polygon one
-            points_ice.loc[above_tosave.index,['selected_data_above']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-            subset_iceslabs.loc[above_tosave.index,['selected_data_above']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+            #Update the 'selected_data' index to specify it has been used in the global dataset but also on the polygon one in the above category (1)
+            points_ice.loc[above_tosave.index,['selected_data']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+            subset_iceslabs.loc[above_tosave.index,['selected_data']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+        
+            #Update the 'selected_data_above' index to specify it has been used in the global dataset but also on the polygon one in the within category (2)
+            points_ice.loc[within_tosave.index,['selected_data']]=[2]*len(within_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+            subset_iceslabs.loc[within_tosave.index,['selected_data']]=[2]*len(within_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
         
         #######################################################################
         ### Prevent the algorithm to select several times the same transect ###
@@ -469,22 +473,21 @@ for indiv_index in polygons_Machguth2022.index:
         #select all the ice slabs data that are higher than the maximum
         #elevation of Emax in this polygon
         
-        pdb.set_trace()
         #Extract corresponding datetrack
         list_datetracks_polygon=np.unique(subset_iceslabs['Track_name'])
         #Display the corresponding transects
         for indiv_trackname_polygon in list(list_datetracks_polygon):
             
             #Select the corresponding transect
-            subset_iceslabs_indiv_transect=points_ice[points_ice['Track_name']==indiv_trackname_polygon]
+            subset_iceslabs_indiv_transect=subset_iceslabs[subset_iceslabs['Track_name']==indiv_trackname_polygon]
             #Keep data whose elevation is higher than the max elevation of Emax in this polygon
             subset_iceslabs_indiv_transect_high=subset_iceslabs_indiv_transect[subset_iceslabs_indiv_transect['elevation']>=np.max(Emax_points.elevation_WGS84)]
             #Keep only data which has not been selected before
-            subset_iceslabs_indiv_transect_high_select=subset_iceslabs_indiv_transect_high[subset_iceslabs_indiv_transect_high['selected_data_above']==0]
+            subset_iceslabs_indiv_transect_high_select=subset_iceslabs_indiv_transect_high[subset_iceslabs_indiv_transect_high['selected_data']==0]
             
             if (len(subset_iceslabs_indiv_transect_high_select)>0):
-                #Update the 'selected_data_above' index to specify it has been used
-                points_ice.loc[subset_iceslabs_indiv_transect_high_select.index,['selected_data_above']]=[1]*len(subset_iceslabs_indiv_transect_high_select)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+                #Update the 'selected_data' index to specify it has been used
+                points_ice.loc[subset_iceslabs_indiv_transect_high_select.index,['selected_data']]=[1]*len(subset_iceslabs_indiv_transect_high_select)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
                 #.loc[] is with index, iloc.[] is position
                 
                 #Display the results
