@@ -158,10 +158,10 @@ for indiv_index in polygons_Machguth2022.index:
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
-    '''
-    if (indiv_index !=94):
+    
+    if (indiv_index !=91):
         continue
-    '''
+    
     print(indiv_index)
     
     #Prepare plot
@@ -407,7 +407,7 @@ for indiv_index in polygons_Machguth2022.index:
         ###         because of a transect matching with several Emax        ###
         ### ---------------------------- START ---------------------------- ###
         #######################################################################
-
+        
         #Define empty dataframe
         iceslabs_above_selected_polygon=pd.DataFrame()
         iceslabs_selected_polygon=pd.DataFrame()
@@ -454,15 +454,17 @@ for indiv_index in polygons_Machguth2022.index:
             #Save the iceslabs within and above of that polygon into another dataframe for polygon plot
             iceslabs_above_selected_polygon=pd.concat([iceslabs_above_selected_polygon,above_tosave])
             iceslabs_selected_polygon=pd.concat([iceslabs_selected_polygon,within_tosave])#There might be points that are picked several times because of the used radius
-            
+                        
             #Update the 'selected_data' index to specify it has been used in the global dataset but also on the polygon one in the above category (1)
             points_ice.loc[above_tosave.index,['selected_data']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-            subset_iceslabs.loc[above_tosave.index,['selected_data']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-        
+            #Need to select only indexes that are within polygon
+            subset_iceslabs.loc[subset_iceslabs[subset_iceslabs.index.isin(above_tosave.index)].index,['selected_data']]=[1]*len(subset_iceslabs[subset_iceslabs.index.isin(above_tosave.index)].index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+            
             #Update the 'selected_data_above' index to specify it has been used in the global dataset but also on the polygon one in the within category (2)
             points_ice.loc[within_tosave.index,['selected_data']]=[2]*len(within_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-            subset_iceslabs.loc[within_tosave.index,['selected_data']]=[2]*len(within_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-        
+            #Need to select only indexes that are within polygon
+            subset_iceslabs.loc[subset_iceslabs[subset_iceslabs.index.isin(within_tosave.index)].index,['selected_data']]=[1]*len(subset_iceslabs[subset_iceslabs.index.isin(within_tosave.index)].index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
+            
         #######################################################################
         ### Prevent the algorithm to select several times the same transect ###
         ###         because of a transect matching with several Emax        ###
@@ -472,7 +474,7 @@ for indiv_index in polygons_Machguth2022.index:
         #From all the transects intersecting with the polygon of interest,
         #select all the ice slabs data that are higher than the maximum
         #elevation of Emax in this polygon
-        
+
         #Extract corresponding datetrack
         list_datetracks_polygon=np.unique(subset_iceslabs['Track_name'])
         #Display the corresponding transects
