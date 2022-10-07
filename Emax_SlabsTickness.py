@@ -151,7 +151,7 @@ iceslabs_above_selected_overall=pd.DataFrame()
 iceslabs_selected_overall=pd.DataFrame()
 
 #Define the radius [m]
-radius=500
+radius=1000
 
 for indiv_index in polygons_Machguth2022.index:
     if (indiv_index in nogo_polygon):
