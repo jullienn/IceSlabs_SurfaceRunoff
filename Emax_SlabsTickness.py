@@ -158,10 +158,10 @@ for indiv_index in polygons_Machguth2022.index:
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
+    '''
     if (indiv_index !=91):
         continue
-    
+    '''
     print(indiv_index)
     
     #Prepare plot
@@ -169,9 +169,9 @@ for indiv_index in polygons_Machguth2022.index:
     fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
     gs = gridspec.GridSpec(20, 6)
     #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-    ax2 = plt.subplot(gs[0:20, 0:3],projection=crs)
-    ax3 = plt.subplot(gs[0:20, 4:6])
-    ax4 = plt.subplot(gs[0:20, 3:4],projection=crs)
+    ax2 = plt.subplot(gs[0:20, 0:4],projection=crs)
+    ax3 = plt.subplot(gs[0:10, 4:6])
+    ax4 = plt.subplot(gs[13:20, 4:6],projection=crs)
     
     #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
     figManager = plt.get_current_fig_manager()
@@ -323,9 +323,10 @@ for indiv_index in polygons_Machguth2022.index:
             for indiv_trackname in list(list_datetracks):
 
                 print(indiv_trackname)
+                '''
                 #Display the whole track
                 ax2.scatter(points_ice['lon_3413'][points_ice['Track_name']==indiv_trackname],points_ice['lat_3413'][points_ice['Track_name']==indiv_trackname],color='yellow',s=10,zorder=2)
-                
+                '''
                 ''' 
                 #If transect is not saved already, save data of that transect which are higher. OR xkm away ???
                 if (indiv_trackname not in list(np.unique(subset_iceslabs_above_selected['Track_name']))):
@@ -384,24 +385,23 @@ for indiv_index in polygons_Machguth2022.index:
             continue
         
         #On the map, zoom on Emax points
-        ax2.set_xlim(np.min(Emax_points['x'])-3e3,np.max(Emax_points['x'])+3e3)
-        ax2.set_ylim(np.min(Emax_points['y'])-9e3,np.max(Emax_points['y'])+2e3)
-
+        ax2.set_xlim(np.min(Emax_points['x'])-25e3,np.max(Emax_points['x'])+25e3)
+        ax2.set_ylim(np.min(Emax_points['y'])-25e3,np.max(Emax_points['y'])+25e3)
+        
         #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
         legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
                            Line2D([0], [0], color='gray', lw=2, label='2010-18 ice slabs'),
                            Line2D([0], [0], color='purple', lw=2, label='Considered ice slabs (3 years)'),
-                           Line2D([0], [0], color='yellow', lw=2, label='Transect matching with Emax'),
                            Line2D([0], [0], color='red', lw=2, label='Ice slabs within Emax radius'),
                            Line2D([0], [0], color='blue', lw=2, label='Ice slabs above Emax radius'),
+                           Line2D([0], [0], color='cyan', lw=2, label='Ice slabs above within poly'),
                            Line2D([0], [0], color='black', lw=2, label='Emax retrieval', marker='o',linestyle='None'),
                            Line2D([0], [0], color='green', lw=2, label='Matched Emax retrieval', marker='o',linestyle='None'),
-                           Line2D([0], [0], color='#993404', lw=2, label='Kept Emax', marker='o',linestyle='None'),
-                           Line2D([0], [0], color='magenta', lw=2, label='Max Ys', marker='o',linestyle='None')]
+                           Line2D([0], [0], color='#993404', lw=2, label='Kept Emax', marker='o',linestyle='None')]
         
-        ax2.legend(handles=legend_elements,loc='lower left')
+        ax2.legend(handles=legend_elements)
         plt.legend()
-                
+                        
         #######################################################################
         ### Prevent the algorithm to select several times the same transect ###
         ###         because of a transect matching with several Emax        ###
@@ -471,9 +471,12 @@ for indiv_index in polygons_Machguth2022.index:
         ### ----------------------------- END ----------------------------- ###
         #######################################################################
         
-        #From all the transects intersecting with the polygon of interest,
-        #select all the ice slabs data that are higher than the maximum
-        #elevation of Emax in this polygon
+        #######################################################################
+        ###     From all the transects intersecting with the polygon of     ###
+        ### interest select all the ice slabs data that are higher than the ###
+        ###                   highestEmax in this polygon                   ###
+        ### ---------------------------- START ---------------------------- ###
+        #######################################################################
 
         #Extract corresponding datetrack
         list_datetracks_polygon=np.unique(subset_iceslabs['Track_name'])
@@ -498,6 +501,13 @@ for indiv_index in polygons_Machguth2022.index:
                 #Save the iceslabs above from that polygon into another dataframe for polygon plot
                 iceslabs_above_selected_polygon=pd.concat([iceslabs_above_selected_polygon,subset_iceslabs_indiv_transect_high_select])
         
+        #######################################################################
+        ###     From all the transects intersecting with the polygon of     ###
+        ### interest select all the ice slabs data that are higher than the ###
+        ###                   highestEmax in this polygon                   ###
+        ### ----------------------------- END ----------------------------- ###
+        #######################################################################
+        
         #Plot ice slabs thickness that are above and within Ys elevation band
         ax3.hist(iceslabs_above_selected_polygon['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax3.hist(iceslabs_selected_polygon['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
@@ -506,21 +516,17 @@ for indiv_index in polygons_Machguth2022.index:
         ax3.set_xlim(0,16)
 
         fig.suptitle('Polygon '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
-        
         ax3.legend()
         plt.show()
-        pdb.set_trace()
-
         
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,iceslabs_above_selected_polygon])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,iceslabs_selected_polygon])#There might be points that are picked several times because of the used radius
         
-        '''
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m_UniqueEmax.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m_UniqueEmax_AboveIncluded.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        '''
+        
         plt.close()
 
 #Display ice slabs distributions as a function of the regions
@@ -573,7 +579,7 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m_UniqueEmax_AboveIncluded.png',dpi=500)
 '''
 
 
