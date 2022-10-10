@@ -21,6 +21,10 @@ from scipy import spatial
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import sys
+from shapely.geometry import LineString
+from shapely.geometry import Polygon
+from descartes import PolygonPatch
+from shapely.geometry import CAP_STYLE, JOIN_STYLE
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -128,50 +132,34 @@ points_ice = gpd.GeoDataFrame(df_2010_2018_high, geometry = gpd.points_from_xy(d
 points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_TedMach['x'],Emax_TedMach['y']),crs="EPSG:3413")
 points_Ys = gpd.GeoDataFrame(table_complete_annual_max_Ys, geometry = gpd.points_from_xy(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y']),crs="EPSG:3413")
 
-#Define width of the buffer for ice slabs pick up (elevation-wise, in meters)
-buffer=10
-
 #Add a unique_ID_Emax column in points_ice to flag data with its corresponding Emax point
 points_ice['unique_ID_Emax']=[np.nan]*len(points_ice)
 #Add a selected_data column in points_ice to flag data which has already been taken in the above category
 points_ice['selected_data']=[0]*len(points_ice)
 
-#Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
-#This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'2010': "#1a9850", '2011': "#66bd63", '2012': "#a6d96a", '2013':"#d9ef8b", '2014':"#fee08b", '2016':"#fdae61", '2017':"#f46d43", '2018':"#d73027", '2019':"#d73027"}
-pal_violin = {0: "#bdbdbd", 1:"#ffffcc", 2: "#fecc5c", 3: "#fd8d3c", 4:"#f03b20", 5:"#bd0026", 6:"#980043", 7:"#dd1c77", 8:"#df65b0", 9:"#d7b5d8",
-              10: "#f1eef6", 11: "#bae4b3", 12: "#74c476", 13:"#31a354", 14:"#006d2c", 15:"#bdd7e7", 16:"#6baed6", 17:"#3182bd", 18:"#08519c",
-              19: "#08306b"}
-pal_violin_plot = ["#bdbdbd","#ffffcc","#fecc5c","#fd8d3c","#f03b20","#bd0026","#980043","#dd1c77","#df65b0","#d7b5d8",
-                   "#f1eef6","#bae4b3","#74c476","#31a354","#006d2c","#bdd7e7","#6baed6","#3182bd","#08519c","#08306b"] #from https://towardsdatascience.com/how-to-use-your-own-color-palettes-with-seaborn-a45bf5175146
-#sns.set_palette(sns.color_palette(pal_violin_plot))
-
 #Define empty dataframe
 iceslabs_above_selected_overall=pd.DataFrame()
 iceslabs_selected_overall=pd.DataFrame()
-
-#Define the radius [m]
-radius=1000
 
 for indiv_index in polygons_Machguth2022.index:
     if (indiv_index in nogo_polygon):
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
-    '''
-    if (indiv_index !=91):
+    
+    if (indiv_index <140):
         continue
-    '''
+    
     print(indiv_index)
     
     #Prepare plot
     fig = plt.figure(figsize=(10,6))
     fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    gs = gridspec.GridSpec(20, 6)
+    gs = gridspec.GridSpec(20, 10)
     #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-    ax2 = plt.subplot(gs[0:20, 0:4],projection=crs)
-    ax3 = plt.subplot(gs[0:10, 4:6])
-    ax4 = plt.subplot(gs[13:20, 4:6],projection=crs)
+    ax2 = plt.subplot(gs[0:20, 0:6],projection=crs)
+    ax3 = plt.subplot(gs[0:10, 7:10])
+    ax4 = plt.subplot(gs[13:20, 8:10],projection=crs)
     
     #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
     figManager = plt.get_current_fig_manager()
@@ -200,6 +188,9 @@ for indiv_index in polygons_Machguth2022.index:
     within_points_Emax = gpd.sjoin(points_Emax, indiv_polygon, op='within')
     #Intersection between Ys and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_Ys = gpd.sjoin(points_Ys, indiv_polygon, op='within')
+    
+    #rename colnames from join procedure to allow joining with Emax polygons
+    within_points_ice=within_points_ice.rename(columns={"index_right":"index_right_polygon","index":"index_polygon"})
     
     '''
     #plot
@@ -235,7 +226,7 @@ for indiv_index in polygons_Machguth2022.index:
         Emax_points['elevation_WGS84']=[np.nan]*len(Emax_points)
         
         #plot all the Emax points of the considered indiv_year
-        ax2.scatter(Emax_points['x'],Emax_points['y'],color='black',s=10,zorder=2)
+        ax2.scatter(Emax_points['x'],Emax_points['y'],color='black',s=10,zorder=6)
         
         #Define the yearly Ys point
         Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
@@ -292,242 +283,117 @@ for indiv_index in polygons_Machguth2022.index:
             continue
         
         #Display antecedent ice slabs
-        ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10)
+        ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10,zorder=1)
         #Display the tracks of the current year within the polygon
-        ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=10)
+        ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=7)
         
-        #Look up tree and extraction of points were done thanks to the scipy documentation https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.KDTree.query_ball_point.html#scipy.spatial.KDTree.query_ball_point
-        #Organise ice slabs coordinates for tree definition
-        IceSlabs_points_xy=np.transpose(np.asarray([np.asarray(subset_iceslabs['lon_3413']),np.asarray(subset_iceslabs['lat_3413'])]))
-        #Build up the tree
-        tree= spatial.KDTree(IceSlabs_points_xy)
-        #Extract indexes of the ice slabs points within a radius of 1000m around Emax points
-        for indiv_Emax in range(0,len(Emax_points)):
-            #Extract elevation of that Emax point
-            Emax_point=np.asarray([np.asarray((Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax]))])
-            for val in GrIS_DEM.sample(Emax_point): 
-                #Calculate the corresponding elevation
-                Emax_point_elevation=val[0]
-                #Save the elevation
-                Emax_points['elevation_WGS84'].iloc[indiv_Emax]=Emax_point_elevation
-            
-            #Extract indexes of ice slabs points within 1000m radius around that Emax point
-            indexes=tree.query_ball_point((Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax]),r=radius)
-            
-            if (len(subset_iceslabs.iloc[indexes])==0):
-                continue
-            
-            #Extract corresponding datetrack
-            list_datetracks=np.unique(subset_iceslabs.iloc[indexes]['Track_name'])
-            #Display the corresponding transects
-            for indiv_trackname in list(list_datetracks):
-
-                print(indiv_trackname)
-                '''
-                #Display the whole track
-                ax2.scatter(points_ice['lon_3413'][points_ice['Track_name']==indiv_trackname],points_ice['lat_3413'][points_ice['Track_name']==indiv_trackname],color='yellow',s=10,zorder=2)
-                '''
-                ''' 
-                #If transect is not saved already, save data of that transect which are higher. OR xkm away ???
-                if (indiv_trackname not in list(np.unique(subset_iceslabs_above_selected['Track_name']))):
-                
-                    #Save the ice slabs points of the transect of interest whose elevation is larger than the max elevation of the select ice slabs point within the radius of Emax point
-                    indiv_transect=points_ice[points_ice['Track_name']==indiv_trackname]
-                    subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]])
-                    #Plot resulting ice slabs points higher than picked ice slabs
-                    ax2.scatter(indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]['lon_3413'],indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]['lat_3413'],color='blue',s=10,zorder=2)
-                '''
-                
-                ########## ---------- FOR ABOVE, ADD A CONDITION TO SELECT ONLY UPSTREAM DATA ?? ---------- ######## 
-                ########## ----------- BECAUSE SOME CASES WHERE DOWNSTREAM DATA ARE SELECTED ... ---------- ######## 
-
-                #Select all the data belonging to this track
-                indiv_transect=points_ice[points_ice['Track_name']==indiv_trackname]
-                #Select the ice slabs points of the transect of interest whose elevation is larger than the max elevation of the select ice slabs point within the radius of Emax point
-                iceslabs_above=indiv_transect[indiv_transect['elevation']>np.max(subset_iceslabs['elevation'].iloc[indexes])]
-                
-                #Add the unique identifier of Emax point
-                iceslabs_above['unique_ID_Emax'].loc[iceslabs_above.index]=[Emax_points.index_Emax.iloc[indiv_Emax]]*len(iceslabs_above)
-
-                #Check whether the transect is more or less perpendicular to elevation contour. If yes, keep it, else continue
-                #Calculate the variation of lat/lon of the ice slabs above
-                vari=np.abs(np.mean(np.diff(iceslabs_above['lat_3413']))/np.mean(np.diff(iceslabs_above['lon_3413'])))
-                print('variation is: ',str(np.round(vari,2)))
-                if (vari <1): #If vari=1, angle is ~45°
-                    #Not so strong variation, we keep it, otherwise we do not
-                    #Save the data that are above and perpendicular to elevation contour
-                    subset_iceslabs_above_selected=pd.concat([subset_iceslabs_above_selected,iceslabs_above])
-                    #Plot resulting ice slabs points higher than picked ice slabs
-                    '''
-                    ax2.scatter(iceslabs_above['lon_3413'],iceslabs_above['lat_3413'],color='blue',s=40,zorder=2)
-                    '''
-            #Add the unique identifier of Emax point
-            subset_iceslabs['unique_ID_Emax'].iloc[indexes]=[Emax_points.index_Emax.iloc[indiv_Emax]]*len(subset_iceslabs.iloc[indexes])
-
-            #Save the picked ice slabs points in the vicinity of Emax points
-            subset_iceslabs_selected=pd.concat([subset_iceslabs_selected,subset_iceslabs.iloc[indexes]])#There might be points that are picked several times because of the used radius
-            
-            #Reset the associated unique identifier of Emax point of ice slabs to NaN
-            subset_iceslabs['unique_ID_Emax'].iloc[indexes]=[np.nan]*len(subset_iceslabs.iloc[indexes])
-                  
-            '''
-            #Plot resulting extracted ice slabs points
-            ax2.scatter(subset_iceslabs['lon_3413'].iloc[indexes],subset_iceslabs['lat_3413'].iloc[indexes],color='red',s=40,zorder=2)
-            
-            #Plot Emax points
-            ax2.scatter(Emax_points['x'].iloc[indiv_Emax],Emax_points['y'].iloc[indiv_Emax],color='green',s=20,zorder=10)
-            '''
-            plt.show()
-                
-        if (len(subset_iceslabs_selected)==0):
-            #No data, continue
-            plt.close()
-            continue
+        pdb.set_trace()
         
-        #On the map, zoom on Emax points
-        ax2.set_xlim(np.min(Emax_points['x'])-25e3,np.max(Emax_points['x'])+25e3)
-        ax2.set_ylim(np.min(Emax_points['y'])-25e3,np.max(Emax_points['y'])+25e3)
+        ######################### Connect Emax points #########################
+        #Sort Emax by ascending box_id and slice_id for line continuity for the one who need it
+        if (not(indiv_index in list([103,126]))):
+            #Sort Emax by ascending box_id and slice_id
+            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+        elif indiv_index in list([140]):
+            #Sort Emax by ascending box_id and descending slice_id
+            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,False])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+        
+        #If start of line is the northern thant the end, flip upside down data sorting
+        if (Emax_points['y'].iloc[0]>Emax_points['y'].iloc[-1]):#Northern point <=> lat_3413 is less negative
+            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[False,False])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+        
+        #Display start and end of Emax points for line definition
+        ax2.scatter(Emax_points['x'].iloc[0],Emax_points['y'].iloc[0],color='green',s=40,zorder=7)
+        ax2.scatter(Emax_points['x'].iloc[-1],Emax_points['y'].iloc[-1],color='red',s=40,zorder=7)
+                        
+        #Emax as tuples
+        Emax_tuple=[tuple(row[['x','y']]) for index, row in Emax_points.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        #Connect Emax points between them
+        lineEmax= LineString(Emax_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
+        #Display Emax line
+        ax2.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ######################### Connect Emax points #########################
+
+        ########################### Polygon within ############################
+        #Create a buffer around this lime
+        buffer_within_Emax = lineEmax.buffer(500, cap_style=1) #from https://shapely.readthedocs.io/en/stable/code/buffer.py
+        #Create polygon patch from this buffer
+        plot_buffer_within_Emax = PolygonPatch(buffer_within_Emax,zorder=2,color='red',alpha=0.5)
+        #Display patch
+        ax2.add_patch(plot_buffer_within_Emax)        
+        #Convert polygon of Emax buffer around connected Emax line into a geopandas dataframe
+        Emax_within_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffer_within_Emax]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+        #Intersection between subset_iceslabs and Emax_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+        Intersection_EmaxBuffer_slabs = gpd.sjoin(subset_iceslabs, Emax_within_polygon, op='within')
+        #Plot the result of this selection
+        ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=10,zorder=7)
+        ########################### Polygon within ############################
+  
+        ################################ Above ################################
+        #Define a lines for the above upper boundary
+        lineEmax_upper_start = lineEmax.parallel_offset(500, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        lineEmax_upper_end = lineEmax.parallel_offset(40000, 'right', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        #Plot the above upper boundaries
+        ax2.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax2.plot(lineEmax_upper_end.xy[0],lineEmax_upper_end.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        #Create a polygon with low end begin the Emax line and upper end being the Emax line + 20000
+        polygon_above=Polygon([*list(lineEmax_upper_end.coords),*list(lineEmax_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+        #Create polygon patch of the polygon above
+        plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='blue',alpha=0.5)
+        #Display patch of polygone above
+        ax2.add_patch(plot_buffer_above_Emax)        
+        #Convert polygon of Emax buffer above into a geopandas dataframe
+        Emax_above_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_above]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+        #Intersection between subset_iceslabs and Emax_above_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
+        Intersection_EmaxBufferAbove_slabs = gpd.sjoin(subset_iceslabs, Emax_above_polygon, op='within')
+        #Plot the result of this selection
+        ax2.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=10,zorder=7)
+        ################################ Above ################################
+
+        #Plot ice slabs thickness that are above and within Emax polygons
+        ax3.hist(Intersection_EmaxBufferAbove_slabs['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax3.hist(Intersection_EmaxBuffer_slabs['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax3.set_xlabel('Ice content [m]')
+        ax3.set_ylabel('Density [ ]')
+        ax3.set_xlim(0,16)
+
+        fig.suptitle('Polygon '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs')
+        ax3.legend()
+        plt.show()
         
         #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
         legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
                            Line2D([0], [0], color='gray', lw=2, label='2010-18 ice slabs'),
                            Line2D([0], [0], color='purple', lw=2, label='Considered ice slabs (3 years)'),
-                           Line2D([0], [0], color='red', lw=2, label='Ice slabs within Emax radius'),
-                           Line2D([0], [0], color='blue', lw=2, label='Ice slabs above Emax radius'),
-                           Line2D([0], [0], color='cyan', lw=2, label='Ice slabs above within poly'),
                            Line2D([0], [0], color='black', lw=2, label='Emax retrieval', marker='o',linestyle='None'),
-                           Line2D([0], [0], color='green', lw=2, label='Matched Emax retrieval', marker='o',linestyle='None'),
-                           Line2D([0], [0], color='#993404', lw=2, label='Kept Emax', marker='o',linestyle='None')]
+                           Line2D([0], [0], color='#a50f15', lw=2, label='Connected Emax retrieval'),
+                           Patch(facecolor='red',label='Buffer around Emax'),
+                           Patch(facecolor='blue',label='Area above Emax buffer'),
+                           Line2D([0], [0], color='red', lw=2, label='Ice slabs within Emax buffer'),
+                           Line2D([0], [0], color='blue', lw=2, label='Ice slabs above Emax buffer'),
+                           Line2D([0], [0], color='magenta', lw=2, label='Ys', marker='o',linestyle='None')]
         
         ax2.legend(handles=legend_elements)
         plt.legend()
-                        
-        #######################################################################
-        ### Prevent the algorithm to select several times the same transect ###
-        ###         because of a transect matching with several Emax        ###
-        ### ---------------------------- START ---------------------------- ###
-        #######################################################################
         
-        #Define empty dataframe
-        iceslabs_above_selected_polygon=pd.DataFrame()
-        iceslabs_selected_polygon=pd.DataFrame()
-        
-        #Loop over all the Track_name of this polygon
-        for indiv_track_name in np.unique(subset_iceslabs_selected.Track_name):
-            #Select data which correspond to the unique Track_name
-            UNIQUE_TRACKNAME_within=subset_iceslabs_selected[subset_iceslabs_selected.Track_name==indiv_track_name]
-            UNIQUE_TRACKNAME_above=subset_iceslabs_above_selected[subset_iceslabs_above_selected.Track_name==indiv_track_name]
-
-            #Check how many Emax are associated with it
-            CORRESPONDING_UNIQUE_EMAX_within=np.unique(UNIQUE_TRACKNAME_within.unique_ID_Emax)
-            
-            #If more then one Emax for this unique indiv_transect, check the one whose elevation is the highest
-            if (len(CORRESPONDING_UNIQUE_EMAX_within)>1):
-                #Select Emax points associated with this transect
-                Emax_in_transect=Emax_points[Emax_points.index_Emax.isin(CORRESPONDING_UNIQUE_EMAX_within)] #from https://stackoverflow.com/questions/19155718/select-pandas-rows-based-on-list-index
-                #Select the Emax index which correspond to the highest Emax point (elevation-wise)
-                highest_Emax_index=Emax_in_transect[Emax_in_transect['elevation_WGS84']==np.max(Emax_in_transect.elevation_WGS84)]['index_Emax']
-                #Select in subset_iceslabs_selected and subset_iceslabs_above_selected only data of that Track_name whose Emax_point is the highest_Emax_index
-                within_tosave=UNIQUE_TRACKNAME_within[UNIQUE_TRACKNAME_within['unique_ID_Emax']==np.asarray(highest_Emax_index)[0]]
-                above_tosave=UNIQUE_TRACKNAME_above[UNIQUE_TRACKNAME_above['unique_ID_Emax']==np.asarray(highest_Emax_index)[0]]
-               
-                #Display the Emax points
-                ax2.scatter(Emax_in_transect['x'],
-                            Emax_in_transect['y'],color='green',s=20,zorder=10)
+        #Set limits
+        if (len(Intersection_EmaxBufferAbove_slabs)>0):
+            ax2.set_xlim(np.min(Intersection_EmaxBufferAbove_slabs['lon_3413'])-4e4,
+                         np.max(Intersection_EmaxBufferAbove_slabs['lon_3413'])+4e4)
+            ax2.set_ylim(np.min(Intersection_EmaxBufferAbove_slabs['lat_3413'])-4e4,
+                         np.max(Intersection_EmaxBufferAbove_slabs['lat_3413'])+4e4)
                 
-                #Display the highest Emax point
-                ax2.scatter(Emax_in_transect[Emax_in_transect['elevation_WGS84']==np.max(Emax_in_transect.elevation_WGS84)]['x'],
-                            Emax_in_transect[Emax_in_transect['elevation_WGS84']==np.max(Emax_in_transect.elevation_WGS84)]['y'],color='#993404',s=20,zorder=20)
-                
-            else:
-                #Only one Emax for that transect
-                within_tosave=UNIQUE_TRACKNAME_within
-                above_tosave=UNIQUE_TRACKNAME_above
-                
-                ax2.scatter(Emax_points[Emax_points.index_Emax.isin(np.unique(UNIQUE_TRACKNAME_within.unique_ID_Emax))]['x'],
-                            Emax_points[Emax_points.index_Emax.isin(np.unique(UNIQUE_TRACKNAME_within.unique_ID_Emax))]['y'],color='#993404',s=20,zorder=20)
-            
-            #Display data
-            ax2.scatter(above_tosave['lon_3413'],above_tosave['lat_3413'],color='blue',s=40,zorder=2)
-            ax2.scatter(within_tosave['lon_3413'],within_tosave['lat_3413'],color='red',s=40,zorder=2)
-        
-            #Save the iceslabs within and above of that polygon into another dataframe for polygon plot
-            iceslabs_above_selected_polygon=pd.concat([iceslabs_above_selected_polygon,above_tosave])
-            iceslabs_selected_polygon=pd.concat([iceslabs_selected_polygon,within_tosave])#There might be points that are picked several times because of the used radius
-                        
-            #Update the 'selected_data' index to specify it has been used in the global dataset but also on the polygon one in the above category (1)
-            points_ice.loc[above_tosave.index,['selected_data']]=[1]*len(above_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-            #Need to select only indexes that are within polygon
-            subset_iceslabs.loc[subset_iceslabs[subset_iceslabs.index.isin(above_tosave.index)].index,['selected_data']]=[1]*len(subset_iceslabs[subset_iceslabs.index.isin(above_tosave.index)].index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-            
-            #Update the 'selected_data_above' index to specify it has been used in the global dataset but also on the polygon one in the within category (2)
-            points_ice.loc[within_tosave.index,['selected_data']]=[2]*len(within_tosave.index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-            #Need to select only indexes that are within polygon
-            subset_iceslabs.loc[subset_iceslabs[subset_iceslabs.index.isin(within_tosave.index)].index,['selected_data']]=[1]*len(subset_iceslabs[subset_iceslabs.index.isin(within_tosave.index)].index)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-            
-        #######################################################################
-        ### Prevent the algorithm to select several times the same transect ###
-        ###         because of a transect matching with several Emax        ###
-        ### ----------------------------- END ----------------------------- ###
-        #######################################################################
-        
-        #######################################################################
-        ###     From all the transects intersecting with the polygon of     ###
-        ### interest select all the ice slabs data that are higher than the ###
-        ###                   highestEmax in this polygon                   ###
-        ### ---------------------------- START ---------------------------- ###
-        #######################################################################
-
-        #Extract corresponding datetrack
-        list_datetracks_polygon=np.unique(subset_iceslabs['Track_name'])
-        #Display the corresponding transects
-        for indiv_trackname_polygon in list(list_datetracks_polygon):
-            
-            #Select the corresponding transect
-            subset_iceslabs_indiv_transect=subset_iceslabs[subset_iceslabs['Track_name']==indiv_trackname_polygon]
-            #Keep data whose elevation is higher than the max elevation of Emax in this polygon
-            subset_iceslabs_indiv_transect_high=subset_iceslabs_indiv_transect[subset_iceslabs_indiv_transect['elevation']>=np.max(Emax_points.elevation_WGS84)]
-            #Keep only data which has not been selected before
-            subset_iceslabs_indiv_transect_high_select=subset_iceslabs_indiv_transect_high[subset_iceslabs_indiv_transect_high['selected_data']==0]
-            
-            if (len(subset_iceslabs_indiv_transect_high_select)>0):
-                #Update the 'selected_data' index to specify it has been used
-                points_ice.loc[subset_iceslabs_indiv_transect_high_select.index,['selected_data']]=[1]*len(subset_iceslabs_indiv_transect_high_select)#from https://www.askpython.com/python-modules/pandas/update-the-value-of-a-row-dataframe
-                #.loc[] is with index, iloc.[] is position
-                
-                #Display the results
-                ax2.scatter(subset_iceslabs_indiv_transect_high_select['lon_3413'],subset_iceslabs_indiv_transect_high_select['lat_3413'],color='cyan',s=10,zorder=2)
-                
-                #Save the iceslabs above from that polygon into another dataframe for polygon plot
-                iceslabs_above_selected_polygon=pd.concat([iceslabs_above_selected_polygon,subset_iceslabs_indiv_transect_high_select])
-        
-        #######################################################################
-        ###     From all the transects intersecting with the polygon of     ###
-        ### interest select all the ice slabs data that are higher than the ###
-        ###                   highestEmax in this polygon                   ###
-        ### ----------------------------- END ----------------------------- ###
-        #######################################################################
-        
-        #Plot ice slabs thickness that are above and within Ys elevation band
-        ax3.hist(iceslabs_above_selected_polygon['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax3.hist(iceslabs_selected_polygon['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax3.set_xlabel('Ice content [m]')
-        ax3.set_ylabel('Density [ ]')
-        ax3.set_xlim(0,16)
-
-        fig.suptitle('Polygon '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
-        ax3.legend()
-        plt.show()
-        
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
-        iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,iceslabs_above_selected_polygon])
-        iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,iceslabs_selected_polygon])#There might be points that are picked several times because of the used radius
+        iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
+        iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
         
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m_UniqueEmax_AboveIncluded.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/sorted_Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
+
+pdb.set_trace()
 
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
@@ -573,13 +439,13 @@ axGrIS.hist(iceslabs_selected_overall['20m_ice_content_m'],color='red',label='Wi
 axGrIS.text(0.075, 0.9,'GrIS',zorder=10, ha='center', va='center', transform=axGrIS.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 axGrIS.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
 
-fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs -'+' radius = '+str(int(radius))+'m')
+fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs_radius_'+str(int(radius))+'m_UniqueEmax_AboveIncluded.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
 '''
 
 
