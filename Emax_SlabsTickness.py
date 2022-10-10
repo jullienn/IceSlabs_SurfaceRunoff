@@ -37,12 +37,26 @@ GrIS_DEM = rasterio.open(path_GrIS_DEM)
 
 #Define path flowlines
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
+
+'''
 #Open flowlignes
 polygons_Machguth2022=gpd.read_file(path_data+'polygons_Machguth2022/Ys_polygons_v3.2b.shp')
+
 #After manual identification on QGIS, we do not need 0-79, 82-84, 121-124, 146-154, 207-208, 212-217, 223-230, 232, 242-244, 258-267, 277-282, 289-303, 318-333
 nogo_polygon=np.concatenate((np.arange(0,79+1),np.arange(82,84+1),np.arange(121,124+1),np.arange(146,154+1),np.arange(207,208+1),
                              np.arange(212,217+1),np.arange(223,230+1),np.arange(232,233),np.arange(242,244+1),np.arange(258,267+1),
                              np.arange(277,282+1),np.arange(289,303+1),np.arange(318,333+1)))
+'''
+#Open Boxes from Tedstone and Machguth (2022)
+Boxes_Tedstone2022=gpd.read_file(path_data+'Boxes_Tedstone2022/boxes.shp')
+
+#Sort Boxes_Tedstone2022 as a function of FID
+Boxes_Tedstone2022=Boxes_Tedstone2022.sort_values(by=['FID'],ascending=True)#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+
+#After manual identification on QGIS, we do not need 1-4, 20, 27, 33, 39-40, 42, 44-53
+nogo_polygon=np.concatenate((np.arange(1,4+1),np.arange(20,20+1),np.arange(27,27+1),
+                             np.arange(33,33+1),np.arange(39,40+1),np.arange(42,42+1),
+                             np.arange(44,53+1)))
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
@@ -114,16 +128,16 @@ ax1.text(SW_rignotetal.centroid.x,SW_rignotetal.centroid.y-120000,np.asarray(SW_
 ax1.text(CW_rignotetal.centroid.x,CW_rignotetal.centroid.y+20000,np.asarray(CW_rignotetal.SUBREGION1)[0])
 ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y+20000,np.asarray(NW_rignotetal.SUBREGION1)[0])
 
-polygons_Machguth2022.plot(ax=ax1,color='red', edgecolor='black',linewidth=0.5)
+Boxes_Tedstone2022.plot(ax=ax1,color='red', edgecolor='black',linewidth=0.5)
 ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c=df_2010_2018_high['20m_ice_content_m'],s=0.1)
 ax1.scatter(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y'],c=table_complete_annual_max_Ys['year'],s=10,cmap='magma')
 ax1.scatter(Emax_TedMach['x'],Emax_TedMach['y'],c=Emax_TedMach['year'],s=5,cmap='magma')
 
 plt.show()
 
+pdb.set_trace()
 #Save context map figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/context_map.png',dpi=500)
-
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/context_map_tedstone.png',dpi=500)
 '''
 
 #Define df_2002_2003, df_2010_2018_high, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
@@ -141,13 +155,15 @@ points_ice['selected_data']=[0]*len(points_ice)
 iceslabs_above_selected_overall=pd.DataFrame()
 iceslabs_selected_overall=pd.DataFrame()
 
-for indiv_index in polygons_Machguth2022.index:
+for indiv_index in Boxes_Tedstone2022.FID:
+    
     if (indiv_index in nogo_polygon):
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
     
-    if (indiv_index <140):
+    
+    if (indiv_index <13):
         continue
     
     print(indiv_index)
@@ -164,9 +180,9 @@ for indiv_index in polygons_Machguth2022.index:
     #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-
+        
     #Extract individual polygon
-    indiv_polygon=polygons_Machguth2022[polygons_Machguth2022.index==indiv_index]
+    indiv_polygon=Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_index]
 
     #Display polygon
     '''
@@ -179,7 +195,7 @@ for indiv_index in polygons_Machguth2022.index:
     ax4.set_ylim(-3365680, -666380)
     #Display coastlines
     ax4.coastlines(edgecolor='black',linewidth=0.75)
-    
+        
     #Intersection between 2002-2003 ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_20022003 = gpd.sjoin(points_2002_2003, indiv_polygon, op='within')
     #Intersection between ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
@@ -190,7 +206,7 @@ for indiv_index in polygons_Machguth2022.index:
     within_points_Ys = gpd.sjoin(points_Ys, indiv_polygon, op='within')
     
     #rename colnames from join procedure to allow joining with Emax polygons
-    within_points_ice=within_points_ice.rename(columns={"index_right":"index_right_polygon","index":"index_polygon"})
+    within_points_ice=within_points_ice.rename(columns={"index_right":"index_right_polygon"})
     
     '''
     #plot
@@ -199,11 +215,10 @@ for indiv_index in polygons_Machguth2022.index:
     ax1.scatter(within_points_ice['lon_3413'],within_points_ice['lat_3413'],c=within_points_ice['20m_ice_content_m'],s=0.1)
     ax1.scatter(within_points_Ys['X'],within_points_Ys['Y'],c=within_points_Ys['year'],s=10,cmap='magma')
     '''
-    
+        
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    plt.show()
     for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
@@ -213,14 +228,9 @@ for indiv_index in polygons_Machguth2022.index:
         #Select data of the desired year
         Emax_points=within_points_Emax[within_points_Emax.year==indiv_year]
         
-        if (len(Emax_points)==0):
+        #We need at least 2 points per polygon to create an Emax line
+        if (len(Emax_points)<2):
             continue
-        
-        #Check there is one unique Emax identifier in this polygon
-        if (len(np.unique(Emax_points.index_Emax)) != len(Emax_points)):
-            print('No unique identifier for polygon #',str(indiv_index),', year ',str(indiv_year),' - STOP')
-            pdb.set_trace()
-            sys.exit() #https://stackoverflow.com/questions/42205927/how-to-end-code-if-if-condition-is-not-met
         
         #Add a column to add the elevation pickup on WGS84
         Emax_points['elevation_WGS84']=[np.nan]*len(Emax_points)
@@ -281,26 +291,35 @@ for indiv_index in polygons_Machguth2022.index:
         if (len(subset_iceslabs)==0):
             #No slab for this particular year, continue
             continue
-        
+                
         #Display antecedent ice slabs
         ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10,zorder=1)
         #Display the tracks of the current year within the polygon
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=7)
         
-        pdb.set_trace()
-        
         ######################### Connect Emax points #########################
+        '''
         #Sort Emax by ascending box_id and slice_id for line continuity for the one who need it
-        if (not(indiv_index in list([103,126]))):
-            #Sort Emax by ascending box_id and slice_id
-            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
-        elif indiv_index in list([140]):
+        if (indiv_index == 140):
             #Sort Emax by ascending box_id and descending slice_id
             Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,False])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+        elif (indiv_index == 192):
+            #Sort Emax by ascending box_id and descending slice_id
+            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[False,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+        elif (not(indiv_index in list([103,126]))):
+            #Sort Emax by ascending box_id and slice_id
+            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+        '''
         
-        #If start of line is the northern thant the end, flip upside down data sorting
+        #Keep only Emax points whose box_id is associated with the current box_id
+        Emax_points=Emax_points[Emax_points.box_id==indiv_index]
+        
+        #Sort Emax by ascending box_id and descending slice_id
+        Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,False])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+        
+        #If start of line is the northern than the end, flip upside down data sorting
         if (Emax_points['y'].iloc[0]>Emax_points['y'].iloc[-1]):#Northern point <=> lat_3413 is less negative
-            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[False,False])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
+            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[False,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
         
         #Display start and end of Emax points for line definition
         ax2.scatter(Emax_points['x'].iloc[0],Emax_points['y'].iloc[0],color='green',s=40,zorder=7)
@@ -332,7 +351,7 @@ for indiv_index in polygons_Machguth2022.index:
         ################################ Above ################################
         #Define a lines for the above upper boundary
         lineEmax_upper_start = lineEmax.parallel_offset(500, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        lineEmax_upper_end = lineEmax.parallel_offset(40000, 'right', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        lineEmax_upper_end = lineEmax.parallel_offset(5000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         #Plot the above upper boundaries
         ax2.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         ax2.plot(lineEmax_upper_end.xy[0],lineEmax_upper_end.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
@@ -387,10 +406,12 @@ for indiv_index in polygons_Machguth2022.index:
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
         
+        '''
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/sorted_Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_sorted.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        
+        '''
+        pdb.set_trace()
         plt.close()
 
 pdb.set_trace()
