@@ -162,10 +162,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     
-    
+    '''
     if (indiv_index <13):
         continue
-    
+    '''
     print(indiv_index)
     
     #Prepare plot
@@ -298,29 +298,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=7)
         
         ######################### Connect Emax points #########################
-        '''
-        #Sort Emax by ascending box_id and slice_id for line continuity for the one who need it
-        if (indiv_index == 140):
-            #Sort Emax by ascending box_id and descending slice_id
-            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,False])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
-        elif (indiv_index == 192):
-            #Sort Emax by ascending box_id and descending slice_id
-            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[False,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
-        elif (not(indiv_index in list([103,126]))):
-            #Sort Emax by ascending box_id and slice_id
-            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
-        '''
         
         #Keep only Emax points whose box_id is associated with the current box_id
         Emax_points=Emax_points[Emax_points.box_id==indiv_index]
-        
-        #Sort Emax by ascending box_id and descending slice_id
-        Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[True,False])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
-        
-        #If start of line is the northern than the end, flip upside down data sorting
-        if (Emax_points['y'].iloc[0]>Emax_points['y'].iloc[-1]):#Northern point <=> lat_3413 is less negative
-            Emax_points=Emax_points.sort_values(by=['box_id','slice_id'],ascending=[False,True])#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
-        
+
         #Display start and end of Emax points for line definition
         ax2.scatter(Emax_points['x'].iloc[0],Emax_points['y'].iloc[0],color='green',s=40,zorder=7)
         ax2.scatter(Emax_points['x'].iloc[-1],Emax_points['y'].iloc[-1],color='red',s=40,zorder=7)
