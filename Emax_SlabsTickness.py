@@ -163,7 +163,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         continue
     
     '''
-    if (indiv_index <13):
+    if (indiv_index not in list([14,21,22])):
         continue
     '''
     print(indiv_index)
@@ -332,12 +332,21 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ################################ Above ################################
         #Define a lines for the above upper boundary
         lineEmax_upper_start = lineEmax.parallel_offset(500, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        lineEmax_upper_end = lineEmax.parallel_offset(5000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        lineEmax_upper_end_a = lineEmax.parallel_offset(10000, 'right', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        #Extent lineEmax_upper_end to make sure we select all the data above
+        lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(10000, 'left', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        lineEmax_upper_end_c = lineEmax_upper_end_b.parallel_offset(10000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        lineEmax_upper_end_d = lineEmax_upper_end_c.parallel_offset(60000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+
         #Plot the above upper boundaries
         ax2.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        ax2.plot(lineEmax_upper_end.xy[0],lineEmax_upper_end.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        #ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        #ax2.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        #ax2.plot(lineEmax_upper_end_c.xy[0],lineEmax_upper_end_c.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        #ax2.plot(lineEmax_upper_end_d.xy[0],lineEmax_upper_end_d.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+
         #Create a polygon with low end begin the Emax line and upper end being the Emax line + 20000
-        polygon_above=Polygon([*list(lineEmax_upper_end.coords),*list(lineEmax_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+        polygon_above=Polygon([*list(lineEmax_upper_end_d.coords),*list(lineEmax_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
         #Create polygon patch of the polygon above
         plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='blue',alpha=0.5)
         #Display patch of polygone above
@@ -376,23 +385,26 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax2.legend(handles=legend_elements)
         plt.legend()
         
+        '''
         #Set limits
         if (len(Intersection_EmaxBufferAbove_slabs)>0):
-            ax2.set_xlim(np.min(Intersection_EmaxBufferAbove_slabs['lon_3413'])-4e4,
-                         np.max(Intersection_EmaxBufferAbove_slabs['lon_3413'])+4e4)
-            ax2.set_ylim(np.min(Intersection_EmaxBufferAbove_slabs['lat_3413'])-4e4,
-                         np.max(Intersection_EmaxBufferAbove_slabs['lat_3413'])+4e4)
-                
+            ax2.set_xlim(np.min(Emax_points['x'])-5e4,
+                         np.max(Emax_points['x'])+5e4)
+            ax2.set_ylim(np.min(Emax_points['y'])-5e4,
+                         np.max(Emax_points['y'])+5e4)
+        '''
+        #pdb.set_trace()
+        
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
         
+        pdb.set_trace()
         '''
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_polygon'+str(indiv_index)+'_3YearsRunSlabs_sorted.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_add_buffer6.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         '''
-        pdb.set_trace()
         plt.close()
 
 pdb.set_trace()
@@ -447,7 +459,7 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_3YearsRunSlabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs.png',dpi=500)
 '''
 
 
