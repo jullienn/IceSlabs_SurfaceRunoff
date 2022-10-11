@@ -165,10 +165,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     
-    '''
-    if (indiv_index not in list([14,21,22])):
+    
+    if (indiv_index not in list([8])):
         continue
-    '''
+    
     print(indiv_index)
     
     #Prepare plot
@@ -333,10 +333,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Plot the result of this selection
         ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=10,zorder=7)
         ########################### Polygon within ############################
-  
+                
         ################################ Above ################################
         #Define a lines for the above upper boundary
-        lineEmax_upper_start = lineEmax.parallel_offset(radius, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        lineEmax_upper_start = lineEmax.parallel_offset(4000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         lineEmax_upper_end_a = lineEmax.parallel_offset(10000, 'right', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         #Extent lineEmax_upper_end to make sure we select all the data above
         lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(10000, 'left', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
@@ -390,7 +390,6 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax2.legend(handles=legend_elements)
         plt.legend()
         
-        
         #Set limits
         if (len(Intersection_EmaxBufferAbove_slabs)>0):
             ax2.set_xlim(np.min(Emax_points['x'])-5e4,
@@ -398,14 +397,13 @@ for indiv_index in Boxes_Tedstone2022.FID:
             ax2.set_ylim(np.min(Emax_points['y'])-5e4,
                          np.max(Emax_points['y'])+5e4)
         
-        #pdb.set_trace()
-        
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
         
+        pdb.set_trace()
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
@@ -459,7 +457,7 @@ fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx.png',dpi=500)
 
 
 
