@@ -155,6 +155,9 @@ points_ice['selected_data']=[0]*len(points_ice)
 iceslabs_above_selected_overall=pd.DataFrame()
 iceslabs_selected_overall=pd.DataFrame()
 
+#Define radius
+radius=250
+
 for indiv_index in Boxes_Tedstone2022.FID:
     
     if (indiv_index in nogo_polygon):
@@ -301,11 +304,13 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         #Keep only Emax points whose box_id is associated with the current box_id
         Emax_points=Emax_points[Emax_points.box_id==indiv_index]
-
+        
+        '''
         #Display start and end of Emax points for line definition
         ax2.scatter(Emax_points['x'].iloc[0],Emax_points['y'].iloc[0],color='green',s=40,zorder=7)
         ax2.scatter(Emax_points['x'].iloc[-1],Emax_points['y'].iloc[-1],color='red',s=40,zorder=7)
-                        
+        '''
+        
         #Emax as tuples
         Emax_tuple=[tuple(row[['x','y']]) for index, row in Emax_points.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
         #Connect Emax points between them
@@ -316,7 +321,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
 
         ########################### Polygon within ############################
         #Create a buffer around this lime
-        buffer_within_Emax = lineEmax.buffer(500, cap_style=1) #from https://shapely.readthedocs.io/en/stable/code/buffer.py
+        buffer_within_Emax = lineEmax.buffer(radius, cap_style=1) #from https://shapely.readthedocs.io/en/stable/code/buffer.py
         #Create polygon patch from this buffer
         plot_buffer_within_Emax = PolygonPatch(buffer_within_Emax,zorder=2,color='red',alpha=0.5)
         #Display patch
@@ -331,7 +336,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
   
         ################################ Above ################################
         #Define a lines for the above upper boundary
-        lineEmax_upper_start = lineEmax.parallel_offset(500, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        lineEmax_upper_start = lineEmax.parallel_offset(radius, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         lineEmax_upper_end_a = lineEmax.parallel_offset(10000, 'right', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         #Extent lineEmax_upper_end to make sure we select all the data above
         lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(10000, 'left', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
@@ -343,7 +348,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         #ax2.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         #ax2.plot(lineEmax_upper_end_c.xy[0],lineEmax_upper_end_c.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        #ax2.plot(lineEmax_upper_end_d.xy[0],lineEmax_upper_end_d.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax2.plot(lineEmax_upper_end_d.xy[0],lineEmax_upper_end_d.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
 
         #Create a polygon with low end begin the Emax line and upper end being the Emax line + 20000
         polygon_above=Polygon([*list(lineEmax_upper_end_d.coords),*list(lineEmax_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
@@ -366,7 +371,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax3.set_ylabel('Density [ ]')
         ax3.set_xlim(0,16)
 
-        fig.suptitle('Polygon '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs')
+        fig.suptitle('Polygon '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs - radius '+str(radius)+' m')
         ax3.legend()
         plt.show()
         
@@ -385,29 +390,26 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax2.legend(handles=legend_elements)
         plt.legend()
         
-        '''
+        
         #Set limits
         if (len(Intersection_EmaxBufferAbove_slabs)>0):
             ax2.set_xlim(np.min(Emax_points['x'])-5e4,
                          np.max(Emax_points['x'])+5e4)
             ax2.set_ylim(np.min(Emax_points['y'])-5e4,
                          np.max(Emax_points['y'])+5e4)
-        '''
+        
         #pdb.set_trace()
         
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
         
-        pdb.set_trace()
-        '''
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_add_buffer6.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        '''
+        
         plt.close()
 
-pdb.set_trace()
 
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
@@ -456,11 +458,9 @@ axGrIS.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland I
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
-pdb.set_trace()
-'''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs.png',dpi=500)
-'''
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m.png',dpi=500)
+
 
 
 
