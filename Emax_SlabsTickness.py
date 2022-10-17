@@ -169,10 +169,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     
-    
-    if (indiv_index not in list([7])):
+    '''
+    if (indiv_index < 22):
         continue
-    
+    '''
     print(indiv_index)
     
     #Prepare plot
@@ -337,7 +337,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Plot the result of this selection
         ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=10,zorder=7)
         ########################### Polygon within ############################
-        
+
         ################################ Above ################################
         #Define a line for the above upper boundary 4000m away from Emax line        
         if ((indiv_index==7) & (indiv_year==2016)):
@@ -348,16 +348,23 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         lineEmax_upper_end_a = lineEmax.parallel_offset(10000, 'right', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         #Extent lineEmax_upper_end to make sure we select all the data above
-        lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(10000, 'left', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        lineEmax_upper_end_c = lineEmax_upper_end_b.parallel_offset(10000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        lineEmax_upper_end_d = lineEmax_upper_end_c.parallel_offset(60000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         
+        if ((indiv_year==2016)&(indiv_index not in list([8,22,26,29,34]))):
+            lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(5000, 'left', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            lineEmax_upper_end_c = lineEmax_upper_end_b.parallel_offset(10000, 'left', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            lineEmax_upper_end_d = lineEmax_upper_end_c.parallel_offset(60000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py        
+        else:
+            lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(10000, 'left', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            lineEmax_upper_end_c = lineEmax_upper_end_b.parallel_offset(10000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            lineEmax_upper_end_d = lineEmax_upper_end_c.parallel_offset(60000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            
         #Plot the above upper boundaries        
         ax2.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        
-        #ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        #ax2.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        #ax2.plot(lineEmax_upper_end_c.xy[0],lineEmax_upper_end_c.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        '''
+        ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax2.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax2.plot(lineEmax_upper_end_c.xy[0],lineEmax_upper_end_c.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        '''
         ax2.plot(lineEmax_upper_end_d.xy[0],lineEmax_upper_end_d.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         
         #Create a polygon with low end begin the Emax line and upper end being the Emax line + 20000
@@ -416,6 +423,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
+
+
+##### TRY DISPLAY THE DISTRIBUTION OF THE LOW END - TAKE INTO ACCOUNT THE LIKELIHOOD?
+
+##### ADD distribution of within 500m-4000m ???
 
 
 #Display ice slabs distributions as a function of the regions
