@@ -5,6 +5,37 @@ Created on Wed Sep 28 16:00:42 2022
 @author: JullienN
 """
 
+
+def plot_histo(ax_plot,iceslabs_above,iceslabs_within,region):
+    
+    if (region == 'GrIS'):
+        ax_plot.hist(iceslabs_above['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_within['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        #Dislay median values
+        ax_plot.axvline(x=np.quantile(iceslabs_above['20m_ice_content_m'],0.5),linestyle='--',color='blue')
+        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.quantile(iceslabs_above['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_within['20m_ice_content_m'],0.5),linestyle='--',color='red')
+        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.quantile(iceslabs_within['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        
+    else:
+        ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        #Dislay median values
+        ax_plot.axvline(x=np.quantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='blue')
+        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.quantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='red')
+        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.quantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        
+    if (region == 'NW'):
+        ax_plot.legend()
+    
+    if (region in list(['NO','NE','GrIS'])):
+        ax_plot.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
+
+    return
+
 import pandas as pd
 import numpy as np
 import pdb
@@ -202,7 +233,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     ax4.set_ylim(-3365680, -666380)
     #Display coastlines
     ax4.coastlines(edgecolor='black',linewidth=0.75)
-        
+    
     #Intersection between 2002-2003 ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_20022003 = gpd.sjoin(points_2002_2003, indiv_polygon, op='within')
     #Intersection between ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
@@ -226,7 +257,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2012]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -270,6 +301,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         elif(indiv_year == 2012):
             #Select ice slabs data from 2010, 2011, 2012
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,(within_points_ice.year==2011)|(within_points_ice.year==2012))]
+            '''
+            #Select ice slabs data from 2011, 2012
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
+            '''
         elif(indiv_year == 2013):
             #Select ice slabs data from 2011, 2012, 2013
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2011,(within_points_ice.year==2012)|(within_points_ice.year==2013))]
@@ -282,6 +317,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         elif (indiv_year == 2016):
             #Select ice slabs data of the closest indiv_year, i.e. 2014 and the 2 previous ones
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
+            '''
+            #Select ice slabs data of the closest indiv_year, i.e. 2014
+            subset_iceslabs=within_points_ice[within_points_ice.year==2014]
+            '''
         elif (indiv_year == 2017):
             #Select ice slabs data from 2017, 2014, 2013
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,(within_points_ice.year==2014)|(within_points_ice.year==2017))]
@@ -291,6 +330,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         elif (indiv_year == 2019):
             #Select ice slabs data from 2018, 2017, 2014
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,(within_points_ice.year==2017)|(within_points_ice.year==2018))]
+            '''
+            #Select ice slabs data from 2018, 2017
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2017,within_points_ice.year==2018)]
+            '''
         else:
             #Select ice slabs data of the current indiv_year
             subset_iceslabs=within_points_ice[within_points_ice.year==indiv_year]
@@ -388,7 +431,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax3.set_ylabel('Density [ ]')
         ax3.set_xlim(0,16)
 
-        fig.suptitle('Polygon '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs - radius '+str(radius)+' m - cleanedxytpd')
+        fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs - radius '+str(radius)+' m - cleanedxytpd')
         ax3.legend()
         plt.show()
         
@@ -417,18 +460,18 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
-                
+        
+        '''
         #Save the figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        
+        '''
         plt.close()
 
 
 ##### TRY DISPLAY THE DISTRIBUTION OF THE LOW END - TAKE INTO ACCOUNT THE LIKELIHOOD?
 
 ##### ADD distribution of within 500m-4000m ???
-
 
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
@@ -442,46 +485,24 @@ axNO = plt.subplot(gs[0:5, 5:10])
 axNE = plt.subplot(gs[5:10, 5:10])
 axGrIS = plt.subplot(gs[10:15, 5:10])
 
-axNW.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='NW']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-axNW.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='NW']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-axNW.set_xlabel('Ice content [m]')
-axNW.text(0.075, 0.9,'NW',zorder=10, ha='center', va='center', transform=axNW.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-axNW.legend()
+#Plot histograms
+plot_histo(axNW,iceslabs_above_selected_overall,iceslabs_selected_overall,'NW')
+plot_histo(axCW,iceslabs_above_selected_overall,iceslabs_selected_overall,'CW')
+plot_histo(axSW,iceslabs_above_selected_overall,iceslabs_selected_overall,'SW')
+plot_histo(axNO,iceslabs_above_selected_overall,iceslabs_selected_overall,'NO')
+plot_histo(axNE,iceslabs_above_selected_overall,iceslabs_selected_overall,'NE')
+plot_histo(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_overall,'GrIS')
 
-axCW.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='CW']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-axCW.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='CW']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-axCW.set_xlabel('Ice content [m]')
-axCW.text(0.075, 0.9,'CW',zorder=10, ha='center', va='center', transform=axCW.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
-axSW.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='SW']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-axSW.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='SW']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+#Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-axSW.text(0.075, 0.9,'SW',zorder=10, ha='center', va='center', transform=axSW.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
-axNO.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='NO']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-axNO.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='NO']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-axNO.text(0.075, 0.9,'NO',zorder=10, ha='center', va='center', transform=axNO.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-axNO.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
-
-axNE.hist(iceslabs_above_selected_overall[iceslabs_above_selected_overall['key_shp']=='NE']['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-axNE.hist(iceslabs_selected_overall[iceslabs_selected_overall['key_shp']=='NE']['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-axNE.text(0.075, 0.9,'NE',zorder=10, ha='center', va='center', transform=axNE.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-axNE.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
-
-axGrIS.hist(iceslabs_above_selected_overall['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-axGrIS.hist(iceslabs_selected_overall['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-axGrIS.text(0.075, 0.9,'GrIS',zorder=10, ha='center', va='center', transform=axGrIS.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-axGrIS.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
-
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
+pdb.set_trace()
 
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500)
-
-
 
 
 '''
