@@ -169,10 +169,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     
-    '''
+    
     if (indiv_index not in list([7])):
         continue
-    '''
+    
     print(indiv_index)
     
     #Prepare plot
@@ -226,7 +226,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -337,10 +337,14 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Plot the result of this selection
         ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=10,zorder=7)
         ########################### Polygon within ############################
-                
+        
         ################################ Above ################################
-        #Define a line for the above upper boundary 4000m away from Emax line
-        lineEmax_upper_start = lineEmax.parallel_offset(4000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        #Define a line for the above upper boundary 4000m away from Emax line        
+        if ((indiv_index==7) & (indiv_year==2016)):
+            lineEmax_upper_start_pre = lineEmax.parallel_offset(2000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            lineEmax_upper_start = lineEmax_upper_start_pre.parallel_offset(2000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        else:
+            lineEmax_upper_start = lineEmax.parallel_offset(4000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         
         lineEmax_upper_end_a = lineEmax.parallel_offset(10000, 'right', join_style=2) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         #Extent lineEmax_upper_end to make sure we select all the data above
@@ -350,7 +354,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         #Plot the above upper boundaries        
         ax2.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-                
+        
         #ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         #ax2.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         #ax2.plot(lineEmax_upper_end_c.xy[0],lineEmax_upper_end_c.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
@@ -406,9 +410,9 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
-        
+                
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_last.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
@@ -461,10 +465,10 @@ axGrIS.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland I
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
-'''
+
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500)
-'''
+
 
 
 
