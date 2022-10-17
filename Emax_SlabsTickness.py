@@ -69,6 +69,10 @@ GrIS_DEM = rasterio.open(path_GrIS_DEM)
 #Define path flowlines
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
 
+#Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
+#This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
+my_pal = {'Within': "#cb181d", 'Above': "#4292c6"}
+
 '''
 #Open flowlignes
 polygons_Machguth2022=gpd.read_file(path_data+'polygons_Machguth2022/Ys_polygons_v3.2b.shp')
@@ -257,7 +261,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    for indiv_year in list([2012]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -499,11 +503,41 @@ axSW.set_ylabel('Density [ ]')
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
-pdb.set_trace()
-
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500)
 
+
+#Display as boxplots
+
+#Aggregate data together
+iceslabs_above_selected_overall['type']=['Above']*len(iceslabs_above_selected_overall)
+iceslabs_selected_overall['type']=['Within']*len(iceslabs_selected_overall)
+iceslabs_boxplot=pd.concat([iceslabs_selected_overall,iceslabs_above_selected_overall])
+
+#Display
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_regions = plt.subplot(gs[0:8, 0:6])
+ax_GrIS = plt.subplot(gs[8:10, 0:6])
+gs.update(hspace=0)
+
+box_plot_regions=sns.boxplot(data=iceslabs_boxplot, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions,palette=my_pal)#, kde=True)
+box_plot_regions.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seaborn-barplot-invert-y-axis-and-keep-x-axis-on-bottom-of-chart-area
+box_plot_GrIS=sns.boxplot(data=iceslabs_boxplot, x="20m_ice_content_m",y="type",orient="h",ax=ax_GrIS,palette=my_pal)#, kde=True)
+box_plot_GrIS.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seaborn-barplot-invert-y-axis-and-keep-x-axis-on-bottom-of-chart-area
+
+#Improve display
+ax_regions.set_ylabel('')
+ax_GrIS.set_xlabel('Ice content [m]')
+ax_GrIS.set_ylabel('')
+ax_GrIS.set_yticks([0.5])
+ax_GrIS.set_yticklabels(['GrIS'])
+ax_regions.set_xlim(1,16.5)
+ax_GrIS.set_xlim(1,16.5)
+ax_regions.legend(loc='lower right')
+
+#Save the figure
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500)
 
 '''
 
