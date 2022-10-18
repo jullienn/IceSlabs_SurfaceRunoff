@@ -6,27 +6,33 @@ Created on Wed Sep 28 16:00:42 2022
 """
 
 
-def plot_histo(ax_plot,iceslabs_above,iceslabs_within,region):
+def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region):
     
     if (region == 'GrIS'):
         ax_plot.hist(iceslabs_above['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_inbetween['20m_ice_content_m'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Dislay median values
         ax_plot.axvline(x=np.quantile(iceslabs_above['20m_ice_content_m'],0.5),linestyle='--',color='blue')
         ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.quantile(iceslabs_above['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.quantile(iceslabs_within['20m_ice_content_m'],0.5),linestyle='--',color='red')
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.quantile(iceslabs_within['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_inbetween['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
+        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.quantile(iceslabs_inbetween['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         
     else:
         ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Dislay median values
         ax_plot.axvline(x=np.quantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='blue')
         ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.quantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.quantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='red')
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.quantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
+        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.quantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         
     if (region == 'NW'):
         ax_plot.legend()
@@ -71,7 +77,7 @@ path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunof
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff"}
+my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'InBetween': "#fee391"}
 
 '''
 #Open flowlignes
@@ -193,9 +199,10 @@ points_ice['selected_data']=[0]*len(points_ice)
 #Define empty dataframe
 iceslabs_above_selected_overall=pd.DataFrame()
 iceslabs_selected_overall=pd.DataFrame()
+iceslabs_inbetween_overall=pd.DataFrame()
 
 #Define radius
-radius=500
+radius=250
 
 for indiv_index in Boxes_Tedstone2022.FID:
     
@@ -205,7 +212,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         continue
     
     '''
-    if (indiv_index < 13):
+    if (indiv_index < 8):
         continue
     '''
     print(indiv_index)
@@ -261,7 +268,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2012]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -436,8 +443,26 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax3.set_xlim(0,16)
 
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs - radius '+str(radius)+' m - cleanedxytpd')
-        ax3.legend()
         plt.show()
+        
+        ############################## In between ##############################
+        lineEmax_radius = lineEmax.parallel_offset(radius, 'right', join_style=1)
+        ax2.plot(lineEmax_radius .xy[0],lineEmax_radius .xy[1],zorder=5,color='yellow')
+        ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow')
+        
+        polygon_radius_4000=Polygon([*list(lineEmax_upper_start.coords),*list(lineEmax_radius.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+        plot_buffer_radius_4000 = PolygonPatch(polygon_radius_4000,zorder=2,color='yellow',alpha=0.5)
+        ax2.add_patch(plot_buffer_radius_4000)        
+             
+        #Convert polygon of polygon_radius_4000 into a geopandas dataframe
+        Emax_radius_4000_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_radius_4000]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+        #Intersection between subset_iceslabs and Emax_radius_4000_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
+        Intersection_Emaxradius4000_slabs = gpd.sjoin(subset_iceslabs, Emax_radius_4000_polygon, op='within')
+        #Plot the result of this selection
+        ax2.scatter(Intersection_Emaxradius4000_slabs['lon_3413'],Intersection_Emaxradius4000_slabs['lat_3413'],color='yellow',s=10,zorder=7)
+        ax3.hist(Intersection_Emaxradius4000_slabs['20m_ice_content_m'],color='yellow',label='In-between',alpha=0.5,bins=np.arange(0,17),density=True)
+        ############################## In between ##############################
+        ax3.legend()
         
         #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
         legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
@@ -449,7 +474,9 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Patch(facecolor='blue',label='Area above Emax buffer'),
                            Line2D([0], [0], color='red', lw=2, label='Ice slabs within Emax buffer'),
                            Line2D([0], [0], color='blue', lw=2, label='Ice slabs above Emax buffer'),
-                           Line2D([0], [0], color='magenta', lw=2, label='Ys', marker='o',linestyle='None')]
+                           Line2D([0], [0], color='magenta', lw=2, label='Ys', marker='o',linestyle='None'),
+                           Patch(facecolor='yellow',label='Area in-between'),
+                           Line2D([0], [0], color='yellow', lw=2, label='Ice slabs in-between')]
         
         ax2.legend(handles=legend_elements)
         plt.legend()
@@ -463,19 +490,17 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
-        iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
-               
-        '''
+        iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
+        iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
+        
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        '''
+        
         plt.close()
 
 
 ##### TRY DISPLAY THE DISTRIBUTION OF THE LOW END - TAKE INTO ACCOUNT THE LIKELIHOOD?
-pdb.set_trace()
-##### ADD distribution of within 500m-4000m ???
 
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
@@ -490,12 +515,12 @@ axNE = plt.subplot(gs[5:10, 5:10])
 axGrIS = plt.subplot(gs[10:15, 5:10])
 
 #Plot histograms
-plot_histo(axNW,iceslabs_above_selected_overall,iceslabs_selected_overall,'NW')
-plot_histo(axCW,iceslabs_above_selected_overall,iceslabs_selected_overall,'CW')
-plot_histo(axSW,iceslabs_above_selected_overall,iceslabs_selected_overall,'SW')
-plot_histo(axNO,iceslabs_above_selected_overall,iceslabs_selected_overall,'NO')
-plot_histo(axNE,iceslabs_above_selected_overall,iceslabs_selected_overall,'NE')
-plot_histo(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_overall,'GrIS')
+plot_histo(axNW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NW')
+plot_histo(axCW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'CW')
+plot_histo(axSW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'SW')
+plot_histo(axNO,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NO')
+plot_histo(axNE,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NE')
+plot_histo(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'GrIS')
 
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
@@ -504,7 +529,7 @@ fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500)
 
 
 #Display as boxplots
@@ -512,7 +537,8 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 #Aggregate data together
 iceslabs_above_selected_overall['type']=['Above']*len(iceslabs_above_selected_overall)
 iceslabs_selected_overall['type']=['Within']*len(iceslabs_selected_overall)
-iceslabs_boxplot=pd.concat([iceslabs_selected_overall,iceslabs_above_selected_overall])
+iceslabs_inbetween_overall['type']=['InBetween']*len(iceslabs_inbetween_overall)
+iceslabs_boxplot=pd.concat([iceslabs_above_selected_overall,iceslabs_inbetween_overall,iceslabs_selected_overall])
 
 iceslabs_boxplot_GrIS=iceslabs_boxplot.copy(deep=True)
 iceslabs_boxplot_GrIS['key_shp']=['GrIS']*len(iceslabs_boxplot_GrIS)
@@ -530,7 +556,7 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500)
 
 '''
 
