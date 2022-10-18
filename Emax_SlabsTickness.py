@@ -62,6 +62,7 @@ from shapely.geometry import LineString
 from shapely.geometry import Polygon
 from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
+import rioxarray as rxr
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -71,6 +72,19 @@ from rasterio.plot import show
 path_GrIS_DEM = r'C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/elevations/greenland_dem_mosaic_100m_v3.0.tif'
 GrIS_DEM = rasterio.open(path_GrIS_DEM)
 ### -------------------------- Load GrIS DEM ----------------------------- ###
+
+#Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+
+path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI_tiff/'
+#Load NDWI data for display
+NDWI_image = rxr.open_rasterio(path_NDWI+'NDWI_p10_2016.tif',
+                              masked=True).squeeze() #No need to reproject satelite image
+#Extract x and y coordinates of satellite image
+x_coord_NDWI=np.asarray(NDWI_image.x)
+y_coord_NDWI=np.asarray(NDWI_image.y)
 
 #Define path flowlines
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
@@ -202,7 +216,7 @@ iceslabs_selected_overall=pd.DataFrame()
 iceslabs_inbetween_overall=pd.DataFrame()
 
 #Define radius
-radius=250
+radius=50
 
 for indiv_index in Boxes_Tedstone2022.FID:
     
@@ -211,12 +225,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     
-    '''
     if (indiv_index < 8):
         continue
-    '''
-    print(indiv_index)
     
+    print(indiv_index)
+        
     #Prepare plot
     fig = plt.figure(figsize=(10,6))
     fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -229,7 +242,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-        
+    
     #Extract individual polygon
     indiv_polygon=Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_index]
 
@@ -237,7 +250,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     '''
     indiv_polygon.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
     '''
-    indiv_polygon.plot(ax=ax2,color='#faf6c8', edgecolor='black',linewidth=0.5)
+    indiv_polygon.plot(ax=ax2,color='none', edgecolor='black',linewidth=0.5,zorder=1)
     
     indiv_polygon.plot(ax=ax4,color='#faf6c8', edgecolor='black',linewidth=0.5)
     ax4.set_xlim(-667470, 738665)
@@ -268,7 +281,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    for indiv_year in list([2012]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -283,6 +296,23 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         #Add a column to add the elevation pickup on WGS84
         Emax_points['elevation_WGS84']=[np.nan]*len(Emax_points)
+                
+        #Define bounds of Emaxs in this box
+        x_min=np.min(Emax_points['x'])-5e4
+        x_max=np.max(Emax_points['x'])+5e4
+        y_min=np.min(Emax_points['y'])-5e4
+        y_max=np.max(Emax_points['y'])+5e4
+
+        #Extract coordinates of NDWI image within Emaxs bounds
+        logical_x_coord_within_bounds=np.logical_and(x_coord_NDWI>=x_min,x_coord_NDWI<=x_max)
+        x_coord_within_bounds=x_coord_NDWI[logical_x_coord_within_bounds]
+        logical_y_coord_within_bounds=np.logical_and(y_coord_NDWI>=y_min,y_coord_NDWI<=y_max)
+        y_coord_within_bounds=y_coord_NDWI[logical_y_coord_within_bounds]
+
+        #Define extents based on the bounds
+        extent_NDWI = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+        #Display NDWI image
+        ax2.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='Blues',zorder=0) #NDWI
         
         #plot all the Emax points of the considered indiv_year
         ax2.scatter(Emax_points['x'],Emax_points['y'],color='black',s=10,zorder=6)
@@ -356,7 +386,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Display antecedent ice slabs
         ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10,zorder=1)
         #Display the tracks of the current year within the polygon
-        ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=7)
+        ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=4)
         
         ######################### Connect Emax points #########################
         
@@ -381,7 +411,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Create a buffer around this line
         buffer_within_Emax = lineEmax.buffer(radius, cap_style=1) #from https://shapely.readthedocs.io/en/stable/code/buffer.py
         #Create polygon patch from this buffer
-        plot_buffer_within_Emax = PolygonPatch(buffer_within_Emax,zorder=2,color='red',alpha=0.5)
+        plot_buffer_within_Emax = PolygonPatch(buffer_within_Emax,zorder=2,color='red',alpha=0.2)
         #Display patch
         ax2.add_patch(plot_buffer_within_Emax)        
         #Convert polygon of Emax buffer around connected Emax line into a geopandas dataframe
@@ -424,9 +454,9 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Create a polygon with low end begin the Emax line and upper end being the Emax line + 20000
         polygon_above=Polygon([*list(lineEmax_upper_end_d.coords),*list(lineEmax_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
         #Create polygon patch of the polygon above
-        plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='blue',alpha=0.5)
+        plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='blue',alpha=0.2)
         #Display patch of polygone above
-        ax2.add_patch(plot_buffer_above_Emax)        
+        #ax2.add_patch(plot_buffer_above_Emax)        
         #Convert polygon of Emax buffer above into a geopandas dataframe
         Emax_above_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_above]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
         #Intersection between subset_iceslabs and Emax_above_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
@@ -451,8 +481,8 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow')
         
         polygon_radius_4000=Polygon([*list(lineEmax_upper_start.coords),*list(lineEmax_radius.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
-        plot_buffer_radius_4000 = PolygonPatch(polygon_radius_4000,zorder=2,color='yellow',alpha=0.5)
-        ax2.add_patch(plot_buffer_radius_4000)        
+        plot_buffer_radius_4000 = PolygonPatch(polygon_radius_4000,zorder=2,color='yellow',alpha=0.2)
+        #ax2.add_patch(plot_buffer_radius_4000)        
              
         #Convert polygon of polygon_radius_4000 into a geopandas dataframe
         Emax_radius_4000_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_radius_4000]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
@@ -493,6 +523,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
         
+        pdb.set_trace()
         #Save the figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -557,6 +588,8 @@ fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500)
+
+
 
 '''
 
