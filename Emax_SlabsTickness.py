@@ -71,7 +71,7 @@ path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunof
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#cb181d", 'Above': "#4292c6"}
+my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff"}
 
 '''
 #Open flowlignes
@@ -205,7 +205,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         continue
     
     '''
-    if (indiv_index < 22):
+    if (indiv_index < 13):
         continue
     '''
     print(indiv_index)
@@ -261,7 +261,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    for indiv_year in list([2019]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -464,7 +464,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])#There might be points that are picked several times because of the used radius
-        
+               
         '''
         #Save the figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500,bbox_inches='tight')
@@ -474,7 +474,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
 
 
 ##### TRY DISPLAY THE DISTRIBUTION OF THE LOW END - TAKE INTO ACCOUNT THE LIKELIHOOD?
-
+pdb.set_trace()
 ##### ADD distribution of within 500m-4000m ???
 
 #Display ice slabs distributions as a function of the regions
@@ -514,27 +514,20 @@ iceslabs_above_selected_overall['type']=['Above']*len(iceslabs_above_selected_ov
 iceslabs_selected_overall['type']=['Within']*len(iceslabs_selected_overall)
 iceslabs_boxplot=pd.concat([iceslabs_selected_overall,iceslabs_above_selected_overall])
 
+iceslabs_boxplot_GrIS=iceslabs_boxplot.copy(deep=True)
+iceslabs_boxplot_GrIS['key_shp']=['GrIS']*len(iceslabs_boxplot_GrIS)
+iceslabs_boxplot_region_GrIS=pd.concat([iceslabs_boxplot,iceslabs_boxplot_GrIS])
+
 #Display
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
-ax_regions = plt.subplot(gs[0:8, 0:6])
-ax_GrIS = plt.subplot(gs[8:10, 0:6])
-gs.update(hspace=0)
-
-box_plot_regions=sns.boxplot(data=iceslabs_boxplot, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions,palette=my_pal)#, kde=True)
-box_plot_regions.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seaborn-barplot-invert-y-axis-and-keep-x-axis-on-bottom-of-chart-area
-box_plot_GrIS=sns.boxplot(data=iceslabs_boxplot, x="20m_ice_content_m",y="type",orient="h",ax=ax_GrIS,palette=my_pal)#, kde=True)
-box_plot_GrIS.invert_yaxis()#From https://stackoverflow.com/questions/44532498/seaborn-barplot-invert-y-axis-and-keep-x-axis-on-bottom-of-chart-area
-
-#Improve display
-ax_regions.set_ylabel('')
-ax_GrIS.set_xlabel('Ice content [m]')
-ax_GrIS.set_ylabel('')
-ax_GrIS.set_yticks([0.5])
-ax_GrIS.set_yticklabels(['GrIS'])
-ax_regions.set_xlim(1,16.5)
-ax_GrIS.set_xlim(1,16.5)
-ax_regions.legend(loc='lower right')
+ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
+box_plot_regions_GrIS=sns.boxplot(data=iceslabs_boxplot_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+ax_regions_GrIS.set_ylabel('')
+ax_regions_GrIS.set_xlabel('Ice content [m]')
+ax_regions_GrIS.set_xlim(1,16.5)
+ax_regions_GrIS.legend(loc='lower right')
+fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd.png',dpi=500)
