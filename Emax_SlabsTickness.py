@@ -64,6 +64,9 @@ from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
 
+#Define which year to plot
+desired_year=2016
+
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
 #https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
@@ -78,9 +81,9 @@ GrIS_DEM = rasterio.open(path_GrIS_DEM)
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 
-path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI_tiff/'
+path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'
 #Load NDWI data for display
-NDWI_image = rxr.open_rasterio(path_NDWI+'NDWI_p10_2016.tif',
+NDWI_image = rxr.open_rasterio(path_NDWI+'NDWI_p10_'+str(desired_year)+'.vrt',
                               masked=True).squeeze() #No need to reproject satelite image
 #Extract x and y coordinates of satellite image
 x_coord_NDWI=np.asarray(NDWI_image.x)
@@ -281,7 +284,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
     
-    for indiv_year in list([2016]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([desired_year]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -419,7 +422,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Intersection between subset_iceslabs and Emax_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
         Intersection_EmaxBuffer_slabs = gpd.sjoin(subset_iceslabs, Emax_within_polygon, op='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=10,zorder=7)
+        ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=10,zorder=8)
         ########################### Polygon within ############################
 
         ################################ Above ################################
@@ -462,7 +465,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Intersection between subset_iceslabs and Emax_above_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
         Intersection_EmaxBufferAbove_slabs = gpd.sjoin(subset_iceslabs, Emax_above_polygon, op='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=10,zorder=7)
+        ax2.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=10,zorder=8)
         ################################ Above ################################
 
         #Plot ice slabs thickness that are above and within Emax polygons
@@ -477,7 +480,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         ############################## In between ##############################
         lineEmax_radius = lineEmax.parallel_offset(radius, 'right', join_style=1)
-        ax2.plot(lineEmax_radius .xy[0],lineEmax_radius .xy[1],zorder=5,color='yellow')
+        #ax2.plot(lineEmax_radius .xy[0],lineEmax_radius .xy[1],zorder=5,color='yellow')
         ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow')
         
         polygon_radius_4000=Polygon([*list(lineEmax_upper_start.coords),*list(lineEmax_radius.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
