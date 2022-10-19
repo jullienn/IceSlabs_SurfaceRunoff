@@ -64,8 +64,11 @@ from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
 
+#Type of slabs product
+type_slabs='high' #can be high or low
+
 #Define which year to plot
-desired_year=2016
+desired_year=2019
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -128,10 +131,10 @@ crs_proj4 = crs.proj4_init
 #Dictionnaries have already been created, load them
 path_df_with_elevation='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/' 
 
-#Load 2010-2018 high estimate
-f_20102018_high = open(path_df_with_elevation+'final_excel/high_estimate/df_20102018_with_elevation_high_estimate_rignotetalregions', "rb")
-df_2010_2018_high = pickle.load(f_20102018_high)
-f_20102018_high.close()
+#Load 2010-2018
+f_20102018 = open(path_df_with_elevation+'final_excel/'+type_slabs+'_estimate/df_20102018_with_elevation_'+type_slabs+'_estimate_rignotetalregions', "rb")
+df_2010_2018 = pickle.load(f_20102018)
+f_20102018.close()
 
 #Load 2002-2003 dataset
 path_2002_2003='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/2002_2003/'
@@ -191,7 +194,7 @@ ax1.text(CW_rignotetal.centroid.x,CW_rignotetal.centroid.y+20000,np.asarray(CW_r
 ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y+20000,np.asarray(NW_rignotetal.SUBREGION1)[0])
 
 Boxes_Tedstone2022.plot(ax=ax1,color='red', edgecolor='black',linewidth=0.5)
-ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c=df_2010_2018_high['20m_ice_content_m'],s=0.1)
+ax1.scatter(df_2010_2018['lon_3413'],df_2010_2018['lat_3413'],c=df_2010_2018['20m_ice_content_m'],s=0.1)
 ax1.scatter(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y'],c=table_complete_annual_max_Ys['year'],s=10,cmap='magma')
 ax1.scatter(Emax_TedMach['x'],Emax_TedMach['y'],c=Emax_TedMach['year'],s=5,cmap='magma')
 
@@ -202,9 +205,9 @@ pdb.set_trace()
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/context_map_tedstone.png',dpi=500)
 '''
 
-#Define df_2002_2003, df_2010_2018_high, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
+#Define df_2002_2003, df_2010_2018, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
 points_2002_2003 = gpd.GeoDataFrame(df_2002_2003, geometry = gpd.points_from_xy(df_2002_2003['lon'],df_2002_2003['lat']),crs="EPSG:3413")
-points_ice = gpd.GeoDataFrame(df_2010_2018_high, geometry = gpd.points_from_xy(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413']),crs="EPSG:3413")
+points_ice = gpd.GeoDataFrame(df_2010_2018, geometry = gpd.points_from_xy(df_2010_2018['lon_3413'],df_2010_2018['lat_3413']),crs="EPSG:3413")
 points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_TedMach['x'],Emax_TedMach['y']),crs="EPSG:3413")
 points_Ys = gpd.GeoDataFrame(table_complete_annual_max_Ys, geometry = gpd.points_from_xy(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y']),crs="EPSG:3413")
 
@@ -227,10 +230,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
-    '''
-    if (indiv_index < 23):
+    
+    if (indiv_index < 8):
         continue
-    '''
+    
     print(indiv_index)
         
     #Prepare plot
@@ -483,7 +486,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ############################## In between ##############################
         lineEmax_radius = lineEmax.parallel_offset(radius, 'right', join_style=1)
         #ax2.plot(lineEmax_radius .xy[0],lineEmax_radius .xy[1],zorder=5,color='yellow')
-        ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow',linewidth=0.5)
+        ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow')
         
         polygon_radius_4000=Polygon([*list(lineEmax_upper_start.coords),*list(lineEmax_radius.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
         plot_buffer_radius_4000 = PolygonPatch(polygon_radius_4000,zorder=2,color='yellow',alpha=0.2)
@@ -535,7 +538,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         pdb.set_trace()
         
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_'+type_slabs+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
@@ -570,7 +573,7 @@ fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500)
 
 
 #Display as boxplots
@@ -597,7 +600,7 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500)
 
 
 
