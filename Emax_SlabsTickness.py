@@ -219,7 +219,7 @@ iceslabs_selected_overall=pd.DataFrame()
 iceslabs_inbetween_overall=pd.DataFrame()
 
 #Define radius
-radius=50
+radius=250
 
 for indiv_index in Boxes_Tedstone2022.FID:
     
@@ -227,25 +227,26 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
-    if (indiv_index < 8):
+    '''
+    if (indiv_index < 23):
         continue
-    
+    '''
     print(indiv_index)
         
     #Prepare plot
-    fig = plt.figure(figsize=(10,6))
-    fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    gs = gridspec.GridSpec(20, 10)
+    fig = plt.figure()
+    fig.set_size_inches(14, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(10, 10)
     #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-    ax2 = plt.subplot(gs[0:20, 0:6],projection=crs)
-    ax3 = plt.subplot(gs[0:10, 7:10])
-    ax4 = plt.subplot(gs[13:20, 8:10],projection=crs)
+    ax2 = plt.subplot(gs[0:10, 0:6],projection=crs)
+    ax3 = plt.subplot(gs[0:5, 7:10])
+    ax4 = plt.subplot(gs[6:10, 7:10],projection=crs)
     
+    '''
     #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-    
+    '''
     #Extract individual polygon
     indiv_polygon=Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_index]
 
@@ -282,7 +283,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     '''
         
     #Display antecedent ice slabs
-    ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=10)
+    ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=1)
     
     for indiv_year in list([desired_year]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
         
@@ -315,10 +316,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Define extents based on the bounds
         extent_NDWI = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
         #Display NDWI image
-        ax2.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='Blues',zorder=0) #NDWI
+        cbar=ax2.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=0,vmax=0.3) #NDWI
         
         #plot all the Emax points of the considered indiv_year
-        ax2.scatter(Emax_points['x'],Emax_points['y'],color='black',s=10,zorder=6)
+        ax2.scatter(Emax_points['x'],Emax_points['y'],color='black',s=1,zorder=6)
         
         #Define the yearly Ys point
         Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
@@ -387,10 +388,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
             continue
                 
         #Display antecedent ice slabs
-        ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=10,zorder=1)
+        ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=1,zorder=1)
+        '''
         #Display the tracks of the current year within the polygon
         ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=4)
-        
+        '''
         ######################### Connect Emax points #########################
         
         #Keep only Emax points whose box_id is associated with the current box_id
@@ -407,7 +409,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Connect Emax points between them
         lineEmax= LineString(Emax_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
         #Display Emax line
-        ax2.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax2.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=0.5) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         ######################### Connect Emax points #########################
 
         ########################### Polygon within ############################
@@ -422,7 +424,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Intersection between subset_iceslabs and Emax_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
         Intersection_EmaxBuffer_slabs = gpd.sjoin(subset_iceslabs, Emax_within_polygon, op='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=10,zorder=8)
+        ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=1,zorder=8)
         ########################### Polygon within ############################
 
         ################################ Above ################################
@@ -465,7 +467,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Intersection between subset_iceslabs and Emax_above_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
         Intersection_EmaxBufferAbove_slabs = gpd.sjoin(subset_iceslabs, Emax_above_polygon, op='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=10,zorder=8)
+        ax2.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=1,zorder=8)
         ################################ Above ################################
 
         #Plot ice slabs thickness that are above and within Emax polygons
@@ -481,7 +483,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ############################## In between ##############################
         lineEmax_radius = lineEmax.parallel_offset(radius, 'right', join_style=1)
         #ax2.plot(lineEmax_radius .xy[0],lineEmax_radius .xy[1],zorder=5,color='yellow')
-        ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow')
+        ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow',linewidth=0.5)
         
         polygon_radius_4000=Polygon([*list(lineEmax_upper_start.coords),*list(lineEmax_radius.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
         plot_buffer_radius_4000 = PolygonPatch(polygon_radius_4000,zorder=2,color='yellow',alpha=0.2)
@@ -492,8 +494,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Intersection between subset_iceslabs and Emax_radius_4000_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
         Intersection_Emaxradius4000_slabs = gpd.sjoin(subset_iceslabs, Emax_radius_4000_polygon, op='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_Emaxradius4000_slabs['lon_3413'],Intersection_Emaxradius4000_slabs['lat_3413'],color='yellow',s=10,zorder=7)
+        ax2.scatter(Intersection_Emaxradius4000_slabs['lon_3413'],Intersection_Emaxradius4000_slabs['lat_3413'],color='yellow',s=1,zorder=7)
+        '''
         ax3.hist(Intersection_Emaxradius4000_slabs['20m_ice_content_m'],color='yellow',label='In-between',alpha=0.5,bins=np.arange(0,17),density=True)
+        '''
         ############################## In between ##############################
         ax3.legend()
         
@@ -511,15 +515,17 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Patch(facecolor='yellow',label='Area in-between'),
                            Line2D([0], [0], color='yellow', lw=2, label='Ice slabs in-between')]
         
+        '''
         ax2.legend(handles=legend_elements)
         plt.legend()
+        '''
         
         #Set limits
         if (len(Intersection_EmaxBufferAbove_slabs)>0):
-            ax2.set_xlim(np.min(Emax_points['x'])-5e4,
-                         np.max(Emax_points['x'])+5e4)
-            ax2.set_ylim(np.min(Emax_points['y'])-5e4,
-                         np.max(Emax_points['y'])+5e4)
+            ax2.set_xlim(np.min(Emax_points['x'])-1e4,
+                         np.max(Emax_points['x'])+1e4)
+            ax2.set_ylim(np.min(Emax_points['y'])-1e4,
+                         np.max(Emax_points['y'])+1e4)
         
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
@@ -527,6 +533,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
         
         pdb.set_trace()
+        
         #Save the figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
