@@ -440,6 +440,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         else:
             lineEmax_upper_start = lineEmax.parallel_offset(4000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         
+        #We chosse 10km, should we choose another value??
         lineEmax_upper_end = lineEmax.parallel_offset(10000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         
         #Plot the above upper boundaries        
@@ -451,7 +452,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Create polygon patch of the polygon above
         plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='blue',alpha=0.2)
         #Display patch of polygone above
-        #ax2.add_patch(plot_buffer_above_Emax)        
+        ax2.add_patch(plot_buffer_above_Emax)        
         #Convert polygon of Emax buffer above into a geopandas dataframe
         Emax_above_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_above]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
         #Intersection between subset_iceslabs and Emax_above_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
