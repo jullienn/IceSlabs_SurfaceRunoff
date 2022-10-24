@@ -68,7 +68,7 @@ import rioxarray as rxr
 type_slabs='high' #can be high or low
 
 #Define which year to plot
-desired_year=2019
+desired_year=2016
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -230,10 +230,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form proicessing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
+    '''
     if (indiv_index < 13):
         continue
-    
+    '''
     print(indiv_index)
         
     #Prepare plot
@@ -435,16 +435,17 @@ for indiv_index in Boxes_Tedstone2022.FID:
         if ((indiv_index==7) & (indiv_year==2016)):
             lineEmax_upper_start_pre = lineEmax.parallel_offset(2000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
             lineEmax_upper_start = lineEmax_upper_start_pre.parallel_offset(2000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            #We choose 10km, should we choose another value??
+            lineEmax_upper_end_b = lineEmax_upper_start.parallel_offset(6000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
         else:
             lineEmax_upper_start = lineEmax.parallel_offset(4000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-                
-        #We chosse 10km, should we choose another value??
-        lineEmax_upper_end_a = lineEmax.parallel_offset(5000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(5000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        
+            #We choose 10km, should we choose another value??
+            lineEmax_upper_end_a = lineEmax.parallel_offset(5000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(5000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+            
         #Plot the above upper boundaries        
         ax2.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        #♣ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='red') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        #ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='red') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         ax2.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         
         #Create a polygon with low end begin the Emax line and upper end being the Emax line + 20000
@@ -522,11 +523,13 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
-                
-        #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_'+type_slabs+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween_with0slabs.png',dpi=500,bbox_inches='tight')
-        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
+        pdb.set_trace()
+        '''
+        #Save the figure
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_'+type_slabs+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500,bbox_inches='tight')
+        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+        '''
         plt.close()
 
 
@@ -559,7 +562,7 @@ fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween_with0slabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
 
 
 #Display as boxplots
@@ -569,6 +572,8 @@ iceslabs_above_selected_overall['type']=['Above']*len(iceslabs_above_selected_ov
 iceslabs_selected_overall['type']=['Within']*len(iceslabs_selected_overall)
 iceslabs_inbetween_overall['type']=['InBetween']*len(iceslabs_inbetween_overall)
 iceslabs_boxplot=pd.concat([iceslabs_above_selected_overall,iceslabs_inbetween_overall,iceslabs_selected_overall])
+#Get rid of out region
+iceslabs_boxplot=iceslabs_boxplot[iceslabs_boxplot.key_shp!='Out']
 
 iceslabs_boxplot_GrIS=iceslabs_boxplot.copy(deep=True)
 iceslabs_boxplot_GrIS['key_shp']=['GrIS']*len(iceslabs_boxplot_GrIS)
@@ -581,12 +586,12 @@ ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
 box_plot_regions_GrIS=sns.boxplot(data=iceslabs_boxplot_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
 ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
-ax_regions_GrIS.set_xlim(1,16.5)
+ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpd_inbetween_with0slabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
 
 
 
