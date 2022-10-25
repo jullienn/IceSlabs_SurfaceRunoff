@@ -33,7 +33,10 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region)
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.quantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.quantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
         ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.quantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        
+    
+    #Set x lims
+    ax_plot.set_xlim(-0.5,20)
+
     if (region == 'NW'):
         ax_plot.legend()
     
@@ -68,7 +71,7 @@ import rioxarray as rxr
 type_slabs='high' #can be high or low
 
 #Define which year to plot
-desired_year=2012
+desired_year=2019
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -148,7 +151,7 @@ table_complete_annual_max_Ys=pd.read_csv(path_data+'_table_complete_annual_max_Y
 '''
 Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd.csv',delimiter=',',decimal='.')
 '''
-Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19.csv',delimiter=',',decimal='.')
 
 #Rename columns preventing intersection
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
@@ -467,7 +470,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax3.hist(Intersection_EmaxBuffer_slabs['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
         ax3.set_xlabel('Ice content [m]')
         ax3.set_ylabel('Density [ ]')
-        ax3.set_xlim(0,16)
+        ax3.set_xlim(0,20)
 
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs - radius '+str(radius)+' m - cleanedxytpd')
         plt.show()
@@ -525,13 +528,14 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
         
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_'+type_slabs+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
 
 
 ##### TRY DISPLAY THE DISTRIBUTION OF THE LOW END - TAKE INTO ACCOUNT THE LIKELIHOOD?
+pdb.set_trace()
 
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
@@ -558,13 +562,63 @@ axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
-
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
 
+
+#Display ice slabs distributions as a function of the regions without 0m thick ice slabs
+#Prepare plot
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(15, 10)
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+axNW = plt.subplot(gs[0:5, 0:5])
+axCW = plt.subplot(gs[5:10, 0:5])
+axSW = plt.subplot(gs[10:15, 0:5])
+axNO = plt.subplot(gs[0:5, 5:10])
+axNE = plt.subplot(gs[5:10, 5:10])
+axGrIS = plt.subplot(gs[10:15, 5:10])
+
+#Plot histograms
+plot_histo(axNW,
+           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+           'NW')
+plot_histo(axCW,
+           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+           'CW')
+plot_histo(axSW,
+           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+           'SW')
+plot_histo(axNO,
+           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+           'NO')
+plot_histo(axNE,
+           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+           'NE')
+plot_histo(axGrIS,
+           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+           'GrIS')
+
+#Finalise plot
+axSW.set_xlabel('Ice content [m]')
+axSW.set_ylabel('Density [ ]')
+fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
+plt.show()
+#Save the figure
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
 
 #Display as boxplots
-
 #Aggregate data together
 iceslabs_above_selected_overall['type']=['Above']*len(iceslabs_above_selected_overall)
 iceslabs_selected_overall['type']=['Within']*len(iceslabs_selected_overall)
@@ -589,7 +643,7 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
 
 
 
