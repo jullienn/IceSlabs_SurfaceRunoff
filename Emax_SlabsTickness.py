@@ -68,7 +68,7 @@ import rioxarray as rxr
 type_slabs='high' #can be high or low
 
 #Define which year to plot
-desired_year=2016
+desired_year=2012
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -148,7 +148,7 @@ table_complete_annual_max_Ys=pd.read_csv(path_data+'_table_complete_annual_max_Y
 '''
 Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd.csv',delimiter=',',decimal='.')
 '''
-Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
 
 #Rename columns preventing intersection
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
@@ -231,7 +231,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     '''
-    if (indiv_index < 13):
+    if (indiv_index < 32):
         continue
     '''
     print(indiv_index)
@@ -524,12 +524,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
         
-        pdb.set_trace()
-        '''
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_'+type_slabs+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_'+type_slabs+'_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        '''
+        
         plt.close()
 
 
@@ -562,7 +560,7 @@ fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Overall_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
 
 
 #Display as boxplots
@@ -591,7 +589,7 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/buffer_method/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_'+type_slabs+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_4kmClerx_cleanedxytpdV2_inbetween_with0slabs.png',dpi=500)
 
 
 
