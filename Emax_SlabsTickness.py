@@ -537,6 +537,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
 ##### TRY DISPLAY THE DISTRIBUTION OF THE LOW END - TAKE INTO ACCOUNT THE LIKELIHOOD?
 pdb.set_trace()
 
+#Get rid of the 'Out' region
+iceslabs_above_selected_overall=iceslabs_above_selected_overall[iceslabs_above_selected_overall.key_shp!='Out']
+iceslabs_selected_overall=iceslabs_selected_overall[iceslabs_selected_overall.key_shp!='Out']
+iceslabs_inbetween_overall=iceslabs_inbetween_overall[iceslabs_inbetween_overall.key_shp!='Out']
+
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
 fig = plt.figure(figsize=(10,6))
