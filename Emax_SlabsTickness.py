@@ -191,7 +191,7 @@ table_complete_annual_max_Ys=pd.read_csv(path_data+'_table_complete_annual_max_Y
 '''
 Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd.csv',delimiter=',',decimal='.')
 '''
-Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
 
 #Rename columns preventing intersection
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
@@ -584,7 +584,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
                 
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
@@ -594,6 +594,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
 iceslabs_above_selected_overall=iceslabs_above_selected_overall[iceslabs_above_selected_overall.key_shp!='Out']
 iceslabs_selected_overall=iceslabs_selected_overall[iceslabs_selected_overall.key_shp!='Out']
 iceslabs_inbetween_overall=iceslabs_inbetween_overall[iceslabs_inbetween_overall.key_shp!='Out']
+
+#Save pandas dataframe
+path_to_save='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
+iceslabs_above_selected_overall.to_csv(path_to_save+'iceslabs_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
+iceslabs_selected_overall.to_csv(path_to_save+'iceslabs_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
+iceslabs_inbetween_overall.to_csv(path_to_save+'iceslabs_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
 
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
@@ -621,7 +627,7 @@ axSW.set_ylabel('Density [ ]')
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -674,7 +680,7 @@ axSW.set_ylabel('Density [ ]')
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 ################################## Likelihood #################################
@@ -728,7 +734,7 @@ axSW.set_ylabel('Density [ ]')
 fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 #Display ice slabs likelihood distributions as a function of the regions with 0m thick ice slabs
@@ -754,11 +760,10 @@ plot_histo_likelihood(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_o
 #Finalise plot
 axSW.set_xlabel('Likelihood [ ]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
+fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs included')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
-
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 ################################## Likelihood #################################
 
 #Display as boxplots
@@ -786,8 +791,7 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle(str(indiv_year)+' - 3 years running slabs')
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
-
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 '''
