@@ -45,6 +45,46 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region)
 
     return
 
+
+def plot_histo_likelihood(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region):
+    
+    if (region == 'GrIS'):
+        ax_plot.hist(iceslabs_above['likelihood'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        ax_plot.hist(iceslabs_within['likelihood'],color='red',label='Within',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        ax_plot.hist(iceslabs_inbetween['likelihood'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        #Dislay median values
+        ax_plot.axvline(x=np.quantile(iceslabs_above['likelihood'],0.5),linestyle='--',color='blue')
+        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.quantile(iceslabs_above['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_within['likelihood'],0.5),linestyle='--',color='red')
+        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.quantile(iceslabs_within['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_inbetween['likelihood'],0.5),linestyle='--',color='yellow')
+        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.quantile(iceslabs_inbetween['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        
+    else:
+        ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['likelihood'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['likelihood'],color='red',label='Within',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        ax_plot.hist(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['likelihood'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        #Dislay median values
+        ax_plot.axvline(x=np.quantile(iceslabs_above[iceslabs_above['key_shp']==region]['likelihood'],0.5),linestyle='--',color='blue')
+        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.quantile(iceslabs_above[iceslabs_above['key_shp']==region]['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_within[iceslabs_within['key_shp']==region]['likelihood'],0.5),linestyle='--',color='red')
+        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.quantile(iceslabs_within[iceslabs_within['key_shp']==region]['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.quantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['likelihood'],0.5),linestyle='--',color='yellow')
+        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.quantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    
+    #Set x lims
+    ax_plot.set_xlim(0,1)
+
+    if (region == 'NW'):
+        ax_plot.legend()
+    
+    if (region in list(['NO','NE','GrIS'])):
+        ax_plot.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
+
+    return
+
 import pandas as pd
 import numpy as np
 import pdb
@@ -234,7 +274,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     '''
-    if (indiv_index < 32):
+    if (indiv_index < 6):
         continue
     '''
     print(indiv_index)
@@ -245,9 +285,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
     gs = gridspec.GridSpec(10, 10)
     #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
     ax2 = plt.subplot(gs[0:10, 0:6],projection=crs)
-    ax3 = plt.subplot(gs[0:5, 7:10])
-    ax4 = plt.subplot(gs[6:10, 7:10],projection=crs)
-    
+    ax3 = plt.subplot(gs[0:4, 7:10])
+    ax3_likelihood = plt.subplot(gs[4:8, 7:10])
+    ax4 = plt.subplot(gs[8:10, 7:10],projection=crs)
+    gs.update(hspace = 2.5)
+
     '''
     #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
     figManager = plt.get_current_fig_manager()
@@ -522,20 +564,31 @@ for indiv_index in Boxes_Tedstone2022.FID:
             ax2.set_ylim(np.min(Emax_points['y'])-1e4,
                          np.max(Emax_points['y'])+1e4)
         
+        ############################# Likelihood ##############################
+        #Fill NaN likelihood by zeros
+        Intersection_EmaxBufferAbove_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
+        Intersection_EmaxBuffer_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
+
+        ax3_likelihood.hist(Intersection_EmaxBufferAbove_slabs['likelihood'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        ax3_likelihood.hist(Intersection_EmaxBuffer_slabs['likelihood'],color='red',label='Within',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+        #ax3_likelihood.hist(Intersection_Emaxradius4000_slabs['likelihood'],color='yellow',label='In-between',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
+
+        ax3_likelihood.set_xlabel('Likelihood [ ]')
+        ax3_likelihood.set_ylabel('Density [ ]')
+        ax3_likelihood.set_xlim(0,1)
+        ############################# Likelihood ##############################
+
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
-        
+                
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
         plt.close()
 
-
-##### TRY DISPLAY THE DISTRIBUTION OF THE LOW END - TAKE INTO ACCOUNT THE LIKELIHOOD?
-pdb.set_trace()
 
 #Get rid of the 'Out' region
 iceslabs_above_selected_overall=iceslabs_above_selected_overall[iceslabs_above_selected_overall.key_shp!='Out']
@@ -622,6 +675,91 @@ fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick s
 plt.show()
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
+
+
+################################## Likelihood #################################
+#Display ice slabs likelihood distributions as a function of the regions without 0m thick ice slabs
+#Prepare plot
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(15, 10)
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+axNW = plt.subplot(gs[0:5, 0:5])
+axCW = plt.subplot(gs[5:10, 0:5])
+axSW = plt.subplot(gs[10:15, 0:5])
+axNO = plt.subplot(gs[0:5, 5:10])
+axNE = plt.subplot(gs[5:10, 5:10])
+axGrIS = plt.subplot(gs[10:15, 5:10])
+
+#Plot histograms
+plot_histo_likelihood(axNW,
+                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+                      'NW')
+plot_histo_likelihood(axCW,
+                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+                      'CW')
+plot_histo_likelihood(axSW,
+                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+                      'SW')
+plot_histo_likelihood(axNO,
+                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+                      'NO')
+plot_histo_likelihood(axNE,
+                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+                      'NE')
+plot_histo_likelihood(axGrIS,
+                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
+                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
+                      'GrIS')
+
+#Finalise plot
+axSW.set_xlabel('Likelihood [ ]')
+axSW.set_ylabel('Density [ ]')
+fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
+plt.show()
+#Save the figure
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
+
+
+#Display ice slabs likelihood distributions as a function of the regions with 0m thick ice slabs
+#Prepare plot
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(15, 10)
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+axNW = plt.subplot(gs[0:5, 0:5])
+axCW = plt.subplot(gs[5:10, 0:5])
+axSW = plt.subplot(gs[10:15, 0:5])
+axNO = plt.subplot(gs[0:5, 5:10])
+axNE = plt.subplot(gs[5:10, 5:10])
+axGrIS = plt.subplot(gs[10:15, 5:10])
+
+#Plot histograms
+plot_histo_likelihood(axNW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NW')
+plot_histo_likelihood(axCW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'CW')
+plot_histo_likelihood(axSW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'SW')
+plot_histo_likelihood(axNO,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NO')
+plot_histo_likelihood(axNE,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NE')
+plot_histo_likelihood(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'GrIS')
+
+#Finalise plot
+axSW.set_xlabel('Likelihood [ ]')
+axSW.set_ylabel('Density [ ]')
+fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
+plt.show()
+#Save the figure
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpd_with0mslabs.png',dpi=500)
+
+################################## Likelihood #################################
 
 #Display as boxplots
 #Aggregate data together
