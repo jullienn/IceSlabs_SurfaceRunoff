@@ -88,9 +88,9 @@ iceslabs_above_121619=pd.DataFrame()
 for indiv_year in list([2012,2016,2019]):
 
     #Load data
-    iceslabs_within_load=pd.read_csv(path_load_data+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
-    iceslabs_inbetween_load=pd.read_csv(path_load_data+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
-    iceslabs_above_load=pd.read_csv(path_load_data+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
+    iceslabs_within_load=pd.read_csv(path_load_data+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
+    iceslabs_inbetween_load=pd.read_csv(path_load_data+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
+    iceslabs_above_load=pd.read_csv(path_load_data+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
     
     #Append data to each other
     iceslabs_within_121619=pd.concat([iceslabs_within_121619,iceslabs_within_load])
@@ -122,11 +122,11 @@ plot_histo(axGrIS,iceslabs_above_121619,iceslabs_within_121619,iceslabs_inbetwee
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - 2012-16-19 - 3 years running slabs')
+fig.suptitle('2012-16-19 - 2 years running slabs')
 plt.show()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Histo_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Histo_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 #Display as boxplots
 #Aggregate data together
@@ -148,11 +148,11 @@ ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2012-16-19 - 3 years running slabs')
+fig.suptitle('2012-16-19 - 2 years running slabs')
 
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Boxplot_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Boxplot_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 ######################## Plot with 0m thick ice slabs #########################
 
@@ -204,11 +204,11 @@ plot_histo(axGrIS,
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
+fig.suptitle('2012-16-19 - 2 years running slabs - 0m thick slabs excluded')
 plt.show()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/HistoNonZeros_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/HistoNonZeros_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 #Display
@@ -220,11 +220,11 @@ ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2012-16-19 - 3 years running slabs >0m thick')
+fig.suptitle('2012-16-19 - 2 years running slabs - 0m thick slabs excluded')
 
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/BoxplotNonZeros_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/BoxplotNonZeros_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 ####################### Plot without 0m thick ice slabs #######################

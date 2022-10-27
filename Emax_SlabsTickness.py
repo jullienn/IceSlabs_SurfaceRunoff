@@ -111,7 +111,7 @@ import rioxarray as rxr
 type_slabs='high' #can be high or low
 
 #Define which year to plot
-desired_year=2019
+desired_year=2012
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -392,12 +392,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
             #Select ice slabs data from 2010 and 2011
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
         elif(indiv_year == 2012):
+            '''
             #Select ice slabs data from 2010, 2011, 2012
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,(within_points_ice.year==2011)|(within_points_ice.year==2012))]
             '''
             #Select ice slabs data from 2011, 2012
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
-            '''
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2011,within_points_ice.year==2012)]
         elif(indiv_year == 2013):
             #Select ice slabs data from 2011, 2012, 2013
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2011,(within_points_ice.year==2012)|(within_points_ice.year==2013))]
@@ -408,12 +408,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
             #Select ice slabs data of the closest indiv_year, i.e. 2014 and the 2 previous ones
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
         elif (indiv_year == 2016):
+            '''
             #Select ice slabs data of the closest indiv_year, i.e. 2014 and the 2 previous ones
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
             '''
-            #Select ice slabs data of the closest indiv_year, i.e. 2014
-            subset_iceslabs=within_points_ice[within_points_ice.year==2014]
-            '''
+            #Select ice slabs data of the the 2 previous closest indiv_year, i.e. 2013 and 2014
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,within_points_ice.year==2014)]
         elif (indiv_year == 2017):
             #Select ice slabs data from 2017, 2014, 2013
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,(within_points_ice.year==2014)|(within_points_ice.year==2017))]
@@ -421,12 +421,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
             #Select ice slabs data from 2018, 2017, 2014
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,(within_points_ice.year==2017)|(within_points_ice.year==2018))]
         elif (indiv_year == 2019):
+            '''
             #Select ice slabs data from 2018, 2017, 2014
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,(within_points_ice.year==2017)|(within_points_ice.year==2018))]
             '''
             #Select ice slabs data from 2018, 2017
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2017,within_points_ice.year==2018)]
-            '''
         else:
             #Select ice slabs data of the current indiv_year
             subset_iceslabs=within_points_ice[within_points_ice.year==indiv_year]
@@ -514,7 +514,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax3.set_ylabel('Density [ ]')
         ax3.set_xlim(0,20)
 
-        fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 3 years running slabs - radius '+str(radius)+' m - cleanedxytpd')
+        fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V2')
         plt.show()
         
         ############################## In between ##############################
@@ -568,6 +568,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Fill NaN likelihood by zeros
         Intersection_EmaxBufferAbove_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
         Intersection_EmaxBuffer_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
+        Intersection_Emaxradius4000_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
 
         ax3_likelihood.hist(Intersection_EmaxBufferAbove_slabs['likelihood'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
         ax3_likelihood.hist(Intersection_EmaxBuffer_slabs['likelihood'],color='red',label='Within',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
@@ -583,12 +584,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
         
-        pdb.set_trace()
-        '''
+        
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        '''
+        
         plt.close()
 
 
@@ -599,9 +599,9 @@ iceslabs_inbetween_overall=iceslabs_inbetween_overall[iceslabs_inbetween_overall
 
 #Save pandas dataframe
 path_to_save='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
-iceslabs_above_selected_overall.to_csv(path_to_save+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
-iceslabs_selected_overall.to_csv(path_to_save+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
-iceslabs_inbetween_overall.to_csv(path_to_save+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2.csv')
+iceslabs_above_selected_overall.to_csv(path_to_save+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
+iceslabs_selected_overall.to_csv(path_to_save+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
+iceslabs_inbetween_overall.to_csv(path_to_save+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
 
 #Display ice slabs distributions as a function of the regions
 #Prepare plot
@@ -626,10 +626,10 @@ plot_histo(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_overall,ices
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs')
+fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -679,10 +679,10 @@ plot_histo(axGrIS,
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
+fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs - 0m thick slabs excluded')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 ################################## Likelihood #################################
@@ -733,10 +733,10 @@ plot_histo_likelihood(axGrIS,
 #Finalise plot
 axSW.set_xlabel('Likelihood [ ]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs excluded')
+fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs - 0m thick slabs excluded')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 #Display ice slabs likelihood distributions as a function of the regions with 0m thick ice slabs
@@ -762,10 +762,10 @@ plot_histo_likelihood(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_o
 #Finalise plot
 axSW.set_xlabel('Likelihood [ ]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 3 years running slabs - 0m thick slabs included')
+fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs - 0m thick slabs included')
 plt.show()
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 ################################## Likelihood #################################
 
 #Display as boxplots
@@ -790,10 +790,10 @@ ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle(str(indiv_year)+' - 3 years running slabs')
+fig.suptitle(str(indiv_year)+' - 2 years running slabs')
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_3YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
 
 '''
