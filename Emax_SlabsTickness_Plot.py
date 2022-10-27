@@ -42,6 +42,9 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region)
     
     if (region in list(['NO','NE','GrIS'])):
         ax_plot.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
+    
+    if (region in list(['NW','NO','CW','NE'])):
+        ax_plot.set_xticklabels([])
 
     return
 
@@ -124,7 +127,6 @@ plt.show()
 
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Histo_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_3YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
-
 
 #Display as boxplots
 #Aggregate data together

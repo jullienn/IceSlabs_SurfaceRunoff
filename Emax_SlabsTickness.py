@@ -111,7 +111,7 @@ import rioxarray as rxr
 type_slabs='high' #can be high or low
 
 #Define which year to plot
-desired_year=2012
+desired_year=2019
 
 ### -------------------------- Load GrIS DEM ----------------------------- ###
 #This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
@@ -274,7 +274,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     '''
-    if (indiv_index < 6):
+    if (indiv_index < 7):
         continue
     '''
     print(indiv_index)
@@ -582,11 +582,13 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
-                
+        
+        pdb.set_trace()
+        '''
         #Save the figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_3YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        
+        '''
         plt.close()
 
 
