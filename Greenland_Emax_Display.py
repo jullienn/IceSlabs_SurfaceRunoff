@@ -31,7 +31,7 @@ from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
 
 #Define which year to plot
-desired_year=2012
+desired_year=2019
 #Define which map to plot on the background: either NDWI or master_map
 desired_map='NDWI'
 
@@ -101,6 +101,16 @@ Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
 #Emax_TedMach.drop(columns=['Unnamed: 0'])
 
+### ------------------------- Load df_2010_2018 --------------------------- ###
+path_df_with_elevation='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/' 
+
+#Load 2010-2018 high estimate
+f_20102018_high = open(path_df_with_elevation+'final_excel/high_estimate/df_20102018_with_elevation_high_estimate_rignotetalregions', "rb")
+df_2010_2018_high = pickle.load(f_20102018_high)
+f_20102018_high.close
+
+### ------------------------- Load df_2010_2018 --------------------------- ###
+
 '''
 ### -------------------------- Load shapefiles --------------------------- ###
 #Load Rignot et al., 2016 Greenland drainage bassins
@@ -163,21 +173,29 @@ gs = gridspec.GridSpec(14, 10)
 ax1 = plt.subplot(gs[0:14, 0:10],projection=crs)
 #Display coastlines
 ax1.coastlines(edgecolor='black',linewidth=0.075)
+#Display 2010-2018 ice slabs data
+ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c='#9ecae1',s=0.1,zorder=2)
 
 for indiv_index in Boxes_Tedstone2022.FID:
-    
+    '''
     if (indiv_index in nogo_polygon):
-        #Zone excluded form proicessing, continue
+        #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-
+    '''
     print(indiv_index)
     
     #Extract individual polygon
     indiv_polygon=Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_index]
-
+    '''
     #Display polygon
+    if (indiv_index==7):
+        indiv_polygon.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.05,zorder=1)
+    else:
+        indiv_polygon.plot(ax=ax1,color='none', edgecolor='black',linewidth=0.05,zorder=1)
+    '''
     indiv_polygon.plot(ax=ax1,color='none', edgecolor='black',linewidth=0.05,zorder=1)
+
     
     #Intersection between Emax and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     Emax_points = gpd.sjoin(Emax_points_yearly, indiv_polygon, op='within')
@@ -201,12 +219,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Define extents based on the bounds
     extent_MapPlot = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
     #Display NDWI image
-    cbar=ax1.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=vlim_min,vmax=vlim_max)
+    #cbar=ax1.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=vlim_min,vmax=vlim_max)
     
-    '''
+    
     #plot all the Emax points of the considered indiv_year
-    ax1.scatter(Emax_points['x'],Emax_points['y'],color='black',s=1,zorder=6)
-    '''
+    ax1.scatter(Emax_points['x'],Emax_points['y'],color='black',s=0.1,zorder=3)
+    
     
     ######################### Connect Emax points #########################
     #Keep only Emax points whose box_id is associated with the current box_id
@@ -223,19 +241,35 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Connect Emax points between them
     lineEmax= LineString(Emax_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
     #Display Emax line
-    ax1.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=0.05) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    #ax1.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=0.05) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ######################### Connect Emax points #########################
     
     #pdb.set_trace()
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Line2D([0], [0], color='#a50f15', lw=2, label='Emax')]
-
-ax1.legend(handles=legend_elements)
-plt.legend()
-
-fig.suptitle(str(desired_year)+' Emax and '+desired_map+' - cleanedxytpd V2')
+#legend_elements = [Line2D([0], [0], color='#a50f15', lw=2, label='Emax')]
+legend_elements = [Patch(facecolor='none',edgecolor='black',label='100km-wide boxes'),
+                   Line2D([0], [0], color='#9ecae1', lw=2, marker='o',linestyle='None', label='2010-2018 ice slabs'),
+                   Line2D([0], [0], color='black', lw=2, marker='o',linestyle='None', label='Emax retrieval')]
+ax1.legend(handles=legend_elements,loc='lower right')
 plt.show()
+#plt.legend()
+
+###################### From Tedstone et al., 2022 #####################
+#from plot_map_decadal_change.py
+gl=ax1.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+#Customize lat labels
+#gl.ylabels_right = False
+gl.xlabels_bottom = False
+ax1.axis('off')
+#ax8map.legend(loc='upper right')
+###################### From Tedstone et al., 2022 #####################
+
+fig.suptitle(str(desired_year)+' Emax retrievals - cleanedxytpd V2')
+#fig.suptitle(str(desired_year)+' Emax and '+desired_map+' - cleanedxytpd V2')
+
+plt.show()
+pdb.set_trace()
 
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(desired_year)+'_EmaxMap_'+desired_map+'cleanedxytpdV2.pdf',dpi=2000)
