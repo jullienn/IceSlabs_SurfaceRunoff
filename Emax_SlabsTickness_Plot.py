@@ -134,8 +134,6 @@ axSW.set_ylabel('Density [ ]')
 fig.suptitle('2012-16-19 - 2 years running slabs')
 plt.show()
 
-pdb.set_trace()
-
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Histo_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 
