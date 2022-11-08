@@ -20,6 +20,10 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region)
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
         ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        #Display sample size
+        print(region,':\n')
+        print('   Above: ',len(iceslabs_above),'\n')
+        print('   Within: ',len(iceslabs_within),'\n')
         
     else:
         ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
@@ -33,7 +37,12 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region)
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
         ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    
+        
+        #Display sample size
+        print(region,':\n')
+        print('   Above: ',len(iceslabs_above[iceslabs_above['key_shp']==region]),'\n')
+        print('   Within: ',len(iceslabs_within[iceslabs_within['key_shp']==region]),'\n')
+
     #Set x lims
     ax_plot.set_xlim(-0.5,20)
 
@@ -124,6 +133,8 @@ axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
 fig.suptitle('2012-16-19 - 2 years running slabs')
 plt.show()
+
+pdb.set_trace()
 
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Histo_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
