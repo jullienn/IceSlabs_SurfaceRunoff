@@ -86,7 +86,7 @@ radius=250
 my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'InBetween': "#fee391"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
-path_load_data='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
+path_load_data='C:/Users/jullienn/switchdrive/Private/research/RT3/data/extracted_slabs/'
 
 #Define empty dataframe
 iceslabs_within_121619=pd.DataFrame()
