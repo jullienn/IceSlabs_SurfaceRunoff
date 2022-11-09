@@ -135,8 +135,8 @@ NDWI_image = rxr.open_rasterio(path_NDWI+'NDWI_p10_'+str(desired_year)+'.vrt',
 x_coord_NDWI=np.asarray(NDWI_image.x)
 y_coord_NDWI=np.asarray(NDWI_image.y)
 
-#Define path flowlines
-path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
+#Define path Boxes
+path_data='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
@@ -172,7 +172,7 @@ crs_proj4 = crs.proj4_init
 
 ### ---------------------------- Load dataset ---------------------------- ###
 #Dictionnaries have already been created, load them
-path_df_with_elevation='C:/Users/jullienn/switchdrive/Private/research/RT3/export_RT1_for_RT3/' 
+path_df_with_elevation='C:/Users/jullienn/switchdrive/Private/research/RT3/data/export_RT1_for_RT3/' 
 
 #Load 2010-2018
 f_20102018 = open(path_df_with_elevation+'df_20102018_with_elevation_for_RT3_masked_rignotetalregions', "rb")
@@ -184,21 +184,15 @@ path_2002_2003='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset
 df_2002_2003=pd.read_csv(path_2002_2003+'2002_2003_green_excel.csv')
 ### ---------------------------- Load dataset ---------------------------- ###
 
-#Load max Ys from Machguth et al., (2022)
-table_complete_annual_max_Ys=pd.read_csv(path_data+'_table_complete_annual_max_Ys.csv',delimiter=';',decimal=',')
-
 #Load Emax from Tedstone and Machguth (2022)
 '''
-Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data+'/Emax/xytpd.csv',delimiter=',',decimal='.')
 '''
-Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data+'/Emax/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
 
 #Rename columns preventing intersection
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
 #Emax_TedMach.drop(columns=['Unnamed: 0'])
-
-Emax_plus_Mad_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_plus_mad.csv',delimiter=',',decimal='.')
-Emax_Ted_minus_Mad_Mach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_minus_mad.csv',delimiter=',',decimal='.')
 
 '''
 ### -------------------------- Load shapefiles --------------------------- ###
@@ -238,7 +232,6 @@ ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y+20000,np.asarray(NW_r
 
 Boxes_Tedstone2022.plot(ax=ax1,color='red', edgecolor='black',linewidth=0.5)
 ax1.scatter(df_2010_2018['lon_3413'],df_2010_2018['lat_3413'],c=df_2010_2018['20m_ice_content_m'],s=0.1)
-ax1.scatter(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y'],c=table_complete_annual_max_Ys['year'],s=10,cmap='magma')
 ax1.scatter(Emax_TedMach['x'],Emax_TedMach['y'],c=Emax_TedMach['year'],s=5,cmap='magma')
 
 plt.show()
@@ -248,11 +241,10 @@ pdb.set_trace()
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/context_map_tedstone.png',dpi=500)
 '''
 
-#Define df_2002_2003, df_2010_2018, Emax_TedMach, table_complete_annual_max_Ys as being a geopandas dataframes
+#Define df_2002_2003, df_2010_2018, Emax_TedMach as being a geopandas dataframes
 points_2002_2003 = gpd.GeoDataFrame(df_2002_2003, geometry = gpd.points_from_xy(df_2002_2003['lon'],df_2002_2003['lat']),crs="EPSG:3413")
 points_ice = gpd.GeoDataFrame(df_2010_2018, geometry = gpd.points_from_xy(df_2010_2018['lon_3413'],df_2010_2018['lat_3413']),crs="EPSG:3413")
 points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_TedMach['x'],Emax_TedMach['y']),crs="EPSG:3413")
-points_Ys = gpd.GeoDataFrame(table_complete_annual_max_Ys, geometry = gpd.points_from_xy(table_complete_annual_max_Ys['X'],table_complete_annual_max_Ys['Y']),crs="EPSG:3413")
 
 #Add a unique_ID_Emax column in points_ice to flag data with its corresponding Emax point
 points_ice['unique_ID_Emax']=[np.nan]*len(points_ice)
@@ -316,8 +308,6 @@ for indiv_index in Boxes_Tedstone2022.FID:
     within_points_ice = gpd.sjoin(points_ice, indiv_polygon, op='within')
     #Intersection between Emax and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     within_points_Emax = gpd.sjoin(points_Emax, indiv_polygon, op='within')
-    #Intersection between Ys and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-    within_points_Ys = gpd.sjoin(points_Ys, indiv_polygon, op='within')
     
     #rename colnames from join procedure to allow joining with Emax polygons
     within_points_ice=within_points_ice.rename(columns={"index_right":"index_right_polygon"})
@@ -327,13 +317,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
     ax1.scatter(within_points_20022003['lon'],within_points_20022003['lat'],c='#bdbdbd',s=0.1)
     ax1.scatter(within_points_Emax['x'],within_points_Emax['y'],c=within_points_Emax['year'],s=5,cmap='magma')
     ax1.scatter(within_points_ice['lon_3413'],within_points_ice['lat_3413'],c=within_points_ice['20m_ice_content_m'],s=0.1)
-    ax1.scatter(within_points_Ys['X'],within_points_Ys['Y'],c=within_points_Ys['year'],s=10,cmap='magma')
     '''
     
     #Display antecedent ice slabs
     ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=1)
     
-    for indiv_year in list([desired_year]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):#np.asarray(within_points_Ys.year):
+    for indiv_year in list([desired_year]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -375,14 +364,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax2.set_xlim(-158424.6613558118, -97042.21017519754)
         ax2.set_ylim(-2698977.3494860246, -2586220.455469461)
         '''
-        #Define the yearly Ys point
-        Ys_point=np.transpose(np.asarray([np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['X']),np.asarray(within_points_Ys[within_points_Ys.year==indiv_year]['Y'])]))   
-        
-        #Display the Ys of the current indiv_year
-        if (len(Ys_point>0)):
-            #There is an Ys of that year for this polygon, plot it
-            ax2.scatter(Ys_point[0][0],Ys_point[0][1],color='magenta',s=10,zorder=10)
-        
+
         #Select ice slabs thickness to display distribution
         if (indiv_year == 2002):
             #Select ice slabs data from 2002            
@@ -589,7 +571,8 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
-                
+        
+        pdb.set_trace()
         '''
         #Save the figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
@@ -604,7 +587,7 @@ iceslabs_selected_overall=iceslabs_selected_overall[iceslabs_selected_overall.ke
 iceslabs_inbetween_overall=iceslabs_inbetween_overall[iceslabs_inbetween_overall.key_shp!='Out']
 
 #Save pandas dataframe
-path_to_save='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
+path_to_save='C:/Users/jullienn/switchdrive/Private/research/RT3/data/extracted_slabs/'
 iceslabs_above_selected_overall.to_csv(path_to_save+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
 iceslabs_selected_overall.to_csv(path_to_save+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
 iceslabs_inbetween_overall.to_csv(path_to_save+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
