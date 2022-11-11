@@ -66,7 +66,7 @@ x_coord_MapPlot=np.asarray(MapPlot.x)
 y_coord_MapPlot=np.asarray(MapPlot.y)
 
 #Define path Boxes
-path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
+path_data='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
@@ -93,9 +93,9 @@ crs_proj4 = crs.proj4_init
 
 #Load Emax from Tedstone and Machguth (2022)
 '''
-Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data+'Emax/xytpd.csv',delimiter=',',decimal='.')
 '''
-Emax_TedMach=pd.read_csv(path_data+'rlim_annual_maxm/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data+'Emax/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
 
 #Rename columns preventing intersection
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
