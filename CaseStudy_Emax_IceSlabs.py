@@ -51,6 +51,9 @@ from descartes import PolygonPatch
 3. Display the Emax on a map aside for each year.
 4. Display groups of Emax to observe any change
 '''
+
+method_keep='closest'#chan be 'closest' highest'
+
 #Define variables
 #Compute the speed (Modified Robin speed):
 # self.C / (1.0 + (coefficient*density_kg_m3/1000.0))
@@ -434,7 +437,7 @@ for single_year in investigation_year.keys():
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
-    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,color=my_pal[str(single_year)],zorder=10)
+    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,color=my_pal[str(single_year)],zorder=100)
     '''
     #Store the coordinates of displayed transect
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
@@ -468,7 +471,7 @@ y_coord_within_bounds=y_coord_cum_raster[logical_y_coord_within_bounds]
 #Define extents based on the bounds
 extent_cum_raster = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
 #Display cumulative raster image
-cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',zorder=0,vmin=0,vmax=250) #NDWI
+cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=0) #NDWI
 #Set xlims
 ax_map.set_xlim(x_min,x_max)
 
@@ -511,32 +514,53 @@ polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geome
 #Intersection between Emax points and polygon_Emax_extraction_gpd, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
 Emax_extraction = gpd.sjoin(points_Emax, polygon_Emax_extraction_gpd, op='within')
 #Plot the result of this selection
-ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=5,zorder=8)
+ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=5,zorder=0)
 ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
 
+#count for zorder
+count=0
 #Display Emax
 for single_year in range(2002,2020):
     print(single_year)
     
+    cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count) #NDWI
+    #Set xlims
+    ax_map.set_xlim(x_min,x_max)
+
     ### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
     #Select data of the desired year
     Emax_points=Emax_extraction[Emax_extraction.year==single_year]
     #Display Emax points of that year within the transect bounds
-    ax_map.scatter(Emax_points['x'],Emax_points['y'],c=Emax_points['year'],cmap=plt.cm.plasma,s=10,zorder=10)
-
-    #Keep only the closest Emax point from the transect - OR KEEP THE HIGHEST??
-    distances_Emax_points_transect=Emax_points.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid
-    closest_Emax_point=Emax_points.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
-    ax_map.scatter(closest_Emax_point['x'],closest_Emax_point['y'],c='magenta',s=10,zorder=10)#Display this closest point
-    
+    ax_map.scatter(Emax_points['x'],Emax_points['y'],s=10,zorder=count+1),#c=Emax_points['year'],cmap=plt.cm.plasma)
     pdb.set_trace()
+
+    if (method_keep=='closest'):
+        #Keep only the closest Emax point from the transect
+        distances_Emax_points_transect=Emax_points.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
+        best_Emax_point=Emax_points.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
+        ax_map.scatter(best_Emax_point['x'],best_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this closest point
+    elif (method_keep=='highest'):
+        #Keep only the highest Emax point from the transect
+        best_Emax_point=Emax_points.iloc[np.where(Emax_points.elev==np.max(Emax_points.elev))]#Select this highest point
+        #if two points, select the closest
+        if (len(best_Emax_point)>1):
+            pdb.set_trace()
+            #Keep only the closest Emax point
+            distances_Emax_points_transect=best_Emax_point.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
+            best_Emax_point=best_Emax_point.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
+        ax_map.scatter(best_Emax_point['x'],best_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this closest point
+    else:
+        print('Method not known')
+        pdb.set_trace()
     ### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
-    
-    if (len(closest_Emax_point)==0):
+    pdb.set_trace()
+    count=count+2
+
+    if (len(best_Emax_point)==0):
         continue
     else:
         #Convert to coordinates into EPSG:4326
-        coord_Emax=transformer_3413_to_4326.transform(np.array(closest_Emax_point['x']),np.array(closest_Emax_point['y']))
+        coord_Emax=transformer_3413_to_4326.transform(np.array(best_Emax_point['x']),np.array(best_Emax_point['y']))
         
         #Plot Emax on the radargrams
         if (single_year<2010):
@@ -607,7 +631,8 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig('enter_path.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/Radargrams_Emax_highest_map.png',dpi=300,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
 
