@@ -523,65 +523,90 @@ count=0
 for single_year in range(2002,2020):
     print(single_year)
     
+    pdb.set_trace()
+    
     cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count) #NDWI
     #Set xlims
     ax_map.set_xlim(x_min,x_max)
 
-    ### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
+    ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     #Select data of the desired year
     Emax_points=Emax_extraction[Emax_extraction.year==single_year]
     #Display Emax points of that year within the transect bounds
     ax_map.scatter(Emax_points['x'],Emax_points['y'],s=10,zorder=count+1),#c=Emax_points['year'],cmap=plt.cm.plasma)
+    
+    pdb.set_trace()
+    
+    ###########################################################################
+    ### After a quick look at kept best Enax point for each year with the   ###
+    ### method closest, I come to the conclusion that sometimes the closest ###
+    ### Emax point is best, sometimes the highest Emax point is best to     ###
+    ### relate the actual Emax. Hence, I keep the closest Emax point and    ###
+    ### the highest Emax point each year.                                   ###
+    ###########################################################################
+    
+    #Keep the closest Emax point from the transect
+    distances_Emax_points_transect=Emax_points.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
+    closest_Emax_point=Emax_points.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
+    ax_map.scatter(closest_Emax_point['x'],closest_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this closest point
+    
     pdb.set_trace()
 
-    if (method_keep=='closest'):
-        #Keep only the closest Emax point from the transect
-        distances_Emax_points_transect=Emax_points.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
-        best_Emax_point=Emax_points.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
-        ax_map.scatter(best_Emax_point['x'],best_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this closest point
-    elif (method_keep=='highest'):
-        #Keep only the highest Emax point from the transect
-        best_Emax_point=Emax_points.iloc[np.where(Emax_points.elev==np.max(Emax_points.elev))]#Select this highest point
-        #if two points, select the closest
-        if (len(best_Emax_point)>1):
-            pdb.set_trace()
-            #Keep only the closest Emax point
-            distances_Emax_points_transect=best_Emax_point.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
-            best_Emax_point=best_Emax_point.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
-        ax_map.scatter(best_Emax_point['x'],best_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this closest point
-    else:
-        print('Method not known')
+    #Keep the highest Emax point from the transect
+    highest_Emax_point=Emax_points.iloc[np.where(Emax_points.elev==np.max(Emax_points.elev))]#Select this highest point
+    #if two points, select the easternmost one
+    if (len(highest_Emax_point)>1):
         pdb.set_trace()
-    ### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
+        #Keep only the easternmost Emax point, i.e. the most positive longitute
+        highest_Emax_point=highest_Emax_point.iloc[np.where(highest_Emax_point.x==np.max(highest_Emax_point.x))]
+    ax_map.scatter(highest_Emax_point['x'],highest_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this easternmost point
     pdb.set_trace()
+
+    #Store the closest and highest points
+    best_Emax_points=pd.concat([closest_Emax_point, highest_Emax_point])
+    
+    #If the difference in elevation between the two points is larger than 50m (to change?), we probably have two Emax points at two different hydrological features. Discard the lowest one
+    if (np.diff(best_Emax_points.elev)>50):
+        pdb.set_trace()
+        best_Emax_points=best_Emax_points.iloc[np.where(best_Emax_points.elev==np.max(best_Emax_points.elev))]
+
+    #Dsiplay the best Emax points
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],c='green',s=10,zorder=count+1)#Display this easternmost point
+    
+    ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     count=count+2
 
-    if (len(best_Emax_point)==0):
+    if (len(best_Emax_points)==0):
         continue
     else:
         #Convert to coordinates into EPSG:4326
-        coord_Emax=transformer_3413_to_4326.transform(np.array(best_Emax_point['x']),np.array(best_Emax_point['y']))
+        coord_Emax=transformer_3413_to_4326.transform(np.array(best_Emax_points['x']),np.array(best_Emax_points['y']))
         
         #Plot Emax on the radargrams
         if (single_year<2010):
-            ax2.scatter(coord_Emax[0],2,c=my_pal['2002'])
+            ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2002'])
         elif (single_year==2010):
-            ax3.scatter(coord_Emax[0],2,c=my_pal['2010'])
+            ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2010'])
         elif (single_year==2011):
-            ax4.scatter(coord_Emax[0],2,c=my_pal['2011'])
+            ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2011'])
         elif (single_year==2012):
-            ax5.scatter(coord_Emax[0],2,c=my_pal['2012'])
+            ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2012'])
         elif (single_year==2013):
-            ax6.scatter(coord_Emax[0],2,c=my_pal['2013'])
+            ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2013'])
         elif (single_year==2014):
-            ax7.scatter(coord_Emax[0],2,c=my_pal['2014'])
+            ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2014'])
         elif ((single_year>2014) & (single_year<=2017)):
-            ax8.scatter(coord_Emax[0],2,c=my_pal['2017'])
+            ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2017'])
         elif (single_year>=2018):
-            ax9.scatter(coord_Emax[0],2,c=my_pal['2018'])
+            ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2018'])
         else:
             print('year not know')
-    
+
+###################### From Tedstone et al., 2022 #####################
+#from plot_map_decadal_change.py
+gl=ax_map.gridlines(draw_labels=True, xlocs=[-35,-47,-50, -55,-60], ylocs=[66,67,68,69], x_inline=False, y_inline=False,linewidth=0.5)
+###################### From Tedstone et al., 2022 #####################
+
 pdb.set_trace()
 
 if (investigation_year==CaseStudy2):
