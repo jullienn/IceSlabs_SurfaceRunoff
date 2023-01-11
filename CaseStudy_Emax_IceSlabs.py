@@ -68,7 +68,12 @@ path_rignotetal2016_GrIS_drainage_bassins='C:/Users/jullienn/switchdrive/Private
 
 #Define palette for time periods, this is from fig2_paper_icelsabs.py
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'2002': 'yellow', '2003': 'yellow', '2010': "#fdd49e", '2011': "#fc8d59", '2012': "#fc8d59", '2013':"#d7301f",'2014':"#d7301f",'2017':"#7f0000",'2018':"#7f0000"}
+#my_pal = {'2002': 'yellow', '2003': 'yellow', '2010': "#fdd49e", '2011': "#fc8d59", '2012': "#fc8d59", '2013':"#d7301f",'2014':"#d7301f",'2017':"#7f0000",'2018':"#7f0000"}
+my_pal = {'2002': '#08519c', '2003': '#4292c6', '2004': '#9ecae1', '2005': '#deebf7',
+          '2006': '#ffffbf', '2007': '#feb24c', '2008': '#fc4e2a', '2009': '#bd0026',
+          '2010': "#67000d", '2011': "#ce1256", '2012': "#c51b7d", '2013': "#f1b6da",
+          '2014': "#e6f5d0", '2015': '#a1d99b', '2016': '#41ab5d', '2017': "#006d2c",
+          '2018': "#00441b", '2019': '#01665e'}
 
 #Load Rignot et al., 2016 Greenland drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3.shp')
@@ -437,7 +442,7 @@ for single_year in investigation_year.keys():
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
-    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,color=my_pal[str(single_year)],zorder=100)
+    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=10,color='black')#my_pal[str(single_year)])
     '''
     #Store the coordinates of displayed transect
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
@@ -495,12 +500,13 @@ line_lower_transect= LineString(lower_transect_tuple) #from https://shapely.read
 #Create a polygon for Emax extraction
 polygon_Emax_extraction=Polygon([*list(line_upper_transect.coords),*list(line_lower_transect.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
 
-'''
-############################# TO COMMENT LATER ON #############################
 #Create polygon patch of the polygon above
-plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=2,color='blue',alpha=0.2)
+plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=2,edgecolor='red',facecolor='none')
 #Display plot_poylgon_Emax_extraction
 ax_map.add_patch(plot_poylgon_Emax_extraction)
+
+'''
+############################# TO COMMENT LATER ON #############################
 #Display upper and lower limits
 ax_map.plot(upper_transect_lim['lon_3413_transect'],upper_transect_lim['lat_3413_transect'],color='black',zorder=10)
 ax_map.plot(lower_transect_lim['lon_3413_transect'],lower_transect_lim['lat_3413_transect'],color='black',zorder=10)
@@ -513,30 +519,23 @@ ax_map.scatter(points_Emax['x'],points_Emax['y'],color='green',s=5,zorder=8)
 polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_Emax_extraction]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
 #Intersection between Emax points and polygon_Emax_extraction_gpd, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
 Emax_extraction = gpd.sjoin(points_Emax, polygon_Emax_extraction_gpd, op='within')
+'''
 #Plot the result of this selection
 ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=5,zorder=0)
+'''
 ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
 
-#count for zorder
-count=0
 #Display Emax
 for single_year in range(2002,2020):
     print(single_year)
     
-    pdb.set_trace()
-    
-    cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count) #NDWI
-    #Set xlims
-    ax_map.set_xlim(x_min,x_max)
-
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     #Select data of the desired year
     Emax_points=Emax_extraction[Emax_extraction.year==single_year]
+    '''
     #Display Emax points of that year within the transect bounds
-    ax_map.scatter(Emax_points['x'],Emax_points['y'],s=10,zorder=count+1),#c=Emax_points['year'],cmap=plt.cm.plasma)
-    
-    pdb.set_trace()
-    
+    ax_map.scatter(Emax_points['x'],Emax_points['y'],s=10,zorder=1),#c=Emax_points['year'],cmap=plt.cm.plasma)
+    '''
     ###########################################################################
     ### After a quick look at kept best Enax point for each year with the   ###
     ### method closest, I come to the conclusion that sometimes the closest ###
@@ -548,34 +547,30 @@ for single_year in range(2002,2020):
     #Keep the closest Emax point from the transect
     distances_Emax_points_transect=Emax_points.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
     closest_Emax_point=Emax_points.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
+    '''
     ax_map.scatter(closest_Emax_point['x'],closest_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this closest point
+    '''
     
-    pdb.set_trace()
-
     #Keep the highest Emax point from the transect
     highest_Emax_point=Emax_points.iloc[np.where(Emax_points.elev==np.max(Emax_points.elev))]#Select this highest point
-    #if two points, select the easternmost one
+    #if we have to points having the same highest elevation, select the easternmost one
     if (len(highest_Emax_point)>1):
-        pdb.set_trace()
         #Keep only the easternmost Emax point, i.e. the most positive longitute
         highest_Emax_point=highest_Emax_point.iloc[np.where(highest_Emax_point.x==np.max(highest_Emax_point.x))]
+    '''
     ax_map.scatter(highest_Emax_point['x'],highest_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this easternmost point
-    pdb.set_trace()
-
+    '''
     #Store the closest and highest points
     best_Emax_points=pd.concat([closest_Emax_point, highest_Emax_point])
     
     #If the difference in elevation between the two points is larger than 50m (to change?), we probably have two Emax points at two different hydrological features. Discard the lowest one
     if (np.diff(best_Emax_points.elev)>50):
-        pdb.set_trace()
         best_Emax_points=best_Emax_points.iloc[np.where(best_Emax_points.elev==np.max(best_Emax_points.elev))]
 
-    #Dsiplay the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],c='green',s=10,zorder=count+1)#Display this easternmost point
-    
+    #Display the best Emax points
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],c=my_pal[str(single_year)],s=15,zorder=1)#Display this easternmost point
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
-    count=count+2
-
+    
     if (len(best_Emax_points)==0):
         continue
     else:
@@ -584,27 +579,27 @@ for single_year in range(2002,2020):
         
         #Plot Emax on the radargrams
         if (single_year<2010):
-            ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2002'])
+            ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         elif (single_year==2010):
-            ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2010'])
+            ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         elif (single_year==2011):
-            ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2011'])
+            ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         elif (single_year==2012):
-            ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2012'])
+            ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         elif (single_year==2013):
-            ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2013'])
+            ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         elif (single_year==2014):
-            ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2014'])
+            ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         elif ((single_year>2014) & (single_year<=2017)):
-            ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2017'])
+            ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         elif (single_year>=2018):
-            ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal['2018'])
+            ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         else:
             print('year not know')
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
-gl=ax_map.gridlines(draw_labels=True, xlocs=[-35,-47,-50, -55,-60], ylocs=[66,67,68,69], x_inline=False, y_inline=False,linewidth=0.5)
+gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[67.6,67.65], x_inline=False, y_inline=False,linewidth=0.5)
 ###################### From Tedstone et al., 2022 #####################
 
 pdb.set_trace()
