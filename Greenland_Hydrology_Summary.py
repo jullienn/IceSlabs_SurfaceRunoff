@@ -35,7 +35,7 @@ import rioxarray as rxr
 #Define which year to plot
 desired_year=2019
 #Define which map to plot on the background: either NDWI or master_map
-desired_map='NDWI'
+desired_map='master_map'
 
 #Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
 #This section of displaying sat data was coding using tips from
@@ -163,7 +163,9 @@ poly_2013_2020=gpd.read_file(path_poly+'poly_2013_2020_median_edited.shp')
 poly_2013_2020.plot(ax=ax1,color='white', edgecolor='none',linewidth=0.075)
 
 #Display high-end 2010-2018 shapefile
-iceslabs_jullien_highend_20102018.plot(ax=ax1,color='none', edgecolor='black',linewidth=0.5)
+'''
+iceslabs_jullien_highend_20102018.plot(ax=ax1,color='none', edgecolor='red',linewidth=0.5)
+'''
 
 #Display 2002-2003 ice slabs
 ax1.scatter(df_2002_2003.lon,df_2002_2003.lat,c='#000000',s=0.001,zorder=2)
@@ -188,9 +190,50 @@ ax1.text(CW_rignotetal.centroid.x,CW_rignotetal.centroid.y+20000,np.asarray(CW_r
 ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y+20000,np.asarray(NW_rignotetal.SUBREGION1)[0])
 
 '''
-#Display 2010-2018 ice slabs data
+#Display 2010-2018 high end ice slabs data
 ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c='#9ecae1',s=0.1,zorder=2)
 '''
+
+#Display low-end 2010-2012 shapefile
+iceslabs_jullien_lowend_20102012=gpd.read_file(path_df_with_elevation+'shapefiles/iceslabs_jullien_lowend_2010_11_12.shp') 
+
+#Display low-end 2010-2018 shapefile
+iceslabs_jullien_lowend_20102018=gpd.read_file(path_df_with_elevation+'shapefiles/iceslabs_jullien_lowend_20102018.shp') 
+
+#Display low-end 2010-2018 shapefile
+iceslabs_jullien_lowend_20102018.plot(ax=ax1,color='none', edgecolor='red',linewidth=2)
+
+#Display low-end 2010-2012 shapefile
+iceslabs_jullien_lowend_20102012.plot(ax=ax1,color='none', edgecolor='blue',linewidth=1)
+'''
+#Load 2010-2018 low estimate
+f_20102018_low = open(path_df_with_elevation+'final_excel/low_estimate/df_20102018_with_elevation_low_estimate_rignotetalregions', "rb")
+df_2010_2018_low = pickle.load(f_20102018_low)
+f_20102018_low.close
+'''
+'''
+#Display 2010-2012 ice slabs data
+ax1.scatter(df_2010_2018_high[df_2010_2018_high.year<=2012]['lon_3413'],
+            df_2010_2018_high[df_2010_2018_high.year<=2012]['lat_3413'],
+            c='blue',s=1,zorder=2)
+'''
+'''
+#Display 2010-2018 high end ice slabs data
+ax1.scatter(df_2010_2018_high['lon_3413'],df_2010_2018_high['lat_3413'],c='red',s=0.1,zorder=2)
+'''
+#Load 2010-2018 high estimate for Fig3
+path_RT3='C:/Users/jullienn/switchdrive/Private/research/RT3/data/export_RT1_for_RT3/'
+f_20102018_RT3 = open(path_RT3+'df_20102018_with_elevation_for_RT3_masked_rignotetalregions', "rb")
+df_2010_2018_RT3 = pickle.load(f_20102018_RT3)
+f_20102018_RT3.close
+'''
+#Display 2010-2012 ice slabs data
+ax1.scatter(df_2010_2018_RT3[df_2010_2018_RT3['year']<=2012]['lon_3413'],
+            df_2010_2018_RT3[df_2010_2018_RT3['year']<=2012]['lat_3413'],
+            c=df_2010_2018_RT3[df_2010_2018_RT3['year']<=2012]['20m_ice_content_m'],
+            cmap='Blues',s=0.1,zorder=2)
+'''
+
 #Display firn aquifers
 ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=0.001,zorder=2)
 
@@ -215,6 +258,8 @@ plt.show()
 ax1.set_xlim(-642397, 1105201)
 ax1.set_ylim(-3366273, -784280)
 
+pdb.set_trace()
+
 '''
 #Save the figure
 plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT1/figures/Greenland_hydrology_summary.pdf',dpi=500)
@@ -224,7 +269,7 @@ plt.close()
 
 #Prepare plot
 fig = plt.figure()
-fig.set_size_inches(14, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
 ax1 = plt.subplot(projection=crs)
 #Display coastlines
@@ -303,8 +348,8 @@ ax1.axis('off')
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor='none',edgecolor='black',label='2010-2018 high end ice slabs'),
-                   Line2D([0], [0], color='#df778e', lw=2, marker='o',linestyle='None', label='2013-2020 runoff'),
-                   Line2D([0], [0], color='#0f4969', lw=2, marker='o',linestyle='None', label='1985-1993 runoff'),
+                   Line2D([0], [0], color='#df778e', lw=2, label='2013-2020 runoff'),
+                   Line2D([0], [0], color='#0f4969', lw=2, label='1985-1993 runoff'),
                    Line2D([0], [0], color='#000000', lw=2, marker='o',linestyle='None', label='2002-2003 ice slabs'),
                    Line2D([0], [0], color='#74c476', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers')]
 ax1.legend(handles=legend_elements,loc='lower right')
