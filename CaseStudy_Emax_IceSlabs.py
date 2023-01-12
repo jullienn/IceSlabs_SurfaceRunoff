@@ -90,45 +90,98 @@ crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
 crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
-#Case study 1, in box nb 7
+#Herebelow are all the potential overal between 2002-2003 with 2010-2018
+
+#Case study 1
 CaseStudy1={2002:['jun04_02proc_4.mat'],
             2003:['may12_03_36_aggregated'],
             2010:['Data_20100513_01_001.mat','Data_20100513_01_002.mat'],
-            2011:['Data_20110411_01_116.mat','Data_20110411_01_117.mat','Data_20110411_01_118.mat'],
-            2012:['Data_20120428_01_125.mat','Data_20120428_01_126.mat'],
+            2011:['Data_20110411_01_116.mat','Data_20110411_01_117.mat','Data_20110411_01_118.mat'],#2011 is reversed
+            2012:['Data_20120428_01_125.mat','Data_20120428_01_126.mat'],#2012 is reversed
             2013:'empty',
-            2014:['Data_20140408_11_024.mat','Data_20140408_11_025.mat','Data_20140408_11_026.mat'],
-            2017:['Data_20170508_02_165.mat','Data_20170508_02_166.mat','Data_20170508_02_167.mat','Data_20170508_02_168.mat','Data_20170508_02_169.mat','Data_20170508_02_170.mat','Data_20170508_02_171.mat'],
+            2014:['Data_20140408_11_024.mat','Data_20140408_11_025.mat','Data_20140408_11_026.mat'],#2014 is reversed
+            2017:['Data_20170508_02_165.mat','Data_20170508_02_166.mat','Data_20170508_02_167.mat','Data_20170508_02_168.mat','Data_20170508_02_169.mat','Data_20170508_02_170.mat','Data_20170508_02_171.mat'],#2017 is reversed
             2018:'empty'}
-'''
-CaseStudy1
-2011  is reversed
-2012  is reversed
-2014  is reversed
-2017  is reversed
-'''
 
-#Case study 2, in box nb 9
+#Case study 2
 CaseStudy2={2002:'empty',
             2003:['may12_03_1_aggregated','may12_03_2_aggregated'],
-            2010:['Data_20100508_01_114.mat','Data_20100508_01_115.mat'],
+            2010:['Data_20100508_01_114.mat','Data_20100508_01_115.mat'],#2010 is reversed
             2011:['Data_20110419_01_008.mat','Data_20110419_01_009.mat','Data_20110419_01_010.mat'],
-            2012:['Data_20120418_01_129.mat','Data_20120418_01_130.mat','Data_20120418_01_131.mat'],
-            2013:['Data_20130405_01_165.mat','Data_20130405_01_166.mat','Data_20130405_01_167.mat'],
+            2012:['Data_20120418_01_129.mat','Data_20120418_01_130.mat','Data_20120418_01_131.mat'],#2012 is reversed
+            2013:['Data_20130405_01_165.mat','Data_20130405_01_166.mat','Data_20130405_01_167.mat'],#2013 is reversed
             2014:['Data_20140424_01_002.mat','Data_20140424_01_003.mat','Data_20140424_01_004.mat'],
-            2017:['Data_20170422_01_168.mat','Data_20170422_01_169.mat','Data_20170422_01_170.mat','Data_20170422_01_171.mat'],
-            2018:['Data_20180427_01_170.mat','Data_20180427_01_171.mat','Data_20180427_01_172.mat']}
+            2017:['Data_20170422_01_168.mat','Data_20170422_01_169.mat','Data_20170422_01_170.mat','Data_20170422_01_171.mat'],#2017 is reversed
+            2018:['Data_20180427_01_170.mat','Data_20180427_01_171.mat','Data_20180427_01_172.mat']}#2018 is reversed
+
+#Case study 3 - this is Fig. 3c. For this one, it seems that we should enlarge the buffer where to extract Emax, and keep only high retrievals, not the closest ones.
+CaseStudy3={2002:['jun04_02proc_52.mat','jun04_02proc_53.mat'],
+            2003:'empty',
+            2010:['Data_20100507_01_008.mat','Data_20100507_01_009.mat','Data_20100507_01_010.mat'],
+            2011:['Data_20110426_01_009.mat','Data_20110426_01_010.mat','Data_20110426_01_011.mat'],
+            2012:'empty',
+            2013:'empty',
+            2014:['Data_20140421_01_009.mat','Data_20140421_01_010.mat','Data_20140421_01_011.mat','Data_20140421_01_012.mat','Data_20140421_01_013.mat'],
+            2017:['Data_20170424_01_008.mat','Data_20170424_01_009.mat','Data_20170424_01_010.mat','Data_20170424_01_011.mat','Data_20170424_01_012.mat','Data_20170424_01_013.mat','Data_20170424_01_014.mat'],
+            2018:'empty'}
+
+#Case study 4 - DATA TO CHECK!! TO TEST!!
+CaseStudy4={2002:['may18_02_0_aggregated'],
+            2003:['may13_03_29_aggregated','may13_03_30_aggregated'],
+            2010:['Data_20100507_01_008.mat','Data_20100507_01_009.mat','Data_20100507_01_010.mat'],
+            2011:['Data_20110426_01_009.mat','Data_20110426_01_010.mat','Data_20110426_01_011.mat'],
+            2012:'empty',
+            2013:'empty',
+            2014:['Data_20140421_01_009.mat','Data_20140421_01_010.mat','Data_20140421_01_011.mat','Data_20140421_01_012.mat','Data_20140421_01_013.mat'],
+            2017:['Data_20170424_01_008.mat','Data_20170424_01_009.mat','Data_20170424_01_010.mat','Data_20170424_01_011.mat','Data_20170424_01_012.mat','Data_20170424_01_013.mat','Data_20170424_01_014.mat'],
+            2018:'empty'}
 '''
-CaseStudy2
-2010  is reversed
-2012  is reversed
-2013  is reversed
-2017  is reversed
-2018  is reversed
+#Case study 4 bis - TO TEST!!
+CaseStudy4={2002:['may30_02_51_aggregated'],
+            2003:['may14_03_51_aggregated','may14_03_52_aggregated'],#may13_03_29_aggregated,
+            2010:['Data_20100507_01_008.mat','Data_20100507_01_009.mat','Data_20100507_01_010.mat'],
+            2011:['Data_20110426_01_009.mat','Data_20110426_01_010.mat','Data_20110426_01_011.mat'],
+            2012:'empty',
+            2013:'empty',
+            2014:['Data_20140421_01_009.mat','Data_20140421_01_010.mat','Data_20140421_01_011.mat','Data_20140421_01_012.mat','Data_20140421_01_013.mat'],
+            2017:['Data_20170424_01_008.mat','Data_20170424_01_009.mat','Data_20170424_01_010.mat','Data_20170424_01_011.mat','Data_20170424_01_012.mat','Data_20170424_01_013.mat','Data_20170424_01_014.mat'],
+            2018:'empty'}
 '''
 
+#Case study 5 - TO TEST!!
+CaseStudy5={2002:'empty',
+            2003:['may14_03_6_aggregated','may14_03_7_aggregated'],
+            2010:'empty',
+            2011:['Data_20110329_01_013.mat','Data_20110329_01_014.mat','Data_20110329_01_015.mat','Data_20110329_01_016.mat','Data_20110329_01_017.mat','Data_20110329_01_018.mat'],
+            2012:['Data_20120330_01_018.mat','Data_20120330_01_019.mat','Data_20120330_01_020.mat','Data_20120330_01_021.mat','Data_20120330_01_022.mat','Data_20120330_01_023.mat'],
+            2013:'empty',
+            2014:'empty',
+            2017:'empty',
+            2018:'empty'}
+
+#Case study 6 - TO TEST!!
+CaseStudy6={2002:['may18_02_28_aggregated','may18_02_29_aggregated'],
+            2003:'empty',
+            2010:'empty',
+            2011:'empty',
+            2012:'empty',
+            2013:'empty',
+            2014:['Data_20140429_02_076.mat','Data_20140429_02_077.mat','Data_20140429_02_078.mat','Data_20140429_02_079.mat'], #OR 20140508_03_019_024
+            2017:['Data_20170328_01_095.mat','Data_20170328_01_096.mat','Data_20170328_01_097.mat','Data_20170328_01_098.mat','Data_20170328_01_099.mat','Data_20170328_01_100.mat','Data_20170328_01_101.mat'], 
+            2018:'empty'}
+
+#Case study 7 - TO TEST!!
+CaseStudy7={2002:'empty',
+            2003:['may12_03_9_aggregated','may12_03_10_aggregated'],
+            2010:['Data_20100508_01_084.mat'], #2010 a bit offset towards the east
+            2011:'empty',
+            2012:'empty',
+            2013:'empty',
+            2014:'empty',
+            2017:['Data_20170422_01_138.mat','Data_20170422_01_139.mat'],
+            2018:'empty'}
 #Define the panel to study
-investigation_year=CaseStudy1
+investigation_year=CaseStudy3
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -160,7 +213,14 @@ elif (investigation_year==CaseStudy2):
     ax8 = plt.subplot(gs[24:28, 0:100])
     ax9 = plt.subplot(gs[28:32, 0:100])
     axc = plt.subplot(gs[0:32, 100:101])
-
+    
+elif (investigation_year==CaseStudy3):
+    ax1 = plt.subplot(gs[0:4, 0:100])
+    ax3 = plt.subplot(gs[4:8, 0:100])
+    ax4 = plt.subplot(gs[8:12, 0:100])
+    ax7 = plt.subplot(gs[12:16, 0:100])
+    ax8 = plt.subplot(gs[16:20, 0:100])
+    axc = plt.subplot(gs[0:32, 100:101])
 else:
     print('Wrong transect name input')
 
@@ -368,13 +428,16 @@ for single_year in investigation_year.keys():
         end_transect=-46.41555609606877
         vmin_plot=-4.5
         vmax_plot=4.5
-        box_to_load=9
     elif (investigation_year==CaseStudy1):
         start_transect=-48.21060856534727
         end_transect=-46.88764316176339
         vmin_plot=-4.5
+        vmax_plot=4.5        
+    elif (investigation_year==CaseStudy3):
+        start_transect=-47.9337
+        end_transect=-45.4912
+        vmin_plot=-4.5
         vmax_plot=4.5
-        box_to_load=7
     else:
         print('Wrong transect name input')
     
@@ -451,6 +514,8 @@ if (investigation_year==CaseStudy1):
     year_limit=2017
 elif (investigation_year==CaseStudy2):
     year_limit=2014
+elif (investigation_year==CaseStudy3):
+    year_limit=2017
 else:
     print('Year not known')
     pdb.set_trace()
@@ -488,19 +553,26 @@ for holding_data in investigation_year.keys():
 
 #Display Emax
 for single_year in range(2002,2020):
-    print(single_year)
     
-    #Reset clean raster
-    cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count+1) #NDWI
+    #If no data before this year, continue
+    if (single_year<list_holding_data[0]):
+        print('No data in ',str(single_year))
+        continue
+    
+    print(single_year)
     
     #Select data of the desired year
     points_Emax_single_year=points_Emax[points_Emax.year==single_year]
         
+    '''
+    #Reset clean raster
+    cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count+1) #NDWI
+    
     #Display all Emax points of this year
     ax_map.scatter(points_Emax_single_year['x'],points_Emax_single_year['y'],color='black',s=5,zorder=count+1)
     #Set xlims
     ax_map.set_xlim(x_min,x_max)
-    
+    '''
     #Select the transect around which to perform Emax extraction
     if (single_year in list_holding_data):
         #We have a transect on this particular year, select it
@@ -517,13 +589,14 @@ for single_year in range(2002,2020):
     upper_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]+1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
     transect_centroid = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]})
     lower_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]-1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
-
+    
+    '''
     ############################# TO COMMENT LATER ON #############################
     #Display upper and lower limits
     ax_map.plot(upper_transect_lim['lon_3413_transect'],upper_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
     ax_map.plot(lower_transect_lim['lon_3413_transect'],lower_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
     ############################# TO COMMENT LATER ON #############################
-    
+    '''
     ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
     #Upper and lower max as tuples
     upper_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in upper_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
@@ -537,7 +610,7 @@ for single_year in range(2002,2020):
 
     #Create a polygon for Emax extraction
     polygon_Emax_extraction=Polygon([*list(line_upper_transect.coords),*list(line_lower_transect.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
-        
+    
     #Create polygon patch of the polygon above
     plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=count+1,edgecolor='red',facecolor='none')
     #Display plot_poylgon_Emax_extraction
@@ -552,17 +625,16 @@ for single_year in range(2002,2020):
         count=count+2
         continue
     
-    pdb.set_trace()
+    #pdb.set_trace()
+    '''
     #Plot the result of this selection
     ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=10,zorder=count+1)
+    '''
     ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
     
 
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
-    '''
-    #Display Emax points of that year within the transect bounds
-    ax_map.scatter(Emax_points['x'],Emax_points['y'],s=10,zorder=1),#c=Emax_points['year'],cmap=plt.cm.plasma)
-    '''
+    
     ###########################################################################
     ### After a quick look at kept best Enax point for each year with the   ###
     ### method closest, I come to the conclusion that sometimes the closest ###
@@ -575,8 +647,10 @@ for single_year in range(2002,2020):
     distances_Emax_extraction_transect=Emax_extraction.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
     closest_Emax_extraction=Emax_extraction.iloc[np.where(distances_Emax_extraction_transect==np.min(distances_Emax_extraction_transect))]#Select this closest point
     
+    '''
     pdb.set_trace()
     ax_map.scatter(closest_Emax_extraction['x'],closest_Emax_extraction['y'],c='cyan',s=10,zorder=count+1)#Display this closest point
+    '''
     
     #Keep the highest Emax_extraction from the transect
     highest_Emax_extraction=Emax_extraction.iloc[np.where(Emax_extraction.elev==np.max(Emax_extraction.elev))]#Select this highest point
@@ -585,8 +659,10 @@ for single_year in range(2002,2020):
         #Keep only the easternmost Emax point, i.e. the most positive longitute
         highest_Emax_extraction=highest_Emax_extraction.iloc[np.where(highest_Emax_extraction.x==np.max(highest_Emax_extraction.x))]
     
+    '''
     pdb.set_trace()
     ax_map.scatter(highest_Emax_extraction['x'],highest_Emax_extraction['y'],c='yellow',s=10,zorder=count+1)#Display this easternmost point
+    '''
     
     #Store the closest and highest points
     best_Emax_points=pd.concat([closest_Emax_extraction, highest_Emax_extraction])
@@ -595,7 +671,7 @@ for single_year in range(2002,2020):
     if (np.diff(best_Emax_points.elev)>50):
         best_Emax_points=best_Emax_points.iloc[np.where(best_Emax_points.elev==np.max(best_Emax_points.elev))]
 
-    pdb.set_trace()
+    #pdb.set_trace()
     #Display the best Emax points
     ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],c=my_pal[str(single_year)],s=15,zorder=count+1)#Display this easternmost point
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
@@ -631,7 +707,7 @@ for single_year in range(2002,2020):
             pdb.set_trace()
     
     count=count+2
-    pdb.set_trace()
+    #pdb.set_trace()
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
@@ -647,6 +723,14 @@ if (investigation_year==CaseStudy2):
     ax_top=ax2
     
 elif (investigation_year==CaseStudy1):
+    ax4.set_ylabel('Depth [m]')
+    ax8.set_yticklabels(['0','10','20'])
+    ticks_through=ax8.get_xticks()
+    year_ticks=2017
+    ax_tick_plot=ax8
+    ax_top=ax1
+
+elif (investigation_year==CaseStudy3):
     ax4.set_ylabel('Depth [m]')
     ax8.set_yticklabels(['0','10','20'])
     ticks_through=ax8.get_xticks()
