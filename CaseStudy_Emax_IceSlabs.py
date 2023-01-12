@@ -52,8 +52,6 @@ from descartes import PolygonPatch
 4. Display groups of Emax to observe any change
 '''
 
-method_keep='closest'#chan be 'closest' highest'
-
 #Define variables
 #Compute the speed (Modified Robin speed):
 # self.C / (1.0 + (coefficient*density_kg_m3/1000.0))
@@ -130,7 +128,7 @@ CaseStudy2
 '''
 
 #Define the panel to study
-investigation_year=CaseStudy2
+investigation_year=CaseStudy1
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -150,7 +148,7 @@ if (investigation_year==CaseStudy1):
     ax5 = plt.subplot(gs[16:20, 0:100])
     ax7 = plt.subplot(gs[20:24, 0:100])
     ax8 = plt.subplot(gs[24:28, 0:100])
-    axc = plt.subplot(gs[0:28, 100:101])
+    axc = plt.subplot(gs[4:28, 100:101])
 
 elif (investigation_year==CaseStudy2):
     ax2 = plt.subplot(gs[0:4, 0:100])
@@ -442,7 +440,7 @@ for single_year in investigation_year.keys():
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
-    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=10,color='black')#my_pal[str(single_year)])
+    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=100,color=my_pal[str(single_year)])#color='black')
     '''
     #Store the coordinates of displayed transect
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
@@ -480,58 +478,87 @@ cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_with
 #Set xlims
 ax_map.set_xlim(x_min,x_max)
 
-#Create upper and lower line around transect centroid: 2017 and 2018 are roughly the centroid of the transect to extract Emax points
-index_within_bounds_transect=np.logical_and(dataframe[str(2017)]['lon_appended']>=start_transect,dataframe[str(2017)]['lon_appended']<=end_transect)
-upper_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(2017)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(2017)]['lat_3413'][index_within_bounds_transect]+1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
-transect_centroid = pd.DataFrame({'lon_3413_transect': dataframe[str(2017)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(2017)]['lat_3413'][index_within_bounds_transect]})
-lower_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(2017)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(2017)]['lat_3413'][index_within_bounds_transect]-1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
+count=0
 
-### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
-#Upper and lower max as tuples
-upper_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in upper_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
-transect_centroid_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in transect_centroid.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
-lower_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in lower_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
-
-#Make upper/lower_transect_tuple as a line
-line_upper_transect= LineString(upper_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
-transect_centroid_transect= LineString(transect_centroid_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
-line_lower_transect= LineString(lower_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
-
-#Create a polygon for Emax extraction
-polygon_Emax_extraction=Polygon([*list(line_upper_transect.coords),*list(line_lower_transect.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
-
-#Create polygon patch of the polygon above
-plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=2,edgecolor='red',facecolor='none')
-#Display plot_poylgon_Emax_extraction
-ax_map.add_patch(plot_poylgon_Emax_extraction)
-
-'''
-############################# TO COMMENT LATER ON #############################
-#Display upper and lower limits
-ax_map.plot(upper_transect_lim['lon_3413_transect'],upper_transect_lim['lat_3413_transect'],color='black',zorder=10)
-ax_map.plot(lower_transect_lim['lon_3413_transect'],lower_transect_lim['lat_3413_transect'],color='black',zorder=10)
-#Display all Emax points to check the selection worked
-ax_map.scatter(points_Emax['x'],points_Emax['y'],color='green',s=5,zorder=8)
-############################# TO COMMENT LATER ON #############################
-'''
-
-#Convert polygon of polygon_Emax_extraction into a geopandas dataframe
-polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_Emax_extraction]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
-#Intersection between Emax points and polygon_Emax_extraction_gpd, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-Emax_extraction = gpd.sjoin(points_Emax, polygon_Emax_extraction_gpd, op='within')
-'''
-#Plot the result of this selection
-ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=5,zorder=0)
-'''
-### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
+#Create a list of years holding data
+list_holding_data=[]
+for holding_data in investigation_year.keys():
+    if (investigation_year[holding_data]!='empty'):
+        list_holding_data=np.append(list_holding_data,holding_data)
 
 #Display Emax
 for single_year in range(2002,2020):
     print(single_year)
     
-    ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
+    #Reset clean raster
+    cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count+1) #NDWI
+    
     #Select data of the desired year
-    Emax_points=Emax_extraction[Emax_extraction.year==single_year]
+    points_Emax_single_year=points_Emax[points_Emax.year==single_year]
+        
+    #Display all Emax points of this year
+    ax_map.scatter(points_Emax_single_year['x'],points_Emax_single_year['y'],color='black',s=5,zorder=count+1)
+    #Set xlims
+    ax_map.set_xlim(x_min,x_max)
+    
+    #Select the transect around which to perform Emax extraction
+    if (single_year in list_holding_data):
+        #We have a transect on this particular year, select it
+        year_transect=single_year
+    else:
+        #We do not hate a transect on this particulat year, select the closest previous year
+        #Restric the lis of years from the start to the year in question
+        year_list=list_holding_data[list_holding_data<=single_year]
+        year_transect=np.max(year_list).astype(int)
+        print('Chosen year:', str(year_transect))
+
+    #Create upper and lower line around chosen transect to extract Emax points
+    index_within_bounds_transect=np.logical_and(dataframe[str(year_transect)]['lon_appended']>=start_transect,dataframe[str(year_transect)]['lon_appended']<=end_transect)
+    upper_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]+1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
+    transect_centroid = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]})
+    lower_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]-1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
+
+    ############################# TO COMMENT LATER ON #############################
+    #Display upper and lower limits
+    ax_map.plot(upper_transect_lim['lon_3413_transect'],upper_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
+    ax_map.plot(lower_transect_lim['lon_3413_transect'],lower_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
+    ############################# TO COMMENT LATER ON #############################
+    
+    ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
+    #Upper and lower max as tuples
+    upper_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in upper_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+    transect_centroid_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in transect_centroid.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+    lower_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in lower_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+
+    #Make upper/lower_transect_tuple as a line
+    line_upper_transect= LineString(upper_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
+    transect_centroid_transect= LineString(transect_centroid_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
+    line_lower_transect= LineString(lower_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
+
+    #Create a polygon for Emax extraction
+    polygon_Emax_extraction=Polygon([*list(line_upper_transect.coords),*list(line_lower_transect.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+        
+    #Create polygon patch of the polygon above
+    plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=count+1,edgecolor='red',facecolor='none')
+    #Display plot_poylgon_Emax_extraction
+    ax_map.add_patch(plot_poylgon_Emax_extraction)
+    
+    #Convert polygon of polygon_Emax_extraction into a geopandas dataframe
+    polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_Emax_extraction]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+    #Intersection between points_Emax_single_year and polygon_Emax_extraction_gpd, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
+    Emax_extraction = gpd.sjoin(points_Emax_single_year, polygon_Emax_extraction_gpd, op='within')
+    
+    if (len(Emax_extraction)==0):
+        count=count+2
+        continue
+    
+    pdb.set_trace()
+    #Plot the result of this selection
+    ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=10,zorder=count+1)
+    ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
+    
+
+    ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     '''
     #Display Emax points of that year within the transect bounds
     ax_map.scatter(Emax_points['x'],Emax_points['y'],s=10,zorder=1),#c=Emax_points['year'],cmap=plt.cm.plasma)
@@ -544,71 +571,78 @@ for single_year in range(2002,2020):
     ### the highest Emax point each year.                                   ###
     ###########################################################################
     
-    #Keep the closest Emax point from the transect
-    distances_Emax_points_transect=Emax_points.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
-    closest_Emax_point=Emax_points.iloc[np.where(distances_Emax_points_transect==np.min(distances_Emax_points_transect))]#Select this closest point
-    '''
-    ax_map.scatter(closest_Emax_point['x'],closest_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this closest point
-    '''
+    #Keep the closest Emax_extraction from the transect
+    distances_Emax_extraction_transect=Emax_extraction.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
+    closest_Emax_extraction=Emax_extraction.iloc[np.where(distances_Emax_extraction_transect==np.min(distances_Emax_extraction_transect))]#Select this closest point
     
-    #Keep the highest Emax point from the transect
-    highest_Emax_point=Emax_points.iloc[np.where(Emax_points.elev==np.max(Emax_points.elev))]#Select this highest point
+    pdb.set_trace()
+    ax_map.scatter(closest_Emax_extraction['x'],closest_Emax_extraction['y'],c='cyan',s=10,zorder=count+1)#Display this closest point
+    
+    #Keep the highest Emax_extraction from the transect
+    highest_Emax_extraction=Emax_extraction.iloc[np.where(Emax_extraction.elev==np.max(Emax_extraction.elev))]#Select this highest point
     #if we have to points having the same highest elevation, select the easternmost one
-    if (len(highest_Emax_point)>1):
+    if (len(highest_Emax_extraction)>1):
         #Keep only the easternmost Emax point, i.e. the most positive longitute
-        highest_Emax_point=highest_Emax_point.iloc[np.where(highest_Emax_point.x==np.max(highest_Emax_point.x))]
-    '''
-    ax_map.scatter(highest_Emax_point['x'],highest_Emax_point['y'],c='magenta',s=10,zorder=count+1)#Display this easternmost point
-    '''
+        highest_Emax_extraction=highest_Emax_extraction.iloc[np.where(highest_Emax_extraction.x==np.max(highest_Emax_extraction.x))]
+    
+    pdb.set_trace()
+    ax_map.scatter(highest_Emax_extraction['x'],highest_Emax_extraction['y'],c='yellow',s=10,zorder=count+1)#Display this easternmost point
+    
     #Store the closest and highest points
-    best_Emax_points=pd.concat([closest_Emax_point, highest_Emax_point])
+    best_Emax_points=pd.concat([closest_Emax_extraction, highest_Emax_extraction])
     
     #If the difference in elevation between the two points is larger than 50m (to change?), we probably have two Emax points at two different hydrological features. Discard the lowest one
     if (np.diff(best_Emax_points.elev)>50):
         best_Emax_points=best_Emax_points.iloc[np.where(best_Emax_points.elev==np.max(best_Emax_points.elev))]
 
+    pdb.set_trace()
     #Display the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],c=my_pal[str(single_year)],s=15,zorder=1)#Display this easternmost point
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],c=my_pal[str(single_year)],s=15,zorder=count+1)#Display this easternmost point
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     
     if (len(best_Emax_points)==0):
+        count=count+2
         continue
     else:
         #Convert to coordinates into EPSG:4326
         coord_Emax=transformer_3413_to_4326.transform(np.array(best_Emax_points['x']),np.array(best_Emax_points['y']))
         
-        #Plot Emax on the radargrams
-        if (single_year<2010):
+        #Plot Emax on the correct radargrams
+        if (year_transect==2002):
+            ax1.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+        elif(year_transect==2003):
             ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif (single_year==2010):
+        elif(year_transect==2010):
             ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif (single_year==2011):
+        elif(year_transect==2011):
             ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif (single_year==2012):
+        elif(year_transect==2012):
             ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif (single_year==2013):
+        elif(year_transect==2013):
             ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif (single_year==2014):
+        elif(year_transect==2014):
             ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif ((single_year>2014) & (single_year<=2017)):
+        elif(year_transect==2017):
             ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif (single_year>=2018):
+        elif(year_transect==2018):
             ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
         else:
-            print('year not know')
+            print('Should not end up there')
+            pdb.set_trace()
+    
+    count=count+2
+    pdb.set_trace()
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
 gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[67.6,67.65], x_inline=False, y_inline=False,linewidth=0.5)
 ###################### From Tedstone et al., 2022 #####################
 
-pdb.set_trace()
-
 if (investigation_year==CaseStudy2):
-    ax5.set_ylabel('Depth [m]')
+    ax9.set_ylabel('Depth [m]')
     ax9.set_yticklabels(['0','10','20'])
     ticks_through=ax9.get_xticks()
-    year_ticks=2018
+    year_ticks=2014
     ax_tick_plot=ax9
     ax_top=ax2
     
