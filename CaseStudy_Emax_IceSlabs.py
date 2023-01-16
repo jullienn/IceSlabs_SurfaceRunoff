@@ -72,7 +72,7 @@ my_pal = {'2002': '#08519c', '2003': '#4292c6', '2004': '#9ecae1', '2005': '#dee
           '2006': '#ffffbf', '2007': '#feb24c', '2008': '#fc4e2a', '2009': '#bd0026',
           '2010': "#67000d", '2011': "#ce1256", '2012': "#c51b7d", '2013': "#f1b6da",
           '2014': "#e6f5d0", '2015': '#a1d99b', '2016': '#41ab5d', '2017': "#006d2c",
-          '2018': "#00441b", '2019': '#01665e'}
+          '2018': "#00441b", '2019': '#01665e', '2020': 'black'}
 
 #Load Rignot et al., 2016 Greenland drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
@@ -193,7 +193,7 @@ CaseStudy7={2002:'empty',
             2017:['Data_20170422_01_138.mat','Data_20170422_01_139.mat'],
             2018:'empty'}
 #Define the panel to study
-investigation_year=CaseStudy3
+investigation_year=CaseStudy1
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -233,7 +233,7 @@ elif (investigation_year==CaseStudy3):
     ax4 = plt.subplot(gs[8:12, 0:100])
     ax7 = plt.subplot(gs[12:16, 0:100])
     ax8 = plt.subplot(gs[16:20, 0:100])
-    axc = plt.subplot(gs[0:20, 100:101])
+    axc = plt.subplot(gs[4:20, 100:101])
 
 elif (investigation_year==CaseStudy4):
     ax1 = plt.subplot(gs[0:4, 0:100])
@@ -473,7 +473,7 @@ for single_year in investigation_year.keys():
         vmin_plot=-4.5
         vmax_plot=4.5        
     elif (investigation_year==CaseStudy3):
-        start_transect=-47.9337
+        start_transect=-47.567
         end_transect=-46.5427
         vmin_plot=-4.5
         vmax_plot=4.5
@@ -614,6 +614,7 @@ cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_with
 
 #Set xlims
 ax_map.set_xlim(x_min,x_max)
+ax_map.set_ylim(y_min,y_max)
 
 count=0
 
@@ -624,7 +625,7 @@ for holding_data in investigation_year.keys():
         list_holding_data=np.append(list_holding_data,holding_data)
 
 #Display Emax
-for single_year in range(2002,2020):
+for single_year in range(2002,2021):
     
     #If no data before this year, continue
     if (single_year<list_holding_data[0]):
@@ -810,7 +811,7 @@ elif (investigation_year==CaseStudy2):
 
     ###################### From Tedstone et al., 2022 #####################
     #from plot_map_decadal_change.py
-    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-46,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5)
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5)
     ###################### From Tedstone et al., 2022 #####################
 elif (investigation_year==CaseStudy3):
     ax4.set_ylabel('Depth [m]')
@@ -824,7 +825,7 @@ elif (investigation_year==CaseStudy3):
     
     ###################### From Tedstone et al., 2022 #####################
     #from plot_map_decadal_change.py
-    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-46.5,-45.5], ylocs=[68.5,68], x_inline=False, y_inline=False,linewidth=0.5)
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[68,68.25], x_inline=False, y_inline=False,linewidth=0.5)
     ###################### From Tedstone et al., 2022 #####################
 elif (investigation_year==CaseStudy4):
     ax4.set_ylabel('Depth [m]')
@@ -920,7 +921,7 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS4_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
