@@ -42,6 +42,7 @@ from shapely.geometry import Polygon
 import shapely
 
 from descartes import PolygonPatch
+from scalebar import scale_bar
 
 '''
 #Things to be done
@@ -74,7 +75,7 @@ my_pal = {'2002': '#08519c', '2003': '#4292c6', '2004': '#9ecae1', '2005': '#dee
           '2018': "#00441b", '2019': '#01665e'}
 
 #Load Rignot et al., 2016 Greenland drainage bassins
-GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3.shp')
+GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
 #Define transformer for coordinates transform from "EPSG:4326" to "EPSG:3413"
 transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
@@ -89,6 +90,11 @@ crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
 # This can be converted into a `proj4` string/dict compatible with GeoPandas
 crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
+
+#Load 2002-2003 ice slabs identification
+path_2002_2003_slabs='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/2002_2003/radargrams_and_identification/identification/'
+xls_icelenses = pd.read_excel(path_2002_2003_slabs+'icelenses_22022020.xls', sheet_name=None,header=2)
+trafic_light=pd.read_excel(path_2002_2003_slabs+'icelenses_22022020.xls', sheet_name=None,header=1)
 
 #Herebelow are all the potential overal between 2002-2003 with 2010-2018
 
@@ -125,30 +131,36 @@ CaseStudy3={2002:['jun04_02proc_52.mat','jun04_02proc_53.mat'],
             2017:['Data_20170424_01_008.mat','Data_20170424_01_009.mat','Data_20170424_01_010.mat','Data_20170424_01_011.mat','Data_20170424_01_012.mat','Data_20170424_01_013.mat','Data_20170424_01_014.mat'],
             2018:'empty'}
 
-#Case study 4 - DATA TO CHECK!! TO TEST!!
-CaseStudy4={2002:['may18_02_0_aggregated'],
-            2003:['may13_03_29_aggregated','may13_03_30_aggregated'],
-            2010:['Data_20100507_01_008.mat','Data_20100507_01_009.mat','Data_20100507_01_010.mat'],
-            2011:['Data_20110426_01_009.mat','Data_20110426_01_010.mat','Data_20110426_01_011.mat'],
-            2012:'empty',
-            2013:'empty',
-            2014:['Data_20140421_01_009.mat','Data_20140421_01_010.mat','Data_20140421_01_011.mat','Data_20140421_01_012.mat','Data_20140421_01_013.mat'],
-            2017:['Data_20170424_01_008.mat','Data_20170424_01_009.mat','Data_20170424_01_010.mat','Data_20170424_01_011.mat','Data_20170424_01_012.mat','Data_20170424_01_013.mat','Data_20170424_01_014.mat'],
-            2018:'empty'}
-'''
-#Case study 4 bis - TO TEST!!
-CaseStudy4={2002:['may30_02_51_aggregated'],
-            2003:['may14_03_51_aggregated','may14_03_52_aggregated'],#may13_03_29_aggregated,
-            2010:['Data_20100507_01_008.mat','Data_20100507_01_009.mat','Data_20100507_01_010.mat'],
-            2011:['Data_20110426_01_009.mat','Data_20110426_01_010.mat','Data_20110426_01_011.mat'],
-            2012:'empty',
-            2013:'empty',
-            2014:['Data_20140421_01_009.mat','Data_20140421_01_010.mat','Data_20140421_01_011.mat','Data_20140421_01_012.mat','Data_20140421_01_013.mat'],
-            2017:['Data_20170424_01_008.mat','Data_20170424_01_009.mat','Data_20170424_01_010.mat','Data_20170424_01_011.mat','Data_20170424_01_012.mat','Data_20170424_01_013.mat','Data_20170424_01_014.mat'],
-            2018:'empty'}
-'''
+#Case study 1, 2 and 3 are in SW Greenland.
 
-#Case study 5 - TO TEST!!
+#Case study 4 is in NW Greenland and is divided into a lower part of transect and an upper part.
+#Case study 4 - upper part transect: Not usable as it is above the Emax limit.
+CaseStudy4={2002:['may18_02_0_aggregated'],
+            2003:['may13_03_29_aggregated','may13_03_30_aggregated'], #['may14_03_51_aggregated','may14_03_52_aggregated'] is as good as the one used now
+            2010:['Data_20100517_02_001.mat','Data_20100517_02_002.mat'],
+            2011:['Data_20110502_01_171.mat'],
+            2012:['Data_20120516_01_115.mat'],
+            2013:['Data_20130426_01_006.mat','Data_20130426_01_007.mat'],
+            2014:['Data_20140514_02_087.mat','Data_20140514_02_088.mat','Data_20140514_02_089.mat'],
+            2017:['Data_20170417_01_171.mat','Data_20170417_01_172.mat','Data_20170417_01_173.mat','Data_20170417_01_174.mat'],
+            2018:'empty'}
+
+#Case study 4 - lower part transect: To catch Emax points, lower and upper limits must be expanded to +/-3e3.
+#Transect not usable as no clear ice slabs signature in 2002, not a lot of Emax points through time, and the inland expansion of Emax
+#is not as clear as for case study 1, 2, 3.
+CaseStudy4={2002:'empty', #['may30_02_51_aggregated'] is bad
+            2003:['may13_03_29_aggregated','may13_03_30_aggregated'],
+            2010:['Data_20100517_02_001.mat','Data_20100517_02_002.mat'],
+            2011:['Data_20110502_01_171.mat'],
+            2012:['Data_20120330_01_124.mat','Data_20120330_01_125.mat'],#The one used is the best. Or ['TESTED Data_20120516_01_002.mat'],,#['TESTED Data_20120516_01_115.mat'],
+            2013:['Data_20130419_01_004.mat','Data_20130419_01_005.mat'],#The one used is the best. Or ['TESTED Data_20130426_01_006.mat','Data_20130426_01_007.mat'],
+            2014:['Data_20140507_03_007.mat','Data_20140507_03_008.mat'],#The one used is the best. Or ['TESTED Data_20140519_02_002.mat','Data_20140519_02_003.mat','Data_20140519_02_004.mat'],#['TESTED Data_20140515_02_173.mat','Data_20140515_02_174.mat','Data_20140515_02_175.mat'],#['TESTED Data_20140515_02_001.mat','Data_20140515_02_002.mat','Data_20140515_02_003.mat'],#['TESTED Data_20140429_02_160.mat','Data_20140429_02_161.mat'],#['BEST Data_20140514_02_087.mat','Data_20140514_02_088.mat','Data_20140514_02_089.mat'],
+            2017:['Data_20170417_01_171.mat','Data_20170417_01_172.mat','Data_20170417_01_173.mat','Data_20170417_01_174.mat'],
+            2018:'empty'}
+
+#Case study 5 - Not usable: the transect is in the NO and is not perpendicular to the elevation contours,
+#hence it intersects a first zone of runoff, the goes into the dry snow zone before intersecting a another zone of runoff.
+#Furthermore, mo big changes in ice slabs thickness there
 CaseStudy5={2002:'empty',
             2003:['may14_03_6_aggregated','may14_03_7_aggregated'],
             2010:'empty',
@@ -159,7 +171,7 @@ CaseStudy5={2002:'empty',
             2017:'empty',
             2018:'empty'}
 
-#Case study 6 - TO TEST!!
+#Case study 6 - Not usable as the transect is in the NE right a the edge of glacier 79, hence no Emax in the immediate vicinity of transect.
 CaseStudy6={2002:['may18_02_28_aggregated','may18_02_29_aggregated'],
             2003:'empty',
             2010:'empty',
@@ -170,7 +182,7 @@ CaseStudy6={2002:['may18_02_28_aggregated','may18_02_29_aggregated'],
             2017:['Data_20170328_01_095.mat','Data_20170328_01_096.mat','Data_20170328_01_097.mat','Data_20170328_01_098.mat','Data_20170328_01_099.mat','Data_20170328_01_100.mat','Data_20170328_01_101.mat'], 
             2018:'empty'}
 
-#Case study 7 - TO TEST!!
+#Case study 7 - Not usable as transect more or less parallel to elevation contours
 CaseStudy7={2002:'empty',
             2003:['may12_03_9_aggregated','may12_03_10_aggregated'],
             2010:['Data_20100508_01_084.mat'], #2010 a bit offset towards the east
@@ -187,6 +199,7 @@ investigation_year=CaseStudy3
 plt.rcParams.update({'font.size': 20})
 fig2 = plt.figure()
 ax_map = plt.subplot(projection=crs)
+GrIS_drainage_bassins.plot(ax=ax_map,facecolor='none',edgecolor='black')
 
 fig1 = plt.figure()
 gs = gridspec.GridSpec(34, 101)
@@ -201,7 +214,7 @@ if (investigation_year==CaseStudy1):
     ax5 = plt.subplot(gs[16:20, 0:100])
     ax7 = plt.subplot(gs[20:24, 0:100])
     ax8 = plt.subplot(gs[24:28, 0:100])
-    axc = plt.subplot(gs[4:28, 100:101])
+    axc = plt.subplot(gs[8:28, 100:101])
 
 elif (investigation_year==CaseStudy2):
     ax2 = plt.subplot(gs[0:4, 0:100])
@@ -220,7 +233,33 @@ elif (investigation_year==CaseStudy3):
     ax4 = plt.subplot(gs[8:12, 0:100])
     ax7 = plt.subplot(gs[12:16, 0:100])
     ax8 = plt.subplot(gs[16:20, 0:100])
-    axc = plt.subplot(gs[0:32, 100:101])
+    axc = plt.subplot(gs[0:20, 100:101])
+
+elif (investigation_year==CaseStudy4):
+    ax1 = plt.subplot(gs[0:4, 0:100])
+    ax2 = plt.subplot(gs[4:8, 0:100])
+    ax3 = plt.subplot(gs[8:12, 0:100])
+    ax4 = plt.subplot(gs[12:16, 0:100])
+    ax5 = plt.subplot(gs[16:20, 0:100])
+    ax6 = plt.subplot(gs[20:24, 0:100])
+    ax7 = plt.subplot(gs[24:28, 0:100])
+    ax8 = plt.subplot(gs[28:32, 0:100])
+    axc = plt.subplot(gs[8:32, 100:101])
+elif (investigation_year==CaseStudy5):
+    ax2 = plt.subplot(gs[0:4, 0:100])
+    ax4 = plt.subplot(gs[4:8, 0:100])
+    ax5 = plt.subplot(gs[8:12, 0:100])
+    axc = plt.subplot(gs[4:12, 100:101])
+elif (investigation_year==CaseStudy6):
+    ax1 = plt.subplot(gs[0:4, 0:100])
+    ax7 = plt.subplot(gs[4:8, 0:100])
+    ax8 = plt.subplot(gs[8:12, 0:100])
+    axc = plt.subplot(gs[4:12, 100:101])
+elif (investigation_year==CaseStudy7):
+    ax2 = plt.subplot(gs[0:4, 0:100])
+    ax3 = plt.subplot(gs[4:8, 0:100])
+    ax8 = plt.subplot(gs[8:12, 0:100])
+    axc = plt.subplot(gs[4:12, 100:101])
 else:
     print('Wrong transect name input')
 
@@ -435,7 +474,27 @@ for single_year in investigation_year.keys():
         vmax_plot=4.5        
     elif (investigation_year==CaseStudy3):
         start_transect=-47.9337
-        end_transect=-45.4912
+        end_transect=-46.5427
+        vmin_plot=-4.5
+        vmax_plot=4.5
+    elif (investigation_year==CaseStudy4):
+        start_transect=-67.0078#lower transect: -67.0078 #upper transect: -65.81
+        end_transect=-65.81#lower transect: -65.81 # upper transect: -64.8225
+        vmin_plot=-4.5
+        vmax_plot=4.5
+    elif (investigation_year==CaseStudy5):
+        start_transect=-61.2749
+        end_transect=-58.9
+        vmin_plot=-4.5
+        vmax_plot=4.5      
+    elif (investigation_year==CaseStudy6):
+        start_transect=-25.9
+        end_transect=-24.0842
+        vmin_plot=-4.5
+        vmax_plot=4.5
+    elif (investigation_year==CaseStudy7):
+        start_transect=-34.982#-33.5882
+        end_transect=-32.1472#-32.5967
         vmin_plot=-4.5
         vmax_plot=4.5
     else:
@@ -493,8 +552,10 @@ for single_year in investigation_year.keys():
     #Set yticklabels
     ax_plot.set_yticks([0,10,20])
     ax_plot.set_yticklabels(['0','10',''])
+    
     #Set transect limits
     ax_plot.set_xlim(start_transect,end_transect)
+    
     #Get rid of xticklabels
     ax_plot.set_xticklabels([])
     
@@ -504,11 +565,13 @@ for single_year in investigation_year.keys():
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
     ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=100,color=my_pal[str(single_year)])#color='black')
+    
     '''
     #Store the coordinates of displayed transect
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
     lon_transet=np.append(lon_transet,dataframe[str(single_year)]['lon_3413'][index_within_bounds])
     '''
+
 #Display the map
 if (investigation_year==CaseStudy1):
     year_limit=2017
@@ -516,6 +579,14 @@ elif (investigation_year==CaseStudy2):
     year_limit=2014
 elif (investigation_year==CaseStudy3):
     year_limit=2017
+elif (investigation_year==CaseStudy4):
+    year_limit=2017
+elif (investigation_year==CaseStudy5):
+    year_limit=2011
+elif (investigation_year==CaseStudy6):
+    year_limit=2017
+elif (investigation_year==CaseStudy7):
+    year_limit=2003
 else:
     print('Year not known')
     pdb.set_trace()
@@ -540,6 +611,7 @@ y_coord_within_bounds=y_coord_cum_raster[logical_y_coord_within_bounds]
 extent_cum_raster = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
 #Display cumulative raster image
 cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=0) #NDWI
+
 #Set xlims
 ax_map.set_xlim(x_min,x_max)
 
@@ -556,14 +628,14 @@ for single_year in range(2002,2020):
     
     #If no data before this year, continue
     if (single_year<list_holding_data[0]):
-        print('No data in ',str(single_year))
+        print('No data in',str(single_year))
         continue
     
     print(single_year)
     
     #Select data of the desired year
     points_Emax_single_year=points_Emax[points_Emax.year==single_year]
-        
+    
     '''
     #Reset clean raster
     cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count+1) #NDWI
@@ -583,7 +655,7 @@ for single_year in range(2002,2020):
         year_list=list_holding_data[list_holding_data<=single_year]
         year_transect=np.max(year_list).astype(int)
         print('Chosen year:', str(year_transect))
-
+    
     #Create upper and lower line around chosen transect to extract Emax points
     index_within_bounds_transect=np.logical_and(dataframe[str(year_transect)]['lon_appended']>=start_transect,dataframe[str(year_transect)]['lon_appended']<=end_transect)
     upper_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]+1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
@@ -597,6 +669,7 @@ for single_year in range(2002,2020):
     ax_map.plot(lower_transect_lim['lon_3413_transect'],lower_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
     ############################# TO COMMENT LATER ON #############################
     '''
+    
     ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
     #Upper and lower max as tuples
     upper_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in upper_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
@@ -611,10 +684,12 @@ for single_year in range(2002,2020):
     #Create a polygon for Emax extraction
     polygon_Emax_extraction=Polygon([*list(line_upper_transect.coords),*list(line_lower_transect.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
     
+    '''
     #Create polygon patch of the polygon above
     plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=count+1,edgecolor='red',facecolor='none')
     #Display plot_poylgon_Emax_extraction
     ax_map.add_patch(plot_poylgon_Emax_extraction)
+    '''
     
     #Convert polygon of polygon_Emax_extraction into a geopandas dataframe
     polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_Emax_extraction]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
@@ -636,7 +711,7 @@ for single_year in range(2002,2020):
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     
     ###########################################################################
-    ### After a quick look at kept best Enax point for each year with the   ###
+    ### After a quick look at kept best Emax point for each year with the   ###
     ### method closest, I come to the conclusion that sometimes the closest ###
     ### Emax point is best, sometimes the highest Emax point is best to     ###
     ### relate the actual Emax. Hence, I keep the closest Emax point and    ###
@@ -709,27 +784,34 @@ for single_year in range(2002,2020):
     count=count+2
     #pdb.set_trace()
 
-###################### From Tedstone et al., 2022 #####################
-#from plot_map_decadal_change.py
-gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[67.6,67.65], x_inline=False, y_inline=False,linewidth=0.5)
-###################### From Tedstone et al., 2022 #####################
-
-if (investigation_year==CaseStudy2):
-    ax9.set_ylabel('Depth [m]')
-    ax9.set_yticklabels(['0','10','20'])
-    ticks_through=ax9.get_xticks()
-    year_ticks=2014
-    ax_tick_plot=ax9
-    ax_top=ax2
-    
-elif (investigation_year==CaseStudy1):
+if (investigation_year==CaseStudy1):
     ax4.set_ylabel('Depth [m]')
     ax8.set_yticklabels(['0','10','20'])
     ticks_through=ax8.get_xticks()
     year_ticks=2017
     ax_tick_plot=ax8
     ax_top=ax1
+    ax_map.set_title('Case study 1')
+    ax_top.set_title('Case study 1')
 
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[66.05,66.10], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+elif (investigation_year==CaseStudy2):
+    ax9.set_ylabel('Depth [m]')
+    ax9.set_yticklabels(['0','10','20'])
+    ticks_through=ax9.get_xticks()
+    year_ticks=2014
+    ax_tick_plot=ax9
+    ax_top=ax2
+    ax_map.set_title('Case study 2')
+    ax_top.set_title('Case study 2')
+
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-46,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
 elif (investigation_year==CaseStudy3):
     ax4.set_ylabel('Depth [m]')
     ax8.set_yticklabels(['0','10','20'])
@@ -737,6 +819,74 @@ elif (investigation_year==CaseStudy3):
     year_ticks=2017
     ax_tick_plot=ax8
     ax_top=ax1
+    ax_map.set_title('Case study 3')
+    ax_top.set_title('Case study 3')
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-46.5,-45.5], ylocs=[68.5,68], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+elif (investigation_year==CaseStudy4):
+    ax4.set_ylabel('Depth [m]')
+    ax8.set_yticklabels(['0','10','20'])
+    ticks_through=ax8.get_xticks()
+    year_ticks=2017
+    ax_tick_plot=ax8
+    ax_top=ax1
+    ax_map.set_title('Case study 4')
+    ax_top.set_title('Case study 4')
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-66,-67], ylocs=[76.7,76.8], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+
+elif (investigation_year==CaseStudy5):
+    ax4.set_ylabel('Depth [m]')
+    ax5.set_yticklabels(['0','10','20'])
+    ticks_through=ax5.get_xticks()
+    year_ticks=2012
+    ax_tick_plot=ax5
+    ax_top=ax2
+    ax_map.set_title('Case study 5')
+    ax_top.set_title('Case study 5')
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-50,-60,-61], ylocs=[79.5,80], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+
+
+elif (investigation_year==CaseStudy6):
+    ax7.set_ylabel('Depth [m]')
+    ax8.set_yticklabels(['0','10','20'])
+    ticks_through=ax8.get_xticks()
+    year_ticks=2017
+    ax_tick_plot=ax8
+    ax_top=ax1
+    ax_map.set_title('Case study 6')
+    ax_top.set_title('Case study 6')
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-61,-60], ylocs=[79.6,79.7], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+
+elif (investigation_year==CaseStudy7):
+    ax3.set_ylabel('Depth [m]')
+    ax8.set_yticklabels(['0','10','20'])
+    ticks_through=ax8.get_xticks()
+    year_ticks=2017
+    ax_tick_plot=ax8
+    ax_top=ax2
+    ax_map.set_title('Case study 7')
+    ax_top.set_title('Case study 7')
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-61,-60], ylocs=[79.6,79.7], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+
 else:
     print('Wrong transect name input')
 
@@ -755,11 +905,12 @@ for indiv_tick in ticks_through:
         plot_dist=np.append(plot_dist,dataframe[str(year_ticks)]['distances'][index_min]/1000-dataframe[str(year_ticks)]['distances'][np.argmin(np.abs(dataframe[str(year_ticks)]['lon_appended']-start_transect))]/1000)
 
 
+scale_bar(ax_map, (0.9, 0.4), 10, 3,0)# axis, location (x,y), length, linewidth, rotation of text
+#by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
+
 ax_tick_plot.xaxis.set_ticks_position('bottom') 
 ax_tick_plot.set_xticklabels(np.round(plot_dist).astype(int))
 ax_tick_plot.set_xlabel('Distance [km]')
-
-ax_top.set_title('Case study 2')
 
 figManager = plt.get_current_fig_manager()
 figManager.window.showMaximized()
@@ -769,7 +920,7 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/Radargrams_Emax_highest_map.png',dpi=300,bbox_inches='tight')
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS4_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
