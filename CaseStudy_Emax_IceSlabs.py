@@ -58,6 +58,8 @@ from scalebar import scale_bar
 # self.C / (1.0 + (coefficient*density_kg_m3/1000.0))
 v= 299792458
 
+desired_map='NDWI'#'master_map' or 'NDWI'
+
 #Define paths to data
 path_data_Jullien='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/i_out_from_IceBridgeGPR_Manager_v2.py/pickles_and_images/'
 path_data='C:/Users/jullienn/Documents/working_environment/iceslabs_MacFerrin/data/'
@@ -98,7 +100,7 @@ trafic_light=pd.read_excel(path_2002_2003_slabs+'icelenses_22022020.xls', sheet_
 
 #Herebelow are all the potential overal between 2002-2003 with 2010-2018
 
-#Case study 1
+#Case study 1 (Fig 3.f in paper 1)
 CaseStudy1={2002:['jun04_02proc_4.mat'],
             2003:['may12_03_36_aggregated'],
             2010:['Data_20100513_01_001.mat','Data_20100513_01_002.mat'],
@@ -109,7 +111,7 @@ CaseStudy1={2002:['jun04_02proc_4.mat'],
             2017:['Data_20170508_02_165.mat','Data_20170508_02_166.mat','Data_20170508_02_167.mat','Data_20170508_02_168.mat','Data_20170508_02_169.mat','Data_20170508_02_170.mat','Data_20170508_02_171.mat'],#2017 is reversed
             2018:'empty'}
 
-#Case study 2
+#Case study 2 (Fig. 3d in paper 1)
 CaseStudy2={2002:'empty',
             2003:['may12_03_1_aggregated','may12_03_2_aggregated'],
             2010:['Data_20100508_01_114.mat','Data_20100508_01_115.mat'],#2010 is reversed
@@ -120,7 +122,7 @@ CaseStudy2={2002:'empty',
             2017:['Data_20170422_01_168.mat','Data_20170422_01_169.mat','Data_20170422_01_170.mat','Data_20170422_01_171.mat'],#2017 is reversed
             2018:['Data_20180427_01_170.mat','Data_20180427_01_171.mat','Data_20180427_01_172.mat']}#2018 is reversed
 
-#Case study 3 - this is Fig. 3c. For this one, it seems that we should enlarge the buffer where to extract Emax, and keep only high retrievals, not the closest ones.
+#Case study 3 (Fig. 3c in paper 1). For this one, it seems that we should enlarge the buffer where to extract Emax, and keep only high retrievals, not the closest ones.
 CaseStudy3={2002:['jun04_02proc_52.mat','jun04_02proc_53.mat'],
             2003:'empty',
             2010:['Data_20100507_01_008.mat','Data_20100507_01_009.mat','Data_20100507_01_010.mat'],
@@ -192,8 +194,20 @@ CaseStudy7={2002:'empty',
             2014:'empty',
             2017:['Data_20170422_01_138.mat','Data_20170422_01_139.mat'],
             2018:'empty'}
+
+#Case study FS - closest overlapping 2003 with 2010-2018 data. However, the transects seem to offset to me to be studied.
+CaseStudyFS={2002:'empty',
+            2003:['may09_03_1_aggregated'],
+            2010:'empty',
+            2011:'empty',
+            2012:['Data_20120423_01_006.mat','Data_20120423_01_007.mat'],
+            2013:'empty',
+            2014:'empty',
+            2017:['Data_20170505_02_008.mat','Data_20170505_02_009.mat','Data_20170505_02_010.mat'],
+            2018:'empty'}
+
 #Define the panel to study
-investigation_year=CaseStudy1
+investigation_year=CaseStudy2
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -225,7 +239,7 @@ elif (investigation_year==CaseStudy2):
     ax7 = plt.subplot(gs[20:24, 0:100])
     ax8 = plt.subplot(gs[24:28, 0:100])
     ax9 = plt.subplot(gs[28:32, 0:100])
-    axc = plt.subplot(gs[0:32, 100:101])
+    axc = plt.subplot(gs[4:32, 100:101])
     
 elif (investigation_year==CaseStudy3):
     ax1 = plt.subplot(gs[0:4, 0:100])
@@ -258,6 +272,12 @@ elif (investigation_year==CaseStudy6):
 elif (investigation_year==CaseStudy7):
     ax2 = plt.subplot(gs[0:4, 0:100])
     ax3 = plt.subplot(gs[4:8, 0:100])
+    ax8 = plt.subplot(gs[8:12, 0:100])
+    axc = plt.subplot(gs[4:12, 100:101])
+    
+elif (investigation_year==CaseStudyFS):
+    ax2 = plt.subplot(gs[0:4, 0:100])
+    ax5 = plt.subplot(gs[4:8, 0:100])
     ax8 = plt.subplot(gs[8:12, 0:100])
     axc = plt.subplot(gs[4:12, 100:101])
 else:
@@ -437,20 +457,6 @@ Boxes_Tedstone2022=gpd.read_file(path_data_switchdrive+'Boxes_Tedstone2022/boxes
 #Sort Boxes_Tedstone2022 as a function of FID
 Boxes_Tedstone2022=Boxes_Tedstone2022.sort_values(by=['FID'],ascending=True)#from https://sparkbyexamples.com/pandas/pandas-sort-dataframe-by-multiple-columns/
 
-#Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
-#This section of displaying sat data was coding using tips from
-#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
-#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
-import rioxarray as rxr
-path_cum_raster='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/master_maps/'
-#Load cumulative raster data for display
-cum_raster = rxr.open_rasterio(path_cum_raster+'master_map_GrIS_mean.vrt',
-                              masked=True).squeeze() #No need to reproject satelite image
-#Extract x and y coordinates of cumulative raster image
-x_coord_cum_raster=np.asarray(cum_raster.x)
-y_coord_cum_raster=np.asarray(cum_raster.y)
-### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
-
 #For storing transect coordinates
 lat_transet=[]
 lon_transet=[]
@@ -497,6 +503,12 @@ for single_year in investigation_year.keys():
         end_transect=-32.1472#-32.5967
         vmin_plot=-4.5
         vmax_plot=4.5
+    elif (investigation_year==CaseStudyFS):
+        start_transect=-47.7728
+        end_transect=-46.4053
+        vmin_plot=-4.5
+        vmax_plot=4.5
+        
     else:
         print('Wrong transect name input')
     
@@ -601,16 +613,49 @@ x_max=dataframe[str(year_limit)]['lon_3413'][index_end_map]
 y_min=dataframe[str(year_limit)]['lat_3413'][index_start_map]-5e3
 y_max=dataframe[str(year_limit)]['lat_3413'][index_end_map]+5e3
 
+#Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+import rioxarray as rxr
+
+if (desired_map=='NDWI'):
+    desired_year=2019
+    path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'
+    #Load NDWI data for display
+    MapPlot = rxr.open_rasterio(path_NDWI+'NDWI_p10_'+str(desired_year)+'.vrt',
+                                  masked=True).squeeze() #No need to reproject satelite image
+    vlim_min=0
+    vlim_max=0.3
+    
+elif (desired_map=='master_map'):
+    #Load hydrological master map from Tedstone and Machuguth (2022)
+    path_CumHydroMap='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/master_maps/'
+    #Load master_maps data for display
+    MapPlot = rxr.open_rasterio(path_CumHydroMap+'master_map_GrIS_mean.vrt',
+                                  masked=True).squeeze() #No need to reproject satelite image
+    vlim_min=0
+    vlim_max=150
+    
+else:
+    print('Enter a correct map name!')
+    pdb.set_trace()
+
+#Extract x and y coordinates of image
+x_coord_MapPlot=np.asarray(MapPlot.x)
+y_coord_MapPlot=np.asarray(MapPlot.y)
+### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
+
 #Extract coordinates ofcumulative raster within Emaxs bounds
-logical_x_coord_within_bounds=np.logical_and(x_coord_cum_raster>=x_min,x_coord_cum_raster<=x_max)
-x_coord_within_bounds=x_coord_cum_raster[logical_x_coord_within_bounds]
-logical_y_coord_within_bounds=np.logical_and(y_coord_cum_raster>=y_min,y_coord_cum_raster<=y_max)
-y_coord_within_bounds=y_coord_cum_raster[logical_y_coord_within_bounds]
+logical_x_coord_within_bounds=np.logical_and(x_coord_MapPlot>=x_min,x_coord_MapPlot<=x_max)
+x_coord_within_bounds=x_coord_MapPlot[logical_x_coord_within_bounds]
+logical_y_coord_within_bounds=np.logical_and(y_coord_MapPlot>=y_min,y_coord_MapPlot<=y_max)
+y_coord_within_bounds=y_coord_MapPlot[logical_y_coord_within_bounds]
 
 #Define extents based on the bounds
-extent_cum_raster = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
-#Display cumulative raster image
-cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=0) #NDWI
+extent_MapPlot = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+#Display image
+cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',vmin=vlim_min,vmax=vlim_max,zorder=0)
 
 #Set xlims
 ax_map.set_xlim(x_min,x_max)
@@ -623,6 +668,7 @@ list_holding_data=[]
 for holding_data in investigation_year.keys():
     if (investigation_year[holding_data]!='empty'):
         list_holding_data=np.append(list_holding_data,holding_data)
+pdb.set_trace()
 
 #Display Emax
 for single_year in range(2002,2021):
@@ -637,15 +683,19 @@ for single_year in range(2002,2021):
     #Select data of the desired year
     points_Emax_single_year=points_Emax[points_Emax.year==single_year]
     
-    '''
     #Reset clean raster
-    cbar=ax_map.imshow(cum_raster[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_cum_raster, transform=crs, origin='upper', cmap='viridis',vmin=0,vmax=250,zorder=count+1) #NDWI
+    cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',vmin=vlim_min,vmax=vlim_max,zorder=count+1) #NDWI
+    
+    #Display year
+    ax_map.set_title(str(single_year))
     
     #Display all Emax points of this year
     ax_map.scatter(points_Emax_single_year['x'],points_Emax_single_year['y'],color='black',s=5,zorder=count+1)
+    
     #Set xlims
     ax_map.set_xlim(x_min,x_max)
-    '''
+    ax_map.set_ylim(y_min,y_max)
+    
     #Select the transect around which to perform Emax extraction
     if (single_year in list_holding_data):
         #We have a transect on this particular year, select it
@@ -691,13 +741,16 @@ for single_year in range(2002,2021):
     #Display plot_poylgon_Emax_extraction
     ax_map.add_patch(plot_poylgon_Emax_extraction)
     '''
-    
+        
     #Convert polygon of polygon_Emax_extraction into a geopandas dataframe
     polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_Emax_extraction]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Intersection between points_Emax_single_year and polygon_Emax_extraction_gpd, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
     Emax_extraction = gpd.sjoin(points_Emax_single_year, polygon_Emax_extraction_gpd, op='within')
     
     if (len(Emax_extraction)==0):
+        #Save figure
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1/CS1_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
+        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         count=count+2
         continue
     
@@ -749,10 +802,13 @@ for single_year in range(2002,2021):
 
     #pdb.set_trace()
     #Display the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],c=my_pal[str(single_year)],s=15,zorder=count+1)#Display this easternmost point
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=15,zorder=count+1,c='red')#c=my_pal[str(single_year)])#Display this easternmost point
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
-    
+    '''
     if (len(best_Emax_points)==0):
+        #Save figure
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1/CS1_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
+        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         count=count+2
         continue
     else:
@@ -781,9 +837,13 @@ for single_year in range(2002,2021):
         else:
             print('Should not end up there')
             pdb.set_trace()
-    
+    '''
+    #Save figure
+    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS2/CS2_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
+    #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
     count=count+2
     #pdb.set_trace()
+pdb.set_trace()
 
 if (investigation_year==CaseStudy1):
     ax4.set_ylabel('Depth [m]')
@@ -921,7 +981,7 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1_NDWI_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
