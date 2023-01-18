@@ -207,7 +207,7 @@ CaseStudyFS={2002:'empty',
             2018:'empty'}
 
 #Define the panel to study
-investigation_year=CaseStudy2
+investigation_year=CaseStudy1
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -619,6 +619,7 @@ y_max=dataframe[str(year_limit)]['lat_3413'][index_end_map]+5e3
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 import rioxarray as rxr
 
+### ------------- This is from Greenland_Hydrology_Summary.py ------------- ###
 if (desired_map=='NDWI'):
     desired_year=2019
     path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'
@@ -640,6 +641,7 @@ elif (desired_map=='master_map'):
 else:
     print('Enter a correct map name!')
     pdb.set_trace()
+### ------------- This is from Greenland_Hydrology_Summary.py ------------- ###
 
 #Extract x and y coordinates of image
 x_coord_MapPlot=np.asarray(MapPlot.x)
@@ -668,7 +670,6 @@ list_holding_data=[]
 for holding_data in investigation_year.keys():
     if (investigation_year[holding_data]!='empty'):
         list_holding_data=np.append(list_holding_data,holding_data)
-pdb.set_trace()
 
 #Display Emax
 for single_year in range(2002,2021):
@@ -682,20 +683,18 @@ for single_year in range(2002,2021):
     
     #Select data of the desired year
     points_Emax_single_year=points_Emax[points_Emax.year==single_year]
-    
+    '''
+    #In case yearly map of Emax point are desired to be plotted
     #Reset clean raster
-    cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',vmin=vlim_min,vmax=vlim_max,zorder=count+1) #NDWI
-    
+    cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',vmin=vlim_min,vmax=vlim_max,zorder=count+1) #NDWI, this is from Greenland_Hydrology_Summary.py
     #Display year
     ax_map.set_title(str(single_year))
-    
     #Display all Emax points of this year
     ax_map.scatter(points_Emax_single_year['x'],points_Emax_single_year['y'],color='black',s=5,zorder=count+1)
-    
     #Set xlims
     ax_map.set_xlim(x_min,x_max)
     ax_map.set_ylim(y_min,y_max)
-    
+    '''
     #Select the transect around which to perform Emax extraction
     if (single_year in list_holding_data):
         #We have a transect on this particular year, select it
@@ -748,9 +747,12 @@ for single_year in range(2002,2021):
     Emax_extraction = gpd.sjoin(points_Emax_single_year, polygon_Emax_extraction_gpd, op='within')
     
     if (len(Emax_extraction)==0):
+        '''
+        #In case yearly map of Emax point are desired to be plotted
         #Save figure
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1/CS1_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+        '''
         count=count+2
         continue
     
@@ -802,13 +804,11 @@ for single_year in range(2002,2021):
 
     #pdb.set_trace()
     #Display the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=15,zorder=count+1,c='red')#c=my_pal[str(single_year)])#Display this easternmost point
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=15,zorder=count+1,c=my_pal[str(single_year)])#Display the best Emax points
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
-    '''
+    
+    ### In case yearly map of Emax point are desired to be plotted, comment this ###
     if (len(best_Emax_points)==0):
-        #Save figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1/CS1_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
-        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         count=count+2
         continue
     else:
@@ -837,13 +837,18 @@ for single_year in range(2002,2021):
         else:
             print('Should not end up there')
             pdb.set_trace()
+    ### In case yearly map of Emax point are desired to be plotted, comment this ###
+
     '''
+    #In case yearly map of Emax point are desired to be plotted
     #Save figure
-    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS2/CS2_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
+    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1/CS1_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    '''
     count=count+2
     #pdb.set_trace()
-pdb.set_trace()
+    
+#pdb.set_trace() #In case yearly map of Emax point are desired to be plotted, uncomment this
 
 if (investigation_year==CaseStudy1):
     ax4.set_ylabel('Depth [m]')
