@@ -76,6 +76,10 @@ my_pal = {'2002': '#08519c', '2003': '#4292c6', '2004': '#9ecae1', '2005': '#dee
           '2014': "#e6f5d0", '2015': '#a1d99b', '2016': '#41ab5d', '2017': "#006d2c",
           '2018': "#00441b", '2019': '#01665e', '2020': 'black'}
 
+from matplotlib.colors import  ListedColormap
+#Create a palette for traffic_light display
+traffic_light_cmap=ListedColormap(['purple','red','orange','green'],name='traffic_light_cmap') #This is from matplotlib help 'Creating Colormaps in Matplotlib'
+
 #Load Rignot et al., 2016 Greenland drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
@@ -294,12 +298,18 @@ for single_year in investigation_year.keys():
     
     print('Load data for year '+str(single_year))
     if (single_year in list([2002,2003])):
-
+        
         #Prepare transect matrix
         #radargram_20022003=pd.Series(dtype='float64')
         radargram_20022003=np.zeros((99,0)) #From https://stackoverflow.com/questions/55561608/append-array-in-for-loop
         lat_20022003=np.zeros(0) #From https://stackoverflow.com/questions/55561608/append-array-in-for-loop
         lon_20022003=np.zeros(0) #From https://stackoverflow.com/questions/55561608/append-array-in-for-loop
+        
+        #Set empty vector for transect lon, depth and color of ice lenses storing
+        lon_transect_lenses=[]
+        lat_transect_lenses=[]
+        depth_transect_lenses=[]
+        color_transect_lenses=[]
 
         for indiv_file_load in investigation_year[single_year]:
             
@@ -311,6 +321,7 @@ for single_year in investigation_year.keys():
             #Store data for the whole transect
             radargram_20022003=np.concatenate((radargram_20022003,L1_2002003['radar_slice_0_30m']),axis=1)
             
+            #Load lat/lon
             if (single_year==2002):
                 lat_store=L1_2002003['lat_3413']
                 lat_store.shape=(len(lat_store),)#from https://stackoverflow.com/questions/17869840/numpy-vector-n-1-dimension-n-dimension-conversion
@@ -322,13 +333,79 @@ for single_year in investigation_year.keys():
             else:
                 lat_20022003=np.concatenate((lat_20022003,L1_2002003['lat_3413']))
                 lon_20022003=np.concatenate((lon_20022003,L1_2002003['lon_3413']))
-        
+            
+            #Set empty vector for lon, depth and color of ice lenses storing
+            lon_lenses_indiv_file=[]
+            lat_lenses_indiv_file=[]
+            depth_lenses_indiv_file=[]
+            color_lenses_indiv_file=[]
+            
+            #Load 2002-2003 ice lenses identification      
+            ### This is from Fig1.py from paper 'Greenland Ice Slabs Thickening and Expansion ###
+            if (indiv_file_load in list(xls_icelenses.keys())):                
+                print(indiv_file_load+' hold ice lens!')
+                #This file have ice lenses in it: read the data:
+                df_temp=xls_icelenses[indiv_file_load]
+                df_colnames = list(df_temp.keys())
+                x_loc=[]
+                
+                #Trafic light information
+                df_trafic_light=trafic_light[indiv_file_load]
+                df_colnames_trafic_light = list(df_trafic_light.keys())
+                
+                for i in range (0,int(len(df_colnames)),2):
+                    x_vect=df_temp[df_colnames[i]]
+                    y_vect=df_temp[df_colnames[i+1]]
+                    #Load trafic light color
+                    trafic_light_indiv_color=df_colnames_trafic_light[i]
+                    #Define the color in which to display the ice lens
+                    if (trafic_light_indiv_color[0:3]=='gre'):
+                        color_to_display=1
+                    elif (trafic_light_indiv_color[0:3]=='ora'):
+                        color_to_display=0
+                    elif (trafic_light_indiv_color[0:3]=='red'):
+                        color_to_display=-1
+                    elif (trafic_light_indiv_color[0:3]=='pur'):
+                        color_to_display=2
+                    else:
+                        print('The color is not known!')
+                    #Convert from pixel space to geographical referenced space
+                    #1. Get rid of NaNs and transform into int
+                    x_vect=x_vect[~np.isnan(x_vect)].astype(int)
+                    y_vect=y_vect[~np.isnan(y_vect)].astype(int)
+                    #If identification out of radargram, pick the maximum len of radargram
+                    x_vect[x_vect>(L1_2002003['radar_slice_0_30m'].shape[1]-1)]=(L1_2002003['radar_slice_0_30m'].shape[1]-1)
+                    #If data deeper than maximum depth, pick the maximum depth
+                    y_vect[y_vect>(len(L1_2002003['depths'])-1)]=(len(L1_2002003['depths'])-1)
+                    #2. Extract latitude, longitude and depth
+                    lon_lenses=L1_2002003['lon_3413'][x_vect]
+                    lat_lenses=L1_2002003['lat_3413'][x_vect]
+                    depth_lenses=L1_2002003['depths'][y_vect]
+                    #3. Extract the colour code
+                    color_lenses=np.ones(len(lon_lenses))*color_to_display
+                    #4. Append data
+                    lon_lenses_indiv_file=np.append(lon_lenses_indiv_file,lon_lenses)
+                    lat_lenses_indiv_file=np.append(lat_lenses_indiv_file,lat_lenses)
+                    depth_lenses_indiv_file=np.append(depth_lenses_indiv_file,depth_lenses)
+                    color_lenses_indiv_file=np.append(color_lenses_indiv_file,color_lenses)
+
+            #Append individual file data to each other
+            lon_transect_lenses=np.append(lon_transect_lenses,lon_lenses_indiv_file)
+            lat_transect_lenses=np.append(lat_transect_lenses,lat_lenses_indiv_file)
+            depth_transect_lenses=np.append(depth_transect_lenses,depth_lenses_indiv_file)
+            color_transect_lenses=np.append(color_transect_lenses,color_lenses_indiv_file)
+            ### This is from Fig1.py from paper 'Greenland Ice Slabs Thickening and Expansion ###
+                    
         #If from low to high elevations, fliplr
         if (np.sum(np.diff(lon_20022003)<0)):
             print(single_year,' is reversed')
             radargram_20022003=np.fliplr(radargram_20022003)
             lat_20022003=np.flipud(lat_20022003)
             lon_20022003=np.flipud(lon_20022003)
+            lon_transect_lenses=np.flipud(lon_transect_lenses)
+            lat_transect_lenses=np.flipud(lat_transect_lenses)
+            depth_transect_lenses=np.flipud(depth_transect_lenses)
+            color_transect_lenses=np.flipud(color_transect_lenses)
 
         #Calculate distances
         distances_with_start_transect=compute_distances(lon_20022003,lat_20022003)
@@ -340,6 +417,12 @@ for single_year in investigation_year.keys():
         lon_appended=points[0]
         lat_appended=points[1]
         
+        #Convert lon_transect_lenses into EPSG:4326
+        #Transform the coordinates from EPSG:3413 to EPSG:4326
+        #Example from: https://pyproj4.github.io/pyproj/stable/examples.html
+        points_lenses=transformer_3413_to_4326.transform(np.array(lon_transect_lenses),np.array(lat_transect_lenses))
+        lon_transect_4326_lenses=points_lenses[0]
+        
         #Store into a dictionnary:
         dataframe[str(single_year)]={'lat_appended':lat_appended,
                                      'lon_appended':lon_appended,
@@ -347,7 +430,10 @@ for single_year in investigation_year.keys():
                                      'lon_3413':lon_20022003,
                                      'distances':distances_with_start_transect,
                                      'depth':L1_2002003['depths'],
-                                     'radargram_30m':radargram_20022003}
+                                     'radargram_30m':radargram_20022003,
+                                     'lon_transect_4326_lenses':lon_transect_4326_lenses,
+                                     'depth_transect_lenses':depth_transect_lenses,
+                                     'color_transect_lenses':color_transect_lenses}
     else:
         
         ###1. Load the depth corrected radargrams
@@ -549,14 +635,20 @@ for single_year in investigation_year.keys():
     X=dataframe[str(single_year)]['lon_appended']
     Y=np.arange(0,30,30/dataframe[str(single_year)]['radargram_30m'].shape[0])
     C=dataframe[str(single_year)]['radargram_30m']
-    
+        
     #plot data
     if ((single_year==2002)|(single_year==2003)):
         cb=ax_plot.pcolor(X, Y, C,cmap=plt.get_cmap('gray'),zorder=-1,vmin=np.percentile(C.flatten(),2.5), vmax=np.percentile(C.flatten(),97.5))
+        ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
+        #Display the 2002-2003 green ice lenses identification
+        ax_plot.scatter(dataframe[str(single_year)]['lon_transect_4326_lenses'],
+                        dataframe[str(single_year)]['depth_transect_lenses'],
+                        c=dataframe[str(single_year)]['color_transect_lenses'],
+                        cmap=traffic_light_cmap,vmin=-2,vmax=1,s=0.1)#add colour code!!
     else:
         cb=ax_plot.pcolor(X, Y, C,cmap=plt.get_cmap('gray'),zorder=-1,vmin=vmin_plot, vmax=vmax_plot)
-    
-    ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
+        ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
+
     #Activate ticks ylabel
     ax_plot.yaxis.tick_left()
     #Set lims
@@ -583,7 +675,7 @@ for single_year in investigation_year.keys():
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
     lon_transet=np.append(lon_transet,dataframe[str(single_year)]['lon_3413'][index_within_bounds])
     '''
-
+pdb.set_trace()
 #Display the map
 if (investigation_year==CaseStudy1):
     year_limit=2017
