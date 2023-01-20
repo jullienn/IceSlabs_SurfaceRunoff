@@ -676,6 +676,13 @@ for single_year in investigation_year.keys():
     lon_transet=np.append(lon_transet,dataframe[str(single_year)]['lon_3413'][index_within_bounds])
     '''
 pdb.set_trace()
+
+'''
+#In order to generate transect coordinates.
+Coordinates_CSFS=pd.DataFrame({'lon':dataframe['2017']['lon_appended'],'lat':dataframe['2017']['lat_appended']})
+Coordinates_CSFS.to_csv('C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/IceSlabs_And_Coordinates/Coordinates_CSFS.csv')
+'''
+
 #Display the map
 if (investigation_year==CaseStudy1):
     year_limit=2017
