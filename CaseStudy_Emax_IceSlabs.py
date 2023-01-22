@@ -211,7 +211,7 @@ CaseStudyFS={2002:'empty',
             2018:'empty'}
 
 #Define the panel to study
-investigation_year=CaseStudy1
+investigation_year=CaseStudy2
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
