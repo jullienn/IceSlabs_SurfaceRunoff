@@ -113,38 +113,6 @@ ax1.scatter(IceSlabsTransect['longitude_EPSG_3413'],IceSlabsTransect['latitude_E
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
 
-#3. Extract the SAR signal of the transect
-### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
-#https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
-import rasterio
-#Load SAR data
-path_SAR = path+'SAR/'+'ref_2019_2022_61_106_SWGrIS_20m-0000023296-0000000000.tif'
-SAR_RIO = rasterio.open(path_SAR)
-
-SAR_values=[]
-for index, row in Extraction_SAR_transect.iterrows():
-    #This is from https://gis.stackexchange.com/questions/190423/getting-pixel-values-at-single-point-using-rasterio
-    for val in SAR_RIO.sample([(row.lon_3413,row.lat_3413)]): 
-        #Calculate the corresponding SAR value
-        SAR_values=np.append(SAR_values,val)
-### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
-
-#Store the SAR values in the dataframe
-Extraction_SAR_transect['SAR']=SAR_values
-
-'''
-[print(val) for val in SAR_RIO.sample([(row.lon_3413,row.lat_3413)]) for index, row in Extraction_SAR_transect.iterrows()]
-
-[print(row.lon_3413,row.lat_3413) for index, row in Extraction_SAR_transect.iterrows()]
-
-df2_t = Extraction_SAR_transect.DataFrame({for val in SAR_RIO.sample([(row.lon_3413,row.lat_3413)]) for index, row in Extraction_SAR_transect.iterrows()})
-
-Extraction_SAR_transect.apply(SAR_RIO.sample([(Extraction_SAR_transect['lon_3413'], Extraction_SAR_transect['lat_3413'])]), axis=1)
-'''
-
-#4. Plot relationship SAR VS Ice slabs thickness
-Extraction_SAR_transect.plot.scatter(x='SAR',y='20m_ice_content_m')
-
 #3. Deal with oversampling issue
 ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
 from shapely.geometry import LineString
@@ -255,8 +223,6 @@ SAR_upsampled_clipped.plot(ax=ax_check_extraction,vmin=-12,vmax=-4)
 ax_check_extraction.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['radar_signal'],vmin=-12,vmax=-4)
 
 pdb.set_trace()
-#Drop the SAR column because it is related to the SAR extraction performed before. The column 'radar_signal' is the outcome of the join!
-pointInPolys=pointInPolys.drop(labels=['SAR'],axis='columns')
 
 #6. Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
 upsampled_SAR_and_IceSlabs=pointInPolys.groupby('index_right').mean()
@@ -277,6 +243,5 @@ fig = plt.figure()
 fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 ax4 = plt.subplot()
 ax4.scatter(upsampled_SAR_and_IceSlabs['radar_signal'],upsampled_SAR_and_IceSlabs['20m_ice_content_m'])
-
 
 #Display the ice slabs transect
