@@ -29,6 +29,8 @@ crs_proj4 = crs.proj4_init
 
 #Define considered transect
 IceSlabsTransect_list=['20180421_01_004_007']
+
+#Check the others dates whether the processing work!!
 '''
 IceSlabsTransect_list=['20180421_01_004_007','20180425_01_166_169','20180426_01_004_006',
                        '20180423_01_180_182','20180427_01_004_006','20180425_01_005_008',
@@ -79,7 +81,7 @@ f_20102018_high_RT3_masked.close
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 #Load SAR data
-SAR = rxr.open_rasterio(path+'SAR/'+'ref_2019_2022_61_106_SWGrIS_20m-0000023296-0000000000.tif',
+SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_west-0000000000-0000000000.tif',
                               masked=True).squeeze() #No need to reproject satelite image
 ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
 
@@ -118,6 +120,9 @@ SAR[logical_y_coord_within_bounds,logical_x_coord_within_bounds].plot(ax=ax_focu
 ax_focus.set_xlim(x_min,x_max)
 ax_focus.set_ylim(y_min,y_max)
 ax_focus.set_title('Proof of oversampling')
+
+pdb.set_trace()
+
 
 #From this by looking at logical_x_coord_within_bounds and logical_y_coord_within_bounds
 #I conclude that the offset is 1 along x, and 2 along y
@@ -171,7 +176,7 @@ ax_downsampled.imshow(SAR_upsampled, extent=extent_SAR_upsampled, transform=crs,
 ax_downsampled.set_xlim(-130600.50763509057, -128610.96548613739)
 ax_downsampled.set_ylim(-2525301.458871396, -2524707.022497623)
 '''
-pdb.set_trace()
+#pdb.set_trace()
 
 #Prepare plot
 fig = plt.figure()
@@ -338,7 +343,7 @@ SAR_upsampled_clipped.plot(ax=ax_check_centroid,edgecolor='black')
 SAR_grid_gpd.plot(ax=ax_check_centroid,alpha=0.2,edgecolor='red')
 #Display the centroid of each polygon
 ax_check_centroid.scatter(SAR_pd.x,SAR_pd.y,color='blue')
-pdb.set_trace()
+#pdb.set_trace()
 
 #5. Perform the intersection between each cell of the polygonized SAR data and Ice Slabs transect data
 ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
@@ -358,9 +363,9 @@ ax_check_extraction = plt.subplot(projection=crs)
 #Display the raster SAR upsampled
 SAR_upsampled_clipped.plot(ax=ax_check_extraction,vmin=-12,vmax=-4)
 #Display the extracted SAR signal
-ax_check_extraction.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['radar_signal'],vmin=-12,vmax=-4)
+ax_check_extraction.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['radar_signal'],vmin=-12,vmax=-4,edgecolor='black')
 
-pdb.set_trace()
+#pdb.set_trace()
 #Drop the SAR column because it is related to the SAR extraction performed before. The column 'radar_signal' is the outcome of the join!
 #Note that the values stores in 'radar_signal' and SAR are the same, which prooves that the upsampling is correct!
 pointInPolys=pointInPolys.drop(labels=['SAR'],axis='columns')
@@ -378,12 +383,12 @@ SAR_grid_gpd.plot(ax=ax_check_upsampling,edgecolor='black')
 ax_check_upsampling.scatter(upsampled_SAR_and_IceSlabs.lon_3413,upsampled_SAR_and_IceSlabs.lat_3413,c=upsampled_SAR_and_IceSlabs['20m_ice_content_m'],s=500,vmin=0,vmax=20)
 ax_check_upsampling.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['20m_ice_content_m'],vmin=0,vmax=20)
 
-#7. Display the upsampled radar signal strength with upsampled ice content
+#7. Plot relationship SAR VS Ice slabs thickness: display the oversampled and upsampled radar signal strength with upsampled ice content
 #Prepare plot
 fig = plt.figure()
 fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-ax4 = plt.subplot()
-ax4.scatter(upsampled_SAR_and_IceSlabs['radar_signal'],upsampled_SAR_and_IceSlabs['20m_ice_content_m'])
-
+fig, (ax_oversampled_SAR, ax_upsampled_SAR) = plt.subplots(1, 2)
+Extraction_SAR_transect.plot.scatter(x='SAR',y='20m_ice_content_m',ax=ax_oversampled_SAR)
+ax_upsampled_SAR.scatter(upsampled_SAR_and_IceSlabs['radar_signal'],upsampled_SAR_and_IceSlabs['20m_ice_content_m'])
 
 #Display the ice slabs transect
