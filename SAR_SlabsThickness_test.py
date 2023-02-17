@@ -88,6 +88,7 @@ SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_w
                               masked=True).squeeze() #No need to reproject satelite image
 ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
 
+
 ### -------------- Proof that SAR data are not oversampled anymore -------------- ###
 #Extract x and y coordinates of SAR image
 x_coord_SAR=np.asarray(SAR.x)
@@ -125,7 +126,13 @@ ax_focus.set_ylim(y_min,y_max)
 ax_focus.set_title('Check data are not oversampled anymore')
 ### -------------- Proof that SAR data are not oversampled anymore -------------- ###
 
+
 #2. Display SAR and transect
+#Select ice slabs data belonging to the list of interest
+Extraction_SAR_transect=df_2010_2018_high_RT3_masked[df_2010_2018_high_RT3_masked.Track_name.isin(IceSlabsTransect_list)]
+### !!! Keep in mind the df_2010_2018_high_RT3_masked dataset should be clipped
+### to the Jullien et al., 2023 ice slabs extent extent shapefile before the overall regression to be done !!!
+
 
 #Prepare plot
 fig = plt.figure()
@@ -135,27 +142,25 @@ ax1 = plt.subplot(projection=crs)
 #Display coastlines
 ax1.coastlines(edgecolor='black',linewidth=0.075)
 ### ---------- --This is from 'Greenland_Hydrology_Summary.py' ------------ ###
-
 #Display SAR image
 cbar=ax1.imshow(SAR, extent=extent_SAR, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
 
-#Select ice slabs data belonging to the list of interest
-Extraction_SAR_transect=df_2010_2018_high_RT3_masked[df_2010_2018_high_RT3_masked.Track_name.isin(IceSlabsTransect_list)]
-
-### !!! Keep in mind the df_2010_2018_high_RT3_masked dataset should be clipped
-### to the Jullien et al., 2023 ice slabs extent extent shapefile before the overall regression to be done !!!
-'''
 ax1.scatter(Extraction_SAR_transect['lon_3413'],
             Extraction_SAR_transect['lat_3413'],
             c=Extraction_SAR_transect['20m_ice_content_m'],zorder=3)
-'''
-'''
+
 #Display Ice Slabs transect
 ax1.scatter(IceSlabsTransect['longitude_EPSG_3413'],IceSlabsTransect['latitude_EPSG_3413'],c=IceSlabsTransect['latitude_EPSG_3413'])
-'''
+
 #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
+#Zoom to make sure the up-sampling do match well with original SAR data
+ax1.set_xlim(-95179, -94133)
+ax1.set_ylim(-2526058, -2524661)
+#Display reference point
+ax1.scatter(-94600.0,-2525000.0)
+ax1.set_title('Original raster')
 
 #3. Extract SAR values in the vicinity of the transect to reduce computation
 ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
@@ -169,8 +174,10 @@ buffered_transect_polygon=transect_line.buffer(200,cap_style=3)
 #Convert polygon of buffered_transect_polygon into a geopandas dataframe
 buffered_transect_polygon_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffered_transect_polygon]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
 
+
 #Display buffered_transect_polygon_gpd
 buffered_transect_polygon_gpd.plot(ax=ax1,facecolor='none',edgecolor='red',zorder=4)
+
 '''
 #Visualize
 #Create polygon patch of the polygon
@@ -179,13 +186,6 @@ plot_buffered_transect_polygon = PolygonPatch(buffered_transect_polygon,edgecolo
 ax1.add_patch(plot_buffered_transect_polygon)
 #ax1.scatter(Extraction_SAR_transect['lon_3413'],Extraction_SAR_transect['lat_3413'],color='black')
 '''
-#Zoom to make sure the up-sampling do match well with original SAR data
-ax1.set_xlim(-95179, -94133)
-ax1.set_ylim(-2526058, -2524661)
-
-#Display reference point
-ax1.scatter(-94600.0,-2525000.0)
-ax1.set_title('Original raster')
 
 #plt.savefig(path+'SAR/HV_2017_2018/original_raster.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -234,53 +234,13 @@ ax_check_centroid.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, 
 SAR_grid_gpd.plot(ax=ax_check_centroid,alpha=0.2,facecolor='none',edgecolor='red')
 #Display the centroid of each polygon
 ax_check_centroid.scatter(SAR_pd.x,SAR_pd.y,color='blue')
-
 #Display buffered_transect_polygon_gpd
 buffered_transect_polygon_gpd.plot(ax=ax_check_centroid,facecolor='none',edgecolor='red',zorder=4)
-
-#Set similar x and y limits
-ax_check_centroid.set_xlim(-95179, -94133)
-ax_check_centroid.set_ylim(-2526058, -2524661)
 ax_check_centroid.set_title('Clipped SAR data and corresponding vector grid')
-
-#Display a common point to make sure all good
-ax_check_centroid.scatter(-94600.0,-2525000.0)
-
-#Does this looks correct?? No it does not, it is offset!
+#This does not look correct, but I am convinced this is due to a matplotlib diplay
 #plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid.png',dpi=300,bbox_inches='tight')
 
-#5. Perform the intersection between each cell of the polygonized SAR data and Ice Slabs transect data
-### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
-#Convert Extraction_SAR_transect into a geopandas dataframe
-Extraction_SAR_transect_gpd = gpd.GeoDataFrame(Extraction_SAR_transect, geometry=gpd.points_from_xy(Extraction_SAR_transect.lon_3413, Extraction_SAR_transect.lat_3413), crs="EPSG:3413")
 
-#Perform the join between ice slabs thickness and SAR data
-pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predicate="within", how='left') #This is from https://www.matecdev.com/posts/point-in-polygon.html
-### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
-
-#Export the extracted values as csv to check in QGIS 
-pointInPolys.to_csv(path+'SAR/HV_2017_2018/IceSlabs_and_SAR_'++'.csv')
-
-
-#Check extraction is correct - It is not correct
-#Prepare plot
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_check_extraction_clipped = plt.subplot(projection=crs)
-#Display the raster SAR upsampled
-ax_check_extraction_clipped.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
-#Display the extracted SAR signal
-ax_check_extraction_clipped.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['radar_signal'],cmap='Blues',vmin=-4,vmax=0,edgecolor='black')
-#Set similar x and y limits
-ax_check_extraction_clipped.set_xlim(-95179, -94133)
-ax_check_extraction_clipped.set_ylim(-2526058, -2524661)
-#Display a common point to make sure all good
-ax_check_extraction_clipped.scatter(-94600.0,-2525000.0)
-ax_check_extraction_clipped.set_title('Clipped SAR data and corresponding extracted SAR signal')
-
-pdb.set_trace()
-#plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR.png',dpi=300,bbox_inches='tight')
 
 
 #3. Extract the SAR signal of the transect
@@ -300,6 +260,38 @@ for index, row in Extraction_SAR_transect.iterrows():
 ### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
 #Store the SAR values in the dataframe
 Extraction_SAR_transect['SAR']=SAR_values
+
+
+
+
+
+#5. Perform the intersection between each cell of the polygonized SAR data and Ice Slabs transect data
+### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
+#Convert Extraction_SAR_transect into a geopandas dataframe
+Extraction_SAR_transect_gpd = gpd.GeoDataFrame(Extraction_SAR_transect, geometry=gpd.points_from_xy(Extraction_SAR_transect.lon_3413, Extraction_SAR_transect.lat_3413), crs="EPSG:3413")
+
+#Perform the join between ice slabs thickness and SAR data
+pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predicate="within", how='left') #This is from https://www.matecdev.com/posts/point-in-polygon.html
+### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
+
+
+#Export the extracted values as csv to check in QGIS 
+pointInPolys.to_csv(path+'SAR/HV_2017_2018/IceSlabs_and_SAR_'+IceSlabsTransect_list[0]+'.csv')
+
+
+#Check extraction is correct
+#Prepare plot
+fig = plt.figure()
+fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+ax_check_extraction_clipped = plt.subplot(projection=crs)
+#Display the raster SAR upsampled
+ax_check_extraction_clipped.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
+#Display the extracted SAR signal
+ax_check_extraction_clipped.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['radar_signal'],cmap='Blues',vmin=-4,vmax=0,edgecolor='black')
+ax_check_extraction_clipped.set_title('Clipped SAR data and corresponding extracted SAR signal')
+#This does not look correct, but I am convinced this is due to a matplotlib diplay
+#plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR.png',dpi=300,bbox_inches='tight')
 
 '''
 #pdb.set_trace()
@@ -322,7 +314,6 @@ ax_check_upsampling.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointI
 
 #7. Plot relationship SAR VS Ice slabs thickness: display the oversampled and upsampled radar signal strength with upsampled ice content
 #Prepare plot
-fig = plt.figure()
 fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 fig, (ax_oversampled_SAR, ax_upsampled_SAR) = plt.subplots(1, 2)
 Extraction_SAR_transect.plot.scatter(x='SAR',y='20m_ice_content_m',ax=ax_oversampled_SAR)
