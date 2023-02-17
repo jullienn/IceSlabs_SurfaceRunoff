@@ -204,9 +204,9 @@ ax1.scatter(-94600.0,-2525000.0)
 ax1.set_title('Original raster')
 
 pdb.set_trace()
-'''
+
 plt.savefig(path+'SAR/HV_2017_2018/original_raster.png',dpi=300,bbox_inches='tight')
-'''
+
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
@@ -217,7 +217,7 @@ import rioxarray
 SAR_to_clip = rioxarray.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_west-0000000000-0000000000.tif',masked=True).squeeze()
 
 #Clip SAR data to the buffered polygon
-SAR_clipped = SAR_to_clip.rio.clip(buffered_transect_polygon_gpd.geometry.values, buffered_transect_polygon_gpd.crs, drop=True, invert=False)
+SAR_clipped = SAR_to_clip.rio.clip(buffered_transect_polygon_gpd.geometry.values, buffered_transect_polygon_gpd.crs, drop=False, invert=False)
 
 #Define extents of SAR_clipped image
 extent_SAR_clipped = [np.min(np.asarray(SAR_clipped.x)), np.max(np.asarray(SAR_clipped.x)),
@@ -239,15 +239,13 @@ ax_SAR_clipped.set_ylim(-2526058, -2524661)
 
 #Display a common point to make sure all good
 ax_SAR_clipped.scatter(-94600.0,-2525000.0)
-ax_SAR_clipped.set_title('Clipped SAR data - Drop is True')
-'''
 ax_SAR_clipped.set_title('Clipping by keeping the dimension of the original raster. NaNs outside clip')
-'''
+
 pdb.set_trace()
 
-plt.savefig(path+'SAR/HV_2017_2018/clipped_with_NaNs_raster_DropIsTrue.png',dpi=300,bbox_inches='tight')
+plt.savefig(path+'SAR/HV_2017_2018/clipped_with_NaNs_raster.png',dpi=300,bbox_inches='tight')
 
-'''
+
 #4. Vectorise the SAR raster
 #4.a. Select only data intersecting with the buffer
 #Select where no NaNs
@@ -285,13 +283,13 @@ ax_SAR_clipped_cleaned.set_title('Keep in matrix only clipped SAR data = Restric
 
 pdb.set_trace()
 plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster.png',dpi=300,bbox_inches='tight')
-'''
-######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
 
+######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
+'''
 x, y, radar_signal = SAR_clipped.x.values, SAR_clipped.y.values, SAR_clipped.values
 '''
 x, y, radar_signal = x_clipped, y_clipped, SAR_clipped[index_y,index_x].values
-'''
+
 x, y = np.meshgrid(x, y)
 x, y, radar_signal = x.flatten(), y.flatten(), radar_signal.flatten()
 
@@ -307,7 +305,7 @@ SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='eps
 ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
 
 #Export the grid to check on QGIS
-SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid_DropIsTrue.shp')
+SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid.shp')
 
 ############################## For drop is True ##############################
 
@@ -330,14 +328,12 @@ buffered_transect_polygon_gpd.plot(ax=ax_check_centroid,facecolor='none',edgecol
 #Set similar x and y limits
 ax_check_centroid.set_xlim(-95179, -94133)
 ax_check_centroid.set_ylim(-2526058, -2524661)
-ax_check_centroid.set_title('Clipped SAR data and corresponding vector grid - Drop is True')
+ax_check_centroid.set_title('Clipped SAR data and corresponding vector grid')
 #Does this looks correct?? No it does not, it is offset!
 pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid_DropIsTrue.png',dpi=300,bbox_inches='tight')
+plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid.png',dpi=300,bbox_inches='tight')
 ############################## For drop is True ##############################
 
-
-'''
 #Display centroid of each cell as well as the created polygons and make sure they are correct - looks all good to me!
 #Prepare plot
 fig = plt.figure()
@@ -360,35 +356,8 @@ ax_check_centroid.set_ylim(-2526058, -2524661)
 ax_check_centroid.set_title('Restricted clipped SAR data and corresponding vector grid')
 #Does this looks correct?? No it does not, it is offset!
 pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid_DropIsTrue.png',dpi=300,bbox_inches='tight')
-'''
-
-#Display centroid of each cell as well as the created polygons and make sure they are correct
-#Prepare plot
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_check_centroid_full = plt.subplot(projection=crs)
-#Display the raster SAR upsampled
-ax_check_centroid_full.imshow(SAR, extent=extent_SAR, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
-#Display the polygons corresponding to SAR upsampled
-SAR_grid_gpd.plot(ax=ax_check_centroid_full,alpha=0.2,facecolor='none',edgecolor='red')
-#Display the centroid of each polygon
-ax_check_centroid_full.scatter(SAR_pd.x,SAR_pd.y,color='blue')
-
-#Display buffered_transect_polygon_gpd
-buffered_transect_polygon_gpd.plot(ax=ax_check_centroid_full,facecolor='none',edgecolor='red',zorder=4)
-
-#Set similar x and y limits
-ax_check_centroid_full.set_xlim(-95179, -94133)
-ax_check_centroid_full.set_ylim(-2526058, -2524661)
-ax_check_centroid_full.set_title('Full SAR data and corresponding vector grid - Drop is True')
+plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid.png',dpi=300,bbox_inches='tight')
 #Does this looks correct?? No it does not, it is offset!
-
-pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_with_NaNs_raster_and_grid_DropIsTrue.png',dpi=300,bbox_inches='tight')
-
-
 
 #5. Perform the intersection between each cell of the polygonized SAR data and Ice Slabs transect data
 ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
@@ -400,7 +369,7 @@ pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predica
 ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
 
 #Export the extracted values as csv to check in QGIS 
-pointInPolys.to_csv(path+'SAR/HV_2017_2018/pointInPolys_DropIsTrue.csv')
+pointInPolys.to_csv(path+'SAR/HV_2017_2018/pointInPolys.csv')
 
 ############################## For drop is True ##############################
 
@@ -419,10 +388,10 @@ ax_check_extraction_clipped.set_xlim(-95179, -94133)
 ax_check_extraction_clipped.set_ylim(-2526058, -2524661)
 #Display a common point to make sure all good
 ax_check_extraction_clipped.scatter(-94600.0,-2525000.0)
-ax_check_extraction_clipped.set_title('Clipped SAR data and corresponding extracted SAR signal - Drop is True')
+ax_check_extraction_clipped.set_title('Clipped SAR data and corresponding extracted SAR signal')
 
 pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR_DropIsTrue.png',dpi=300,bbox_inches='tight')
+plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR.png',dpi=300,bbox_inches='tight')
 ############################## For drop is True ##############################
 
 
@@ -445,7 +414,7 @@ ax_check_extraction_clipped.scatter(-94600.0,-2525000.0)
 ax_check_extraction_clipped.set_title('Restricted clipped SAR data and corresponding extracted SAR signal')
 
 pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR_DropIsTrue.png',dpi=300,bbox_inches='tight')
+plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR.png',dpi=300,bbox_inches='tight')
 '''
 
 
