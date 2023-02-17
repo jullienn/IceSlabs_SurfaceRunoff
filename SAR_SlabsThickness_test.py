@@ -17,6 +17,9 @@ import matplotlib.gridspec as gridspec
 import rioxarray as rxr
 import cartopy.crs as ccrs
 from pyproj import Transformer
+from shapely.geometry import LineString
+from descartes import PolygonPatch
+import rioxarray
 
 #Define projection
 ###################### From Tedstone et al., 2022 #####################
@@ -85,6 +88,7 @@ SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_w
                               masked=True).squeeze() #No need to reproject satelite image
 ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
 
+### -------------- Proof that SAR data are not oversampled anymore -------------- ###
 #Extract x and y coordinates of SAR image
 x_coord_SAR=np.asarray(SAR.x)
 y_coord_SAR=np.asarray(SAR.y)
@@ -92,7 +96,6 @@ y_coord_SAR=np.asarray(SAR.y)
 #Define extents of SAR image
 extent_SAR = [np.min(x_coord_SAR), np.max(x_coord_SAR), np.min(y_coord_SAR), np.max(y_coord_SAR)]#[west limit, east limit., south limit, north limit]
 
-### -------------- Proof that SAR data are not oversampled anymore -------------- ###
 #Define bounds of Emaxs in this box
 x_min=-130600
 x_max=-128610
@@ -122,6 +125,8 @@ ax_focus.set_ylim(y_min,y_max)
 ax_focus.set_title('Check data are not oversampled anymore')
 ### -------------- Proof that SAR data are not oversampled anymore -------------- ###
 
+#2. Display SAR and transect
+
 #Prepare plot
 fig = plt.figure()
 fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -131,7 +136,6 @@ ax1 = plt.subplot(projection=crs)
 ax1.coastlines(edgecolor='black',linewidth=0.075)
 ### ---------- --This is from 'Greenland_Hydrology_Summary.py' ------------ ###
 
-#2. Display SAR and transect
 #Display SAR image
 cbar=ax1.imshow(SAR, extent=extent_SAR, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
 
@@ -153,28 +157,8 @@ ax1.scatter(IceSlabsTransect['longitude_EPSG_3413'],IceSlabsTransect['latitude_E
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
 
-#3. Extract the SAR signal of the transect
-### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
-#https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
-import rasterio
-#Load SAR data
-path_SAR = path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_west-0000000000-0000000000.tif'
-SAR_RIO = rasterio.open(path_SAR)
-
-SAR_values=[]
-for index, row in Extraction_SAR_transect.iterrows():
-    #This is from https://gis.stackexchange.com/questions/190423/getting-pixel-values-at-single-point-using-rasterio
-    for val in SAR_RIO.sample([(row.lon_3413,row.lat_3413)]): 
-        #Calculate the corresponding SAR value
-        SAR_values=np.append(SAR_values,val)
-### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
-#Store the SAR values in the dataframe
-Extraction_SAR_transect['SAR']=SAR_values
-
 #3. Extract SAR values in the vicinity of the transect to reduce computation
 ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
-from shapely.geometry import LineString
-from descartes import PolygonPatch
 
 #3.a. Transform transect of interest into a line
 Extraction_SAR_transect_tuple=[tuple(row[['lon_3413','lat_3413']]) for index, row in Extraction_SAR_transect.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
@@ -203,93 +187,22 @@ ax1.set_ylim(-2526058, -2524661)
 ax1.scatter(-94600.0,-2525000.0)
 ax1.set_title('Original raster')
 
-pdb.set_trace()
-
-plt.savefig(path+'SAR/HV_2017_2018/original_raster.png',dpi=300,bbox_inches='tight')
-
+#plt.savefig(path+'SAR/HV_2017_2018/original_raster.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
 
 #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html
-#Load data
-import rioxarray
-SAR_to_clip = rioxarray.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_west-0000000000-0000000000.tif',masked=True).squeeze()
-
 #Clip SAR data to the buffered polygon
-SAR_clipped = SAR_to_clip.rio.clip(buffered_transect_polygon_gpd.geometry.values, buffered_transect_polygon_gpd.crs, drop=False, invert=False)
+SAR_clipped = SAR.rio.clip(buffered_transect_polygon_gpd.geometry.values, buffered_transect_polygon_gpd.crs, drop=True, invert=False)
 
 #Define extents of SAR_clipped image
 extent_SAR_clipped = [np.min(np.asarray(SAR_clipped.x)), np.max(np.asarray(SAR_clipped.x)),
                       np.min(np.asarray(SAR_clipped.y)), np.max(np.asarray(SAR_clipped.y))]#[west limit, east limit., south limit, north limit]
 
-#prepare figure
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_SAR_clipped = plt.subplot(projection=crs)
-ax_SAR_clipped.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
-
-#Display buffered_transect_polygon_gpd
-buffered_transect_polygon_gpd.plot(ax=ax_SAR_clipped,facecolor='none',edgecolor='red',zorder=4)
-
-#Set similar x and y limits
-ax_SAR_clipped.set_xlim(-95179, -94133)
-ax_SAR_clipped.set_ylim(-2526058, -2524661)
-
-#Display a common point to make sure all good
-ax_SAR_clipped.scatter(-94600.0,-2525000.0)
-ax_SAR_clipped.set_title('Clipping by keeping the dimension of the original raster. NaNs outside clip')
-
-pdb.set_trace()
-
-plt.savefig(path+'SAR/HV_2017_2018/clipped_with_NaNs_raster.png',dpi=300,bbox_inches='tight')
-
-
 #4. Vectorise the SAR raster
-#4.a. Select only data intersecting with the buffer
-#Select where no NaNs
-coordinates_data=np.argwhere(~np.isnan(SAR_clipped.values))#thanks to https://stackoverflow.com/questions/67925064/how-to-identify-the-index-of-a-row-containing-only-nans-in-a-numpy-matrix
-
-#Select corresponding index coordinates
-index_y=np.unique(coordinates_data[:,0])
-index_x=np.unique(coordinates_data[:,1])
-
-#Select corresponding coordinates
-x_clipped=SAR_clipped.x.values[index_x]
-y_clipped=SAR_clipped.y.values[index_y]
-
-#Define extent_SAR_clipped_cleaned
-extent_SAR_clipped_cleaned=[np.min(x_clipped),np.max(x_clipped),
-                            np.min(y_clipped),np.max(y_clipped)]#[west limit, east limit., south limit, north limit]
-
-#prepare figure
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_SAR_clipped_cleaned = plt.subplot(projection=crs)
-ax_SAR_clipped_cleaned.imshow(SAR_clipped[index_y,index_x], extent=extent_SAR_clipped_cleaned, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
-
-#Display buffered_transect_polygon_gpd
-buffered_transect_polygon_gpd.plot(ax=ax_SAR_clipped_cleaned,facecolor='none',edgecolor='red',zorder=4)
-
-#Set similar x and y limits
-ax_SAR_clipped_cleaned.set_xlim(-95179, -94133)
-ax_SAR_clipped_cleaned.set_ylim(-2526058, -2524661)
-
-#Display a common point to make sure all good
-ax_SAR_clipped_cleaned.scatter(-94600.0,-2525000.0)
-ax_SAR_clipped_cleaned.set_title('Keep in matrix only clipped SAR data = Restricted clipped SAR data')
-
-pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster.png',dpi=300,bbox_inches='tight')
-
 ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
-'''
 x, y, radar_signal = SAR_clipped.x.values, SAR_clipped.y.values, SAR_clipped.values
-'''
-x, y, radar_signal = x_clipped, y_clipped, SAR_clipped[index_y,index_x].values
-
 x, y = np.meshgrid(x, y)
 x, y, radar_signal = x.flatten(), y.flatten(), radar_signal.flatten()
 
@@ -304,12 +217,12 @@ SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='eps
 #There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
 ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
 
+'''
 #Export the grid to check on QGIS
 SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid.shp')
+'''
 
-############################## For drop is True ##############################
-
-#Display centroid of each cell as well as the created polygons and make sure they are correct - looks all good to me!
+#Display centroid of each cell as well as the created polygons and make sure they are correct
 #Prepare plot
 fig = plt.figure()
 fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -329,35 +242,12 @@ buffered_transect_polygon_gpd.plot(ax=ax_check_centroid,facecolor='none',edgecol
 ax_check_centroid.set_xlim(-95179, -94133)
 ax_check_centroid.set_ylim(-2526058, -2524661)
 ax_check_centroid.set_title('Clipped SAR data and corresponding vector grid')
-#Does this looks correct?? No it does not, it is offset!
-pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid.png',dpi=300,bbox_inches='tight')
-############################## For drop is True ##############################
 
-#Display centroid of each cell as well as the created polygons and make sure they are correct - looks all good to me!
-#Prepare plot
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_check_centroid = plt.subplot(projection=crs)
-#Display the raster SAR upsampled
-ax_check_centroid.imshow(SAR_clipped[index_y,index_x], extent=extent_SAR_clipped_cleaned, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
-#Display the polygons corresponding to SAR upsampled
-SAR_grid_gpd.plot(ax=ax_check_centroid,alpha=0.2,facecolor='none',edgecolor='red')
-#Display the centroid of each polygon
-ax_check_centroid.scatter(SAR_pd.x,SAR_pd.y,color='blue')
+#Display a common point to make sure all good
+ax_check_centroid.scatter(-94600.0,-2525000.0)
 
-#Display buffered_transect_polygon_gpd
-buffered_transect_polygon_gpd.plot(ax=ax_check_centroid,facecolor='none',edgecolor='red',zorder=4)
-
-#Set similar x and y limits
-ax_check_centroid.set_xlim(-95179, -94133)
-ax_check_centroid.set_ylim(-2526058, -2524661)
-ax_check_centroid.set_title('Restricted clipped SAR data and corresponding vector grid')
 #Does this looks correct?? No it does not, it is offset!
-pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid.png',dpi=300,bbox_inches='tight')
-#Does this looks correct?? No it does not, it is offset!
+#plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_grid.png',dpi=300,bbox_inches='tight')
 
 #5. Perform the intersection between each cell of the polygonized SAR data and Ice Slabs transect data
 ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
@@ -369,9 +259,8 @@ pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predica
 ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
 
 #Export the extracted values as csv to check in QGIS 
-pointInPolys.to_csv(path+'SAR/HV_2017_2018/pointInPolys.csv')
+pointInPolys.to_csv(path+'SAR/HV_2017_2018/IceSlabs_and_SAR_'++'.csv')
 
-############################## For drop is True ##############################
 
 #Check extraction is correct - It is not correct
 #Prepare plot
@@ -391,66 +280,26 @@ ax_check_extraction_clipped.scatter(-94600.0,-2525000.0)
 ax_check_extraction_clipped.set_title('Clipped SAR data and corresponding extracted SAR signal')
 
 pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR.png',dpi=300,bbox_inches='tight')
-############################## For drop is True ##############################
+#plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR.png',dpi=300,bbox_inches='tight')
 
 
-'''
-#Check extraction is correct - It is not correct
-#Prepare plot
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_check_extraction_clipped = plt.subplot(projection=crs)
-#Display the raster SAR upsampled
-ax_check_extraction_clipped.imshow(SAR_clipped[index_y,index_x], extent=extent_SAR_clipped_cleaned, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
-#Display the extracted SAR signal
-ax_check_extraction_clipped.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['radar_signal'],cmap='Blues',vmin=-4,vmax=0,edgecolor='black')
-#Set similar x and y limits
-ax_check_extraction_clipped.set_xlim(-95179, -94133)
-ax_check_extraction_clipped.set_ylim(-2526058, -2524661)
-#Display a common point to make sure all good
-ax_check_extraction_clipped.scatter(-94600.0,-2525000.0)
-ax_check_extraction_clipped.set_title('Restricted clipped SAR data and corresponding extracted SAR signal')
+#3. Extract the SAR signal of the transect
+### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
+#https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
+import rasterio
+#Load SAR data
+path_SAR = path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_west-0000000000-0000000000.tif'
+SAR_RIO = rasterio.open(path_SAR)
 
-pdb.set_trace()
-plt.savefig(path+'SAR/HV_2017_2018/clipped_without_NaNs_raster_and_extract_SAR.png',dpi=300,bbox_inches='tight')
-'''
-
-
-#prepare figure
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_check_extraction_full = plt.subplot(projection=crs)
-ax_check_extraction_full.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=-4,vmax=0)
-
-#Display the extracted SAR signal
-ax_check_extraction_full.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['radar_signal'],cmap='Blues',vmin=-4,vmax=0,edgecolor='black')
-
-#Display buffered_transect_polygon_gpd
-buffered_transect_polygon_gpd.plot(ax=ax_check_extraction_full,facecolor='none',edgecolor='red',zorder=4)
-
-#Set similar x and y limits
-ax_check_extraction_full.set_xlim(-95179, -94133)
-ax_check_extraction_full.set_ylim(-2526058, -2524661)
-
-#Display a common point to make sure all good
-ax_check_extraction_full.scatter(-94600.0,-2525000.0)
-ax_check_extraction_full.set_title('Original SAR data and corresponding extracted SAR signal')
-
-#pdb.set_trace()
-
-
-
-
-
-
-
-
-
-
-
+SAR_values=[]
+for index, row in Extraction_SAR_transect.iterrows():
+    #This is from https://gis.stackexchange.com/questions/190423/getting-pixel-values-at-single-point-using-rasterio
+    for val in SAR_RIO.sample([(row.lon_3413,row.lat_3413)]): 
+        #Calculate the corresponding SAR value
+        SAR_values=np.append(SAR_values,val)
+### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
+#Store the SAR values in the dataframe
+Extraction_SAR_transect['SAR']=SAR_values
 
 '''
 #pdb.set_trace()
@@ -479,4 +328,3 @@ fig, (ax_oversampled_SAR, ax_upsampled_SAR) = plt.subplots(1, 2)
 Extraction_SAR_transect.plot.scatter(x='SAR',y='20m_ice_content_m',ax=ax_oversampled_SAR)
 ax_upsampled_SAR.scatter(upsampled_SAR_and_IceSlabs['radar_signal'],upsampled_SAR_and_IceSlabs['20m_ice_content_m'])
 
-#Display the ice slabs transect
