@@ -421,25 +421,85 @@ if (composite=='TRUE'):
             #Append the data to each other
             appended_df=pd.concat([appended_df,indiv_csv])
     
-    #Display the relationship
-    pdb.set_trace()
+    #Display some descriptive statistics
+    appended_df.describe()['radar_signal']
+    appended_df.describe()['20m_ice_content_m']
     
+    pdb.set_trace()
     #7. Plot the overall relationship SAR VS Ice slabs thickness
+    #Prepare plot
+    fig = plt.figure()
+    fig.set_size_inches(14, 8) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(10, 10)
+    gs.update(wspace=2)
+    gs.update(hspace=1)
+    ax_SAR = plt.subplot(gs[0:2, 0:8])
+    ax_scatter = plt.subplot(gs[2:10, 0:8])
+    ax_IceContent = plt.subplot(gs[2:10, 8:10])
+    
+    #Display
+    appended_df.plot.scatter(x='radar_signal',y='20m_ice_content_m',ax=ax_scatter)
+    ax_scatter.set_xlim(-18,1)
+    ax_scatter.set_ylim(-0.5,20.5)
+    ax_scatter.set_xlabel('SAR [dB]')
+    ax_scatter.set_ylabel('Ice content [m]')
+
+    ax_IceContent.hist(appended_df['20m_ice_content_m'],
+                       bins=np.arange(np.min(appended_df['20m_ice_content_m']),np.max(appended_df['20m_ice_content_m'])),
+                       density=True,orientation='horizontal')
+    ax_IceContent.set_xlabel('Density [ ]')
+    ax_IceContent.set_ylim(-0.5,20.5)
+
+    ax_SAR.hist(appended_df['radar_signal'],
+                bins=np.arange(np.min(appended_df['radar_signal']),np.max(appended_df['radar_signal'])),
+                density=True)
+    ax_SAR.set_xlim(-18,1)
+    ax_SAR.set_ylabel('Density [ ]')
+    fig.suptitle('Ice content and SAR')
+    
+    ###########################################################################
+    ###        Keep only where ice content is: 0 < ice content < 16m        ###
+    ###########################################################################
+    restricted_appended_df=appended_df.copy()
+    restricted_appended_df=restricted_appended_df[np.logical_and(restricted_appended_df['20m_ice_content_m']>0,restricted_appended_df['20m_ice_content_m']<16)]
     
     #Prepare plot
-    fig, (ax_overall) = plt.subplots(1, 1)
-    fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    fig = plt.figure()
+    fig.set_size_inches(14, 8) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(10, 10)
+    gs.update(wspace=2)
+    gs.update(hspace=1)
+    ax_SAR = plt.subplot(gs[0:2, 0:8])
+    ax_scatter = plt.subplot(gs[2:10, 0:8])
+    ax_IceContent = plt.subplot(gs[2:10, 8:10])
+    
     #Display
-    appended_df.plot.scatter(x='radar_signal',y='20m_ice_content_m',ax=ax_overall)
-    
-    #Improve axis
-    ax_overall.set_xlim(-6,0)
-    ax_overall.set_ylim(-0.5,20.5)
-    ax_overall.set_title('Ice content and SAR')
-    
-    #Display some descriptive statistics
-    
+    restricted_appended_df.plot.scatter(x='radar_signal',y='20m_ice_content_m',ax=ax_scatter)
+    ax_scatter.set_xlim(-18,1)
+    ax_scatter.set_ylim(-0.5,20.5)
+    ax_scatter.set_xlabel('SAR [dB]')
+    ax_scatter.set_ylabel('Ice content [m]')
 
+    ax_IceContent.hist(restricted_appended_df['20m_ice_content_m'],
+                       bins=np.arange(np.min(restricted_appended_df['20m_ice_content_m']),np.max(restricted_appended_df['20m_ice_content_m'])),
+                       density=True,orientation='horizontal')
+    ax_IceContent.set_xlabel('Density [ ]')
+    ax_IceContent.set_ylim(-0.5,20.5)
 
+    ax_SAR.hist(restricted_appended_df['radar_signal'],
+                bins=np.arange(np.min(restricted_appended_df['radar_signal']),np.max(restricted_appended_df['radar_signal'])),
+                density=True)
+    ax_SAR.set_xlim(-18,1)
+    ax_SAR.set_ylabel('Density [ ]')
+    fig.suptitle('0 < ice content < 16 m and SAR')
+    ###########################################################################
+    ###        Keep only where ice content is: 0 < ice content < 16m        ###
+    ###########################################################################
+    '''
+    import seaborn as sns
+    #Not working, probably because dataset too large
+    sns.displot(data=appended_df, x="radar_signal", col="20m_ice_content_m", kde=True)
+    sns.jointplot(data=appended_df, x="radar_signal", y="20m_ice_content_m")
+    '''
 
 
