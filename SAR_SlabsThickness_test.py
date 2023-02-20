@@ -5,6 +5,20 @@ Created on Wed Feb  8 09:46:44 2023
 @author: JullienN
 """
 
+def compute_distances(eastings,northings):
+    #This function is from plot_2002_2003.py, which was originally taken from MacFerrin et al., 2019
+    '''Compute the distance (in m here, not km as written originally) of the traces in the file.'''
+    # C = sqrt(A^2  + B^2)
+    distances = np.power(np.power((eastings[1:] - eastings[:-1]),2) + np.power((northings[1:] - northings[:-1]),2), 0.5)
+
+    #Calculate the cumsum of the distances
+    cumsum_distances=np.nancumsum(distances)
+    #Seeting the first value of the cumsum to be zero as it is the origin
+    return_cumsum_distances=np.zeros(eastings.shape[0])
+    return_cumsum_distances[1:eastings.shape[0]]=cumsum_distances
+
+    return return_cumsum_distances
+
 import pickle
 import scipy.io
 import numpy as np
@@ -118,18 +132,21 @@ for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high
     IceSlabsTransect['longitude_EPSG_3413']=points[0]
     IceSlabsTransect['latitude_EPSG_3413']=points[1]
     
+    #Compute distances
+    IceSlabsTransect['distances']=compute_distances(IceSlabsTransect['longitude_EPSG_3413'],IceSlabsTransect['latitude_EPSG_3413'])
+    
     if (fig_display=='TRUE'):
         #Display ice slabs transect
         fig = plt.figure()
         fig.set_size_inches(18, 2) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
         ax_radargram = plt.subplot()
-        ax_radargram.pcolor(IceSlabsTransect['longitude_EPSG_4326'],
+        ax_radargram.pcolor(IceSlabsTransect['distances']/1000,
                             IceSlabsTransect['depth'],
                             IceSlabsTransect['IceSlabs_Mask'],
                             cmap='gray_r')
         ax_radargram.invert_yaxis() #Invert the y axis = avoid using flipud.
-        ax_radargram.set_aspect(0.0075)
+        ax_radargram.set_aspect(0.1)
         ax_radargram.set_title('Ice slab transect')
     ### ------------ This is from 'Greenland_Hydrology_Summary.py' ------------ ###
     
@@ -318,19 +335,14 @@ for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high
     gs = gridspec.GridSpec(6, 10)
     gs.update(wspace=2)
     gs.update(hspace=1)
-    
     ax_oversampled_SAR = plt.subplot(gs[0:4, 0:5])
     ax_upsampled_SAR = plt.subplot(gs[0:4, 5:10])
     ax_radargram = plt.subplot(gs[4:6, 0:10])
     
-    '''
-    fig, (ax_oversampled_SAR, ax_upsampled_SAR) = plt.subplots(1, 2)
-    fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    '''
-    
+    #Display
     Extraction_SAR_transect.plot.scatter(x='SAR',y='20m_ice_content_m',ax=ax_oversampled_SAR)
     ax_upsampled_SAR.scatter(upsampled_SAR_and_IceSlabs['radar_signal'],upsampled_SAR_and_IceSlabs['20m_ice_content_m'])
-    ax_radargram.pcolor(IceSlabsTransect['longitude_EPSG_4326'],
+    ax_radargram.pcolor(IceSlabsTransect['distances']/1000,
                         IceSlabsTransect['depth'],
                         IceSlabsTransect['IceSlabs_Mask'],
                         cmap='gray_r')
@@ -340,24 +352,35 @@ for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high
     ax_upsampled_SAR.set_xlim(-6,0)
     ax_upsampled_SAR.set_ylim(-0.5,20.5)
     ax_radargram.invert_yaxis() #Invert the y axis = avoid using flipud.
-    ax_radargram.set_aspect(0.0075)
+    ax_radargram.set_aspect(0.1)
     ax_radargram.set_title('Ice slab transect')
     #Display titles
     ax_oversampled_SAR.set_title('Original sampling')
     ax_upsampled_SAR.set_title('Upsampled dataset')
     ax_radargram.set_title('Radargram')
-    ax_radargram.set_xlabel('Longitude [°]')
+    ax_radargram.set_xlabel('Distance [km]')
     ax_radargram.set_ylabel('Depth [m]')
     
     fig_indiv.suptitle(IceSlabsTransect_name)
-    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/images/'+IceSlabsTransect_name+'.png',dpi=300,bbox_inches='tight')
-    
+    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/images/'+IceSlabsTransect_name+'_new.png',dpi=300,bbox_inches='tight')
+        
     #Export the extracted values as csv
     pointInPolys.to_csv('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'+IceSlabsTransect_name+'.csv',
                         columns=['Track_name', 'lat', 'lon',
                                '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                'elevation', 'year', 'index_right', 'radar_signal'])
     
+
+
+#Once all csv files of SAR extraction are performed, display the overall reltionship using all the files
+
+#Loop over all the files
+
+#Open the individual file
+
+#Append the data to each other
+
+#Display the rerlationship
 
 
 
