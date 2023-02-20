@@ -120,7 +120,10 @@ if (fig_display=='TRUE'):
 #Loop over all the 2018 transects
 for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high_RT3_masked.year==2018].Track_name.unique()):
     print('Treating ',IceSlabsTransect_name)
-        
+    '''
+    if (IceSlabsTransect_name!='20180423_01_056_056'):
+        continue
+    '''    
     #Open transect file
     f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
     IceSlabsTransect = pickle.load(f_IceSlabsTransect)
@@ -211,11 +214,18 @@ for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high
     #plt.savefig(path+'SAR/HV_2017_2018/original_raster.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
     ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
-    
+    pdb.set_trace()
+
     #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html
     #Clip SAR data to the buffered polygon
-    SAR_clipped = SAR.rio.clip(buffered_transect_polygon_gpd.geometry.values, buffered_transect_polygon_gpd.crs, drop=True, invert=False)
     
+    try:#from https://docs.python.org/3/tutorial/errors.html
+        SAR_clipped = SAR.rio.clip(buffered_transect_polygon_gpd.geometry.values, buffered_transect_polygon_gpd.crs, drop=True, invert=False)
+        print("Transect intersection with SAR data worked well.")
+    except rioxarray.exceptions.NoDataInBounds:#From https://corteva.github.io/rioxarray/html/_modules/rioxarray/exceptions.html#NoDataInBounds
+        print("Transect do not intersect with SAR data. Interrupt and go to next transect ...")
+        continue
+        
     #Define extents of SAR_clipped image
     extent_SAR_clipped = [np.min(np.asarray(SAR_clipped.x)), np.max(np.asarray(SAR_clipped.x)),
                           np.min(np.asarray(SAR_clipped.y)), np.max(np.asarray(SAR_clipped.y))]#[west limit, east limit., south limit, north limit]
@@ -370,17 +380,28 @@ for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high
                                '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                'elevation', 'year', 'index_right', 'radar_signal'])
     
-
-
-#Once all csv files of SAR extraction are performed, display the overall reltionship using all the files
-
-#Loop over all the files
-
-#Open the individual file
-
-#Append the data to each other
-
-#Display the rerlationship
+pdb.set_trace()
+#Once all csv files of SAR extraction are performed, display the overall relationship using all the files
+if (composite=='TRUE'):
+    
+    #Path to data
+    path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'
+    
+    #List all the files in the folder
+    import os
+    
+    #Store files as a list
+    list_composite=os.listdir(path_csv_SAR_VS_IceContent) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
+    
+    #Loop over all the files
+    
+    #Open the individual file
+    
+    #C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'+IceSlabsTransect_name+'.csv',
+    
+    #Append the data to each other
+    
+    #Display the rerlationship
 
 
 
