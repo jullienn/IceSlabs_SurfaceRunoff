@@ -37,8 +37,8 @@ import rioxarray
 import rasterio
 import os
 
-generate_data='TRUE' #If true, generate the individual csv files and figures
-composite='FALSE'
+generate_data='FALSE' #If true, generate the individual csv files and figures
+composite='TRUE'
 fig_display='FALSE' #If TRUE, generate figures
 
 #Define projection
@@ -125,7 +125,7 @@ if (generate_data=='TRUE'):
     ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
     
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high_RT3_masked.year==2017].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high_RT3_masked.year==2018].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
         '''
         if (IceSlabsTransect_name!='20180423_01_056_056'):
@@ -427,7 +427,6 @@ if (composite=='TRUE'):
     appended_df.describe()['radar_signal']
     appended_df.describe()['20m_ice_content_m']
     
-    pdb.set_trace()
     #7. Plot the overall relationship SAR VS Ice slabs thickness
     #Prepare plot
     fig = plt.figure()
@@ -503,5 +502,20 @@ if (composite=='TRUE'):
     sns.displot(data=appended_df, x="radar_signal", col="20m_ice_content_m", kde=True)
     sns.jointplot(data=appended_df, x="radar_signal", y="20m_ice_content_m")
     '''
+    
+    #There are places where the radar signal is a NaN. Extract it
+    restricted_appended_df=restricted_appended_df[~pd.isna(restricted_appended_df['radar_signal'])]
 
+    fig_heatmap, (ax_hist2d) = plt.subplots()
+    h = ax_hist2d.hist2d(restricted_appended_df['radar_signal'],restricted_appended_df['20m_ice_content_m'],bins=30)#,density=True)#,cmin=0.01)
+    ax_hist2d.set_xlim(-18,1)
+    ax_hist2d.set_xlabel('SAR [dB]')
+    ax_hist2d.set_ylabel('Ice content [m]')
+    fig_heatmap.suptitle('0 < ice content < 16 m and SAR - heatmap')
+    
+    pdb.set_trace()
+    
+    #Fit a polynomial to this relationship using numpy.polyfit
+    
+    
 
