@@ -37,8 +37,8 @@ import rioxarray
 import rasterio
 import os
 
-generate_data='FALSE' #If true, generate the individual csv files and figures
-composite='TRUE'
+generate_data='TRUE' #If true, generate the individual csv files and figures
+composite='FALSE'
 fig_display='FALSE' #If TRUE, generate figures
 
 #Define projection
@@ -79,8 +79,10 @@ f_20102018_high_RT3_masked.close
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 #Load SAR data
-SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_west-0000000000-0000000000.tif',
+SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif',
                               masked=True).squeeze() #No need to reproject satelite image
+### almost full greenland: 0000-0000, south greenland: 00023296-00000
+
 #Extract x and y coordinates of SAR image
 x_coord_SAR=np.asarray(SAR.x)
 y_coord_SAR=np.asarray(SAR.y)
@@ -279,7 +281,7 @@ if (generate_data=='TRUE'):
         ### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
         #https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
         #Load SAR data
-        path_SAR = path+'SAR/HV_2017_2018/'+'ref_2017_2018_HV_mean_nofilt_west-0000000000-0000000000.tif'
+        path_SAR = path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif'
         SAR_RIO = rasterio.open(path_SAR)
         
         SAR_values=[]
@@ -307,7 +309,7 @@ if (generate_data=='TRUE'):
         #Perform the join between ice slabs thickness and SAR data
         pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predicate="within", how='left') #This is from https://www.matecdev.com/posts/point-in-polygon.html
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
-        
+                
         if (fig_display=='TRUE'):
             #Make sure SAR extraction between the two methods is identical
             fig = plt.figure()
@@ -361,9 +363,9 @@ if (generate_data=='TRUE'):
                             IceSlabsTransect['IceSlabs_Mask'],
                             cmap='gray_r')
         #Improve axis
-        ax_oversampled_SAR.set_xlim(-6,0)
+        ax_oversampled_SAR.set_xlim(-15,-4)
         ax_oversampled_SAR.set_ylim(-0.5,20.5)
-        ax_upsampled_SAR.set_xlim(-6,0)
+        ax_upsampled_SAR.set_xlim(-15,-4)
         ax_upsampled_SAR.set_ylim(-0.5,20.5)
         ax_radargram.invert_yaxis() #Invert the y axis = avoid using flipud.
         ax_radargram.set_aspect(0.1)
