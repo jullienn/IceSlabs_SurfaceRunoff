@@ -391,15 +391,6 @@ if (generate_data=='TRUE'):
 
 
 
-
-
-
-
-
-
-
-
-
 #pdb.set_trace()
 #Once all csv files of SAR extraction are performed, display the overall relationship using all the files
 if (composite=='TRUE'):
@@ -459,10 +450,10 @@ if (composite=='TRUE'):
     fig.suptitle('Ice content and SAR')
     
     ###########################################################################
-    ###        Keep only where ice content is: 0 < ice content < 16m        ###
+    ###        Keep only where ice content is: 0 < ice content < 15m        ###
     ###########################################################################
     restricted_appended_df=appended_df.copy()
-    restricted_appended_df=restricted_appended_df[np.logical_and(restricted_appended_df['20m_ice_content_m']>0,restricted_appended_df['20m_ice_content_m']<16)]
+    restricted_appended_df=restricted_appended_df[np.logical_and(restricted_appended_df['20m_ice_content_m']>0,restricted_appended_df['20m_ice_content_m']<15)]
     
     #Prepare plot
     fig = plt.figure()
@@ -492,30 +483,184 @@ if (composite=='TRUE'):
                 density=True)
     ax_SAR.set_xlim(-18,1)
     ax_SAR.set_ylabel('Density [ ]')
-    fig.suptitle('0 < ice content < 16 m and SAR')
+    fig.suptitle('0 < ice content < 15 m and SAR')
     ###########################################################################
-    ###        Keep only where ice content is: 0 < ice content < 16m        ###
+    ###        Keep only where ice content is: 0 < ice content < 15m        ###
     ###########################################################################
     '''
     import seaborn as sns
     #Not working, probably because dataset too large
     sns.displot(data=appended_df, x="radar_signal", col="20m_ice_content_m", kde=True)
     sns.jointplot(data=appended_df, x="radar_signal", y="20m_ice_content_m")
-    '''
+    '''    
     
     #There are places where the radar signal is a NaN. Extract it
-    restricted_appended_df=restricted_appended_df[~pd.isna(restricted_appended_df['radar_signal'])]
+    appended_df_no_NaN=appended_df.copy()
+    appended_df_no_NaN=appended_df_no_NaN[~pd.isna(appended_df_no_NaN['radar_signal'])]
+    appended_df_no_NaN=appended_df_no_NaN[~pd.isna(appended_df_no_NaN['20m_ice_content_m'])]
 
-    fig_heatmap, (ax_hist2d) = plt.subplots()
-    h = ax_hist2d.hist2d(restricted_appended_df['radar_signal'],restricted_appended_df['20m_ice_content_m'],bins=30)#,density=True)#,cmin=0.01)
-    ax_hist2d.set_xlim(-18,1)
-    ax_hist2d.set_xlabel('SAR [dB]')
-    ax_hist2d.set_ylabel('Ice content [m]')
-    fig_heatmap.suptitle('0 < ice content < 16 m and SAR - heatmap')
+    restricted_appended_df_no_NaN=restricted_appended_df.copy()
+    restricted_appended_df_no_NaN=restricted_appended_df_no_NaN[~pd.isna(restricted_appended_df_no_NaN['radar_signal'])]
+    
+    #Display
+    fig_heatmap = plt.figure()
+    fig_heatmap.set_size_inches(14, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(10, 10)
+    gs.update(wspace=3)
+    gs.update(hspace=3)
+    ax_hist2d = plt.subplot(gs[0:5, 0:5])
+    ax_hist2d_restricted = plt.subplot(gs[0:5, 5:10])
+    ax_hist2d_log = plt.subplot(gs[5:10, 0:5])
+    ax_hist2d_restricted_log = plt.subplot(gs[5:10, 5:10])
+    import matplotlib as mpl
+    
+    hist2d_cbar = ax_hist2d.hist2d(appended_df_no_NaN['radar_signal'],appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r')
+    hist2d_log_cbar = ax_hist2d_log.hist2d(appended_df_no_NaN['radar_signal'],appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
+
+    hist2d_restricted_cbar = ax_hist2d_restricted.hist2d(restricted_appended_df_no_NaN['radar_signal'],restricted_appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r')
+    hist2d_restricted_log_cbar = ax_hist2d_restricted_log.hist2d(restricted_appended_df_no_NaN['radar_signal'],restricted_appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())#,
+                     #cmin=np.quantile(h[0].flatten(),0.5),cmax=np.max(h[0].flatten()))#density=True
+    #ax_hist2d.set_xlim(-18,1)
+    ax_hist2d_log.set_xlabel('SAR [dB]')
+    ax_hist2d_log.set_ylabel('Ice content [m]')
+    ax_hist2d.set_title('0 < ice content < 20 m')
+    ax_hist2d_restricted.set_title('0 < ice content < 15 m')
+    fig_heatmap.suptitle('Occurrence map')
+
+    ax_hist2d.set_ylim(0,20)
+    ax_hist2d_log.set_ylim(0,20)
+    ax_hist2d_restricted.set_ylim(0,20)
+    ax_hist2d_restricted_log.set_ylim(0,20)
+    ax_hist2d_restricted.set_xlim(-16.5,-4)
+    ax_hist2d_restricted_log.set_xlim(-16.5,-4)
+    
+    #Display colorbars    
+    fig_heatmap.colorbar(hist2d_cbar[3], ax=ax_hist2d,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+    fig_heatmap.colorbar(hist2d_log_cbar[3], ax=ax_hist2d_log,label='log(Occurence)')
+    fig_heatmap.colorbar(hist2d_restricted_cbar[3], ax=ax_hist2d_restricted,label='Occurence')
+    fig_heatmap.colorbar(hist2d_restricted_log_cbar[3], ax=ax_hist2d_restricted_log,label='log(Occurence)')
+    
+    '''
+    #Fit a polynomial to this relationship using numpy.polyfit
+    pol_fit=np.polynomial.polynomial.Polynomial.fit(restricted_appended_df['radar_signal'], restricted_appended_df['20m_ice_content_m'], 2,domain=[-12,0])
+    
+    x_to_fit=np.arange(pol_fit.domain[0],pol_fit.domain[1])
+    fitted=np.polynomial.polynomial.polyval(x_to_fit,pol_fit.coef)
+    
+    #Display the pèolynomial fit
+    ax_hist2d.plot(x_to_fit,fitted)
+    '''
+    #sort restricted_appended_df
+    restricted_appended_df_no_NaN=restricted_appended_df_no_NaN.sort_values(by=['radar_signal'])
+    
+    #Try with scipy.curve_fit - following the example on the help page
+    from scipy.optimize import curve_fit
+    
+    def func(x, a, b, c):
+        return a * np.exp(-b * x) + c
+        
+    xdata = np.array(restricted_appended_df_no_NaN['radar_signal'])
+    ydata = np.array(restricted_appended_df_no_NaN['20m_ice_content_m'])                           
+                           
+    #manual fit
+    ax_hist2d_restricted.plot(xdata, func(xdata, 1,0.26,-2),'r',label='manual fit: y = 1*exp(-0.26*x) - 2')
+        
+    #automatic fit
+    #popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([-2,0,-5],[5,2,2]))
+    popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([0,-1,-4],[2,1,2]))
+    ax_hist2d_restricted.plot(xdata, func(xdata, *popt),'b',label='automatic fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
+    ax_hist2d_restricted.legend(loc='upper left',fontsize=6)
     
     pdb.set_trace()
     
-    #Fit a polynomial to this relationship using numpy.polyfit
+    #Save figure
+    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent.png',dpi=300,bbox_inches='tight')
     
-    
+    ###########################################################################
+    ###           Get rid of data points where occurrence is low!           ###
+    ###########################################################################
 
+    #Define a dataset for regression calculation
+    restricted_appended_df_no_NaN_regression=restricted_appended_df_no_NaN.copy()
+    
+    #Get rid of low occurence grid cells
+    n=1000#let's start by excluding drig cell whose occurence is lower than 100 individuals - should have a good reason behind this value!!    
+    
+    occurence_matrix=hist2d_restricted_cbar[0]
+    
+    index_below_threshold=(occurence_matrix<n)
+    rows=hist2d_restricted_cbar[1]
+    cols=hist2d_restricted_cbar[2]
+    
+    #Define empty vector for index store
+    index_removal=[]
+    
+    #Loop to identify grid cell to delete
+    for index_row in range(0,len(rows)-1):
+        bounds_row=[rows[index_row],rows[index_row+1]] #row is SAR
+        for index_col in range(0,len(cols)-1):
+            bounds_col=[cols[index_col],cols[index_col+1]] #row is ice content
+            #Does this SAR and ice content grid cell has less than n occurence? If yes, delete these data
+            if (occurence_matrix[index_row,index_col]<n):
+                #select data that respect both the SAR and ice content bounds
+                logical_SAR=np.logical_and(restricted_appended_df_no_NaN['radar_signal']>=bounds_row[0],restricted_appended_df_no_NaN['radar_signal']<bounds_row[1])
+                logical_ice_content=np.logical_and(restricted_appended_df_no_NaN['20m_ice_content_m']>=bounds_col[0],restricted_appended_df_no_NaN['20m_ice_content_m']<bounds_col[1])
+                #combine logical vectors
+                logical_combined=np.logical_and(logical_SAR,logical_ice_content)
+                if (logical_combined.astype(int).sum()>0):
+                    #store the index
+                    index_removal=np.append(index_removal,np.array(logical_combined[logical_combined].index))
+    
+    #get rid of corresponding data
+    restricted_appended_df_no_NaN_regression=restricted_appended_df_no_NaN_regression.drop(index=index_removal,axis=1)
+    
+    #Display resulting grid
+    fig_regression = plt.figure()
+    fig_regression.set_size_inches(7, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(10, 5)
+    gs.update(wspace=3)
+    gs.update(hspace=3)
+    ax_hist2d_regression = plt.subplot(gs[0:5, 0:5])
+    ax_hist2d_regression_log = plt.subplot(gs[5:10,0:5])
+    
+    hist2d_regression_cbar = ax_hist2d_regression.hist2d(restricted_appended_df_no_NaN_regression['radar_signal'],restricted_appended_df_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30)
+    hist2d_regression_log_cbar = ax_hist2d_regression_log.hist2d(restricted_appended_df_no_NaN_regression['radar_signal'],restricted_appended_df_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30,norm=mpl.colors.LogNorm())
+    
+    ax_hist2d_regression_log.set_xlabel('SAR [dB]')
+    ax_hist2d_regression_log.set_ylabel('Ice content [m]')
+    ax_hist2d_regression.set_title('0 < ice content < 15 m')
+    
+    ax_hist2d_regression.set_ylim(0,20)
+    ax_hist2d_regression_log.set_ylim(0,20)
+    ax_hist2d_regression.set_xlim(-16.5,-4)
+    ax_hist2d_regression_log.set_xlim(-16.5,-4)
+
+    #Calculate regression
+    xdata = np.array(restricted_appended_df_no_NaN_regression['radar_signal'])
+    ydata = np.array(restricted_appended_df_no_NaN_regression['20m_ice_content_m'])                           
+    
+    #manual fit
+    ax_hist2d_regression.plot(xdata, func(xdata, 1,0.26,-2),'r',label='manual fit: y = 1*exp(-0.26*x) - 2')
+    
+    #automatic fit
+    popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([-2,0,-5],[5,2,2]))
+    ax_hist2d_regression.legend(loc='upper left',fontsize=8)
+
+    ax_hist2d_regression.plot(xdata, func(xdata, *popt), label='fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))
+    ax_hist2d_restricted.plot(xdata, func(xdata, *popt), label='%i filetered, fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(np.append(n,popt)))
+    ax_hist2d_restricted.legend(loc='upper left',fontsize=8)
+    
+    #Display colorbars    
+    fig_regression.colorbar(hist2d_regression_cbar[3], ax=ax_hist2d_regression,label="Occurrence")
+    fig_regression.colorbar(hist2d_regression_log_cbar[3], ax=ax_hist2d_regression_log,label="log(Occurrence)")
+    
+    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent_occurence='+str(n)+'.png',dpi=300,bbox_inches='tight')
+
+    pdb.set_trace()
+    
+    ###########################################################################
+    ###           Get rid of data points where occurrence is low!           ###
+    ###########################################################################
+        
+    #Potential improvement: determine and use the best likelihood for each transect. !Might require quite some work!
+    
