@@ -665,9 +665,12 @@ if (composite=='TRUE'):
     fig_regression.colorbar(hist2d_regression_cbar[3], ax=ax_hist2d_regression,label="Occurrence")
     fig_regression.colorbar(hist2d_regression_log_cbar[3], ax=ax_hist2d_regression_log,label="log(Occurrence)")
     
-    '''
+    #"Compute one standard deviation errors on the parameters":
+    perr = np.sqrt(np.diag(pcov))
+    #popt gives: "Optimal values for the parameters so that the sum of the squared residuals of f(xdata, *popt) - ydata is minimized."
+    
     plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent_occurence='+str(n)+'.png',dpi=300,bbox_inches='tight')
-    '''
+    
     pdb.set_trace()
     
     ###########################################################################
