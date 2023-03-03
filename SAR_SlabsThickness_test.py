@@ -414,6 +414,10 @@ if (composite=='TRUE'):
             #Append the data to each other
             appended_df=pd.concat([appended_df,indiv_csv])
     
+    #Create a unique indey for each line, and set this new vector as the index in dataframe
+    appended_df['index_unique']=np.arange(0,len(appended_df))
+    appended_df=appended_df.set_index('index_unique')
+    
     #Display some descriptive statistics
     appended_df.describe()['radar_signal']
     appended_df.describe()['20m_ice_content_m']
@@ -518,7 +522,7 @@ if (composite=='TRUE'):
     hist2d_log_cbar = ax_hist2d_log.hist2d(appended_df_no_NaN['radar_signal'],appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
 
     hist2d_restricted_cbar = ax_hist2d_restricted.hist2d(restricted_appended_df_no_NaN['radar_signal'],restricted_appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r')
-    hist2d_restricted_log_cbar = ax_hist2d_restricted_log.hist2d(restricted_appended_df_no_NaN['radar_signal'],restricted_appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())#,
+    hist2d_restricted_log_cbar = ax_hist2d_restricted_log.hist2d(restricted_appended_df_no_NaN['radar_signal'],restricted_appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
                      #cmin=np.quantile(h[0].flatten(),0.5),cmax=np.max(h[0].flatten()))#density=True
     #ax_hist2d.set_xlim(-18,1)
     ax_hist2d_log.set_xlabel('SAR [dB]')
@@ -572,9 +576,13 @@ if (composite=='TRUE'):
     ax_hist2d_restricted.legend(loc='upper left',fontsize=6)
     
     pdb.set_trace()
-    
+    '''
     #Save figure
     plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent.png',dpi=300,bbox_inches='tight')
+    '''
+    #Define binning range
+    range_binning=np.array([[restricted_appended_df_no_NaN['radar_signal'].min(),restricted_appended_df_no_NaN['radar_signal'].max()],
+                            [restricted_appended_df_no_NaN['20m_ice_content_m'].min(),restricted_appended_df_no_NaN['20m_ice_content_m'].max()]])
     
     ###########################################################################
     ###           Get rid of data points where occurrence is low!           ###
@@ -586,9 +594,8 @@ if (composite=='TRUE'):
     #Get rid of low occurence grid cells
     n=1000#let's start by excluding drig cell whose occurence is lower than 100 individuals - should have a good reason behind this value!!    
     
+    #Extract occurrence matrix and related x and y vectors
     occurence_matrix=hist2d_restricted_cbar[0]
-    
-    index_below_threshold=(occurence_matrix<n)
     rows=hist2d_restricted_cbar[1]
     cols=hist2d_restricted_cbar[2]
     
@@ -610,9 +617,13 @@ if (composite=='TRUE'):
                 if (logical_combined.astype(int).sum()>0):
                     #store the index
                     index_removal=np.append(index_removal,np.array(logical_combined[logical_combined].index))
-    
+                    #display
+                    '''
+                    ax_hist2d_restricted.scatter(restricted_appended_df_no_NaN['radar_signal'].loc[np.array(logical_combined[logical_combined].index)],
+                                                 restricted_appended_df_no_NaN['20m_ice_content_m'].loc[np.array(logical_combined[logical_combined].index)])
+                    '''
     #get rid of corresponding data
-    restricted_appended_df_no_NaN_regression=restricted_appended_df_no_NaN_regression.drop(index=index_removal,axis=1)
+    restricted_appended_df_no_NaN_regression=restricted_appended_df_no_NaN_regression.drop(index=np.unique(index_removal),axis=1)
     
     #Display resulting grid
     fig_regression = plt.figure()
@@ -623,7 +634,7 @@ if (composite=='TRUE'):
     ax_hist2d_regression = plt.subplot(gs[0:5, 0:5])
     ax_hist2d_regression_log = plt.subplot(gs[5:10,0:5])
     
-    hist2d_regression_cbar = ax_hist2d_regression.hist2d(restricted_appended_df_no_NaN_regression['radar_signal'],restricted_appended_df_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30)
+    hist2d_regression_cbar = ax_hist2d_regression.hist2d(restricted_appended_df_no_NaN_regression['radar_signal'],restricted_appended_df_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30,range=range_binning)
     hist2d_regression_log_cbar = ax_hist2d_regression_log.hist2d(restricted_appended_df_no_NaN_regression['radar_signal'],restricted_appended_df_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30,norm=mpl.colors.LogNorm())
     
     ax_hist2d_regression_log.set_xlabel('SAR [dB]')
@@ -633,7 +644,7 @@ if (composite=='TRUE'):
     ax_hist2d_regression.set_ylim(0,20)
     ax_hist2d_regression_log.set_ylim(0,20)
     ax_hist2d_regression.set_xlim(-16.5,-4)
-    ax_hist2d_regression_log.set_xlim(-16.5,-4)
+    ax_hist2d_regression_log.set_xlim(-16.5,-4)    
 
     #Calculate regression
     xdata = np.array(restricted_appended_df_no_NaN_regression['radar_signal'])
@@ -654,8 +665,9 @@ if (composite=='TRUE'):
     fig_regression.colorbar(hist2d_regression_cbar[3], ax=ax_hist2d_regression,label="Occurrence")
     fig_regression.colorbar(hist2d_regression_log_cbar[3], ax=ax_hist2d_regression_log,label="log(Occurrence)")
     
+    '''
     plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent_occurence='+str(n)+'.png',dpi=300,bbox_inches='tight')
-
+    '''
     pdb.set_trace()
     
     ###########################################################################
