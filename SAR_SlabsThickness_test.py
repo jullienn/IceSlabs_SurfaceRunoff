@@ -61,16 +61,15 @@ IceSlabsTransect_list=['20180421_01_004_007','20180425_01_166_169','20180426_01_
 '''
 #Define paths where data are stored
 path='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
-path_jullienetal2023='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/'
-path_jullienetal2023_forRT3='C:/Users/jullienn/switchdrive/Private/research/RT3/data/export_RT1_for_RT3/'
+path_jullienetal2023='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/final_excel/high_estimate/clipped/'
 path_rignotetal2016_GrIS_drainage_bassins='C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
 
 #1. Load SAR data and a transect case study
 ### ------------------------- Load df_2010_2018 --------------------------- ###
-#Load 2010-2018 high estimate for RT3 masked
-f_20102018_high_RT3_masked = open(path_jullienetal2023_forRT3+'df_20102018_with_elevation_for_RT3_masked_rignotetalregions', "rb")
-df_2010_2018_high_RT3_masked = pickle.load(f_20102018_high_RT3_masked)
-f_20102018_high_RT3_masked.close
+#Load 2010-2018 high estimate
+f_20102018_high_cleaned = open(path_jullienetal2023_forRT3+'df_20102018_with_elevation_rignotetalregions_cleaned', "rb")
+df_20102018_high_cleaned = pickle.load(f_20102018_high_cleaned)
+f_20102018_high_cleaned.close
 ### ------------------------- Load df_2010_2018 --------------------------- ###
 
 ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
@@ -125,7 +124,7 @@ if (generate_data=='TRUE'):
     ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
     
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_2010_2018_high_RT3_masked[df_2010_2018_high_RT3_masked.year==2018].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
         '''
         if (IceSlabsTransect_name!='20180423_01_056_056'):
@@ -162,9 +161,8 @@ if (generate_data=='TRUE'):
         
         #2. Extract ice slabs transect of interest
         #Select ice slabs data belonging to the list of interest
-        Extraction_SAR_transect=df_2010_2018_high_RT3_masked[df_2010_2018_high_RT3_masked.Track_name==IceSlabsTransect_name]
-        ### !!! Keep in mind the df_2010_2018_high_RT3_masked dataset should be clipped
-        ### to the Jullien et al., 2023 ice slabs extent extent shapefile before the overall regression to be done !!!
+        Extraction_SAR_transect=df_20102018_high_cleaned[df_20102018_high_cleaned.Track_name==IceSlabsTransect_name]
+        ### Now using the clipped to polygons high estimate datatset
         
         if (fig_display=='TRUE'):
             #Prepare plot
@@ -669,9 +667,10 @@ if (composite=='TRUE'):
     perr = np.sqrt(np.diag(pcov))
     #popt gives: "Optimal values for the parameters so that the sum of the squared residuals of f(xdata, *popt) - ydata is minimized."
     
+    pdb.set_trace()
+
     plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent_occurence='+str(n)+'.png',dpi=300,bbox_inches='tight')
     
-    pdb.set_trace()
     
     ###########################################################################
     ###           Get rid of data points where occurrence is low!           ###
