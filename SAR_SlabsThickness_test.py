@@ -19,6 +19,9 @@ def compute_distances(eastings,northings):
 
     return return_cumsum_distances
 
+def func(x, a, b, c):
+    return a * np.exp(-b * x) + c
+    
 import pickle
 import scipy.io
 import numpy as np
@@ -36,9 +39,12 @@ from descartes import PolygonPatch
 import rioxarray
 import rasterio
 import os
+from scipy.optimize import curve_fit
 
 generate_data='FALSE' #If true, generate the individual csv files and figures
-composite='TRUE'
+load_data='TRUE'
+composite='FALSE'
+interpolation='TRUE'
 fig_display='FALSE' #If TRUE, generate figures
 
 #Define projection
@@ -50,24 +56,15 @@ crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
 crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
-#Define considered transect
-IceSlabsTransect_list=['20180421_01_004_007']
-
-#Check the others dates whether the processing work!! Yes it does
-'''
-IceSlabsTransect_list=['20180421_01_004_007','20180425_01_166_169','20180426_01_004_006',
-                       '20180423_01_180_182','20180427_01_004_006','20180425_01_005_008',
-                       '20180427_01_170_172','20180421_01_174_177']
-'''
 #Define paths where data are stored
 path='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/'
-path_jullienetal2023='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/final_excel/high_estimate/clipped/'
+path_jullienetal2023='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/'
 path_rignotetal2016_GrIS_drainage_bassins='C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
 
 #1. Load SAR data and a transect case study
 ### ------------------------- Load df_2010_2018 --------------------------- ###
 #Load 2010-2018 high estimate
-f_20102018_high_cleaned = open(path_jullienetal2023_forRT3+'df_20102018_with_elevation_rignotetalregions_cleaned', "rb")
+f_20102018_high_cleaned = open(path_jullienetal2023+'final_excel/high_estimate/clipped/df_20102018_with_elevation_high_estimate_rignotetalregions_cleaned', "rb")
 df_20102018_high_cleaned = pickle.load(f_20102018_high_cleaned)
 f_20102018_high_cleaned.close
 ### ------------------------- Load df_2010_2018 --------------------------- ###
@@ -124,7 +121,7 @@ if (generate_data=='TRUE'):
     ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
     
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
         '''
         if (IceSlabsTransect_name!='20180423_01_056_056'):
@@ -388,11 +385,8 @@ if (generate_data=='TRUE'):
     print('Done in generating 2018 data')
 
 
-
-#pdb.set_trace()
-#Once all csv files of SAR extraction are performed, display the overall relationship using all the files
-if (composite=='TRUE'):
-    
+#Once all csv files of SAR extraction are performed, load them
+if (load_data=='TRUE'):
     #Path to data
     path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'
         
@@ -419,6 +413,10 @@ if (composite=='TRUE'):
     #Display some descriptive statistics
     appended_df.describe()['radar_signal']
     appended_df.describe()['20m_ice_content_m']
+
+
+#Display the composite relationship using all the files
+if (composite=='TRUE'):
     
     #7. Plot the overall relationship SAR VS Ice slabs thickness
     #Prepare plot
@@ -555,19 +553,14 @@ if (composite=='TRUE'):
     #sort restricted_appended_df
     restricted_appended_df_no_NaN=restricted_appended_df_no_NaN.sort_values(by=['radar_signal'])
     
-    #Try with scipy.curve_fit - following the example on the help page
-    from scipy.optimize import curve_fit
-    
-    def func(x, a, b, c):
-        return a * np.exp(-b * x) + c
-        
+    #prepare data for fit        
     xdata = np.array(restricted_appended_df_no_NaN['radar_signal'])
     ydata = np.array(restricted_appended_df_no_NaN['20m_ice_content_m'])                           
                            
     #manual fit
     ax_hist2d_restricted.plot(xdata, func(xdata, 1,0.26,-2),'r',label='manual fit: y = 1*exp(-0.26*x) - 2')
         
-    #automatic fit
+    #automatic fit: try with scipy.curve_fit - following the example on the help page
     #popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([-2,0,-5],[5,2,2]))
     popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([0,-1,-4],[2,1,2]))
     ax_hist2d_restricted.plot(xdata, func(xdata, *popt),'b',label='automatic fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
@@ -675,6 +668,69 @@ if (composite=='TRUE'):
     ###########################################################################
     ###           Get rid of data points where occurrence is low!           ###
     ###########################################################################
-        
-    #Potential improvement: determine and use the best likelihood for each transect. !Might require quite some work!
+
+pdb.set_trace()
+
+#Consider a test dataset, derive the relationship between SAR and ice content, predict ice content from SAR, evaluate the performance of the prediction
+if (interpolation=='TRUE'):
+    print('Performing the interpolation')
+    
+    #Get rid of data where NaNs
+    appended_df_no_NaNs=appended_df[~appended_df['radar_signal'].isna()].copy()
+    
+    #Prepare figure to display
+    fig_selection = plt.figure()
+    fig_selection.set_size_inches(14, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(10, 10)
+    gs.update(wspace=3)
+    gs.update(hspace=3)
+    ax_whole_df = plt.subplot(gs[0:5, 0:5],projection=crs)
+    ax_selected_df = plt.subplot(gs[0:5, 5:10],projection=crs)
+    ax_whole_df_distrib = plt.subplot(gs[5:10, 0:5])
+    ax_selected_df_distrib = plt.subplot(gs[5:10, 5:10])
+    
+    #Display coastlines
+    ax_whole_df.coastlines(edgecolor='black',linewidth=0.075)
+    ax_selected_df.coastlines(edgecolor='black',linewidth=0.075)
+    #Display whole df
+    ax_whole_df.scatter(appended_df_no_NaNs.lon_3413,appended_df_no_NaNs.lat_3413)
+    ax_whole_df_distrib.hist(appended_df_no_NaNs['20m_ice_content_m'])
+    
+    pdb.set_trace()
+    
+    #1. Select randomly x% of the dataset
+    randomly_selected_df=appended_df_no_NaNs.sample(frac=0.5).copy()
+    
+    #Sort data for relationship computation
+    randomly_selected_df=randomly_selected_df.sort_values(by=['radar_signal']).copy()
+    
+    #Display
+    ax_selected_df.scatter(randomly_selected_df.lon_3413,randomly_selected_df.lat_3413)
+    ax_selected_df_distrib.hist(randomly_selected_df['20m_ice_content_m'])
+    
+    #2. Extract the relationship between SAR and ice content
+    popt, pcov = curve_fit(func, np.array(randomly_selected_df['radar_signal']),
+                           np.array(randomly_selected_df['20m_ice_content_m']))#p0=[1,0.26,-2],bounds=([-2,0,-5],[5,2,2]))
+    
+    #Display relationship
+    fig_relationship, (ax_relationship) = plt.subplots()
+    hist2d_cbar = ax_relationship.hist2d(randomly_selected_df['radar_signal'],randomly_selected_df['20m_ice_content_m'],bins=30,cmap='magma_r')
+    ax_relationship.plot(np.array(randomly_selected_df['radar_signal']),
+                         func(np.array(randomly_selected_df['radar_signal']), *popt),
+                         label='fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))
+    
+    #manual fit
+    ax_relationship.plot(np.array(randomly_selected_df['radar_signal']), func(np.array(randomly_selected_df['radar_signal']), 1,0.26,-2),
+                         'r',label='manual fit: y = 1*exp(-0.26*x) - 2')
+    
+    ax_relationship.legend(loc='upper left',fontsize=8)
+    
+    #3. Apply relationship to SAR
+    
+    #4. Compare the results with the remaining dataset
+
+
+
+
+#Potential improvement: determine and use the best likelihood for each transect. !Might require quite some work!
     
