@@ -44,9 +44,9 @@ import rasterio
 import os
 from scipy.optimize import curve_fit
 
-generate_data='TRUE' #If true, generate the individual csv files and figures
-load_data='FALSE'
-composite='FALSE'
+generate_data='FALSE' #If true, generate the individual csv files and figures
+load_data='TRUE'
+composite='TRUE'
 interpolation='FALSE'
 fig_display='FALSE' #If TRUE, generate figures
 
@@ -95,18 +95,6 @@ y_coord_SAR=np.asarray(SAR.y)
 extent_SAR = [np.min(x_coord_SAR), np.max(x_coord_SAR), np.min(y_coord_SAR), np.max(y_coord_SAR)]#[west limit, east limit., south limit, north limit]
 
 
-
-
-#### TO BE DELETED ###
-#Path to data
-path_check='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/csv/'
-    
-#List all the files in the folder
-list_composite=os.listdir(path_check) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
-#### TO BE DELETED ###
-
-
-
 if (generate_data=='TRUE'):
     #Generate the csv files and figures of individual relationship
     if (fig_display=='TRUE'):
@@ -142,11 +130,8 @@ if (generate_data=='TRUE'):
     ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
     
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
         
-        if ((IceSlabsTransect_name+'.csv') not in list(list_composite)):
-            print('Not',IceSlabsTransect_name)
-            continue
         print('Treating',IceSlabsTransect_name)
                 
         #Open transect file
@@ -412,23 +397,36 @@ if (generate_data=='TRUE'):
         plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/images/'+IceSlabsTransect_name+'_distances.png',dpi=300,bbox_inches='tight')
         plt.close()
         
-        '''
+        
         #Export the extracted values as csv
-        pointInPolys.to_csv('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/csv/'+IceSlabsTransect_name+'.csv',
+        pointInPolys.to_csv('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'+IceSlabsTransect_name+'.csv',
                             columns=['Track_name', 'lat', 'lon',
                                    '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                    'elevation', 'year', 'index_right', 'radar_signal'])
-        '''
+        
     print('Done in generating 2018 data')
 
 pdb.set_trace()
 #Once all csv files of SAR extraction are performed, load them
+
+#Define a list of data where the relationship could be ideal
+list_ideal=['20170421_01_006_009.csv', '20170421_01_171_174.csv','20170502_01_171_173.csv',
+              '20170505_02_008_010.csv', '20170505_02_181_183.csv', '20170506_01_010_012.csv',
+              '20170508_02_011_013.csv', '20170508_02_165_171.csv',
+              '20170511_01_010_025.csv', '20170511_01_176_178.csv', '20180421_01_004_007.csv',
+              '20180423_01_180_182.csv', '20180425_01_005_008.csv',
+              '20180425_01_166_169.csv', '20180427_01_004_006.csv',
+              '20180427_01_170_172.csv', '20180429_01_008_014.csv']
+
+
 if (load_data=='TRUE'):
     #Path to data
-    path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/csv/'
-        
+    path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'
+    '''
     #List all the files in the folder
     list_composite=os.listdir(path_csv_SAR_VS_IceContent) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
+    '''
+    list_composite=list_ideal
     
     #Loop over all the files
     for indiv_file in list_composite:
@@ -698,9 +696,9 @@ if (composite=='TRUE'):
     #popt gives: "Optimal values for the parameters so that the sum of the squared residuals of f(xdata, *popt) - ydata is minimized."
     
     pdb.set_trace()
-
+    '''
     plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent_occurence='+str(n)+'.png',dpi=300,bbox_inches='tight')
-    
+    '''
     
     ###########################################################################
     ###           Get rid of data points where occurrence is low!           ###
