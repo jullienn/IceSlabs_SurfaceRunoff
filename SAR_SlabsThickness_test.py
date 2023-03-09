@@ -44,10 +44,10 @@ import rasterio
 import os
 from scipy.optimize import curve_fit
 
-generate_data='FALSE' #If true, generate the individual csv files and figures
-load_data='TRUE'
+generate_data='TRUE' #If true, generate the individual csv files and figures
+load_data='FALSE'
 composite='FALSE'
-interpolation='TRUE'
+interpolation='FALSE'
 fig_display='FALSE' #If TRUE, generate figures
 
 #Define projection
@@ -77,7 +77,7 @@ f_20102018_high_cleaned.close
 #This section of displaying sat data was coding using tips from
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
-'''
+
 #Load SAR data
 SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif',
                               masked=True).squeeze() #No need to reproject satelite image
@@ -86,13 +86,26 @@ SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_d
 #Load SAR data - 2019-2022
 SAR = rxr.open_rasterio(path+'SAR/'+'ref_2019_2022_61_106_SWGrIS_20m-0000023296-0000000000.tif',
                               masked=True).squeeze() #No need to reproject satelite image
-
+'''
 #Extract x and y coordinates of SAR image
 x_coord_SAR=np.asarray(SAR.x)
 y_coord_SAR=np.asarray(SAR.y)
 
 #Define extents of SAR image
 extent_SAR = [np.min(x_coord_SAR), np.max(x_coord_SAR), np.min(y_coord_SAR), np.max(y_coord_SAR)]#[west limit, east limit., south limit, north limit]
+
+
+
+
+#### TO BE DELETED ###
+#Path to data
+path_check='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/csv/'
+    
+#List all the files in the folder
+list_composite=os.listdir(path_check) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
+#### TO BE DELETED ###
+
+
 
 if (generate_data=='TRUE'):
     #Generate the csv files and figures of individual relationship
@@ -130,11 +143,12 @@ if (generate_data=='TRUE'):
     
     #Loop over all the 2018 transects
     for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
-        print('Treating',IceSlabsTransect_name)
-        '''
-        if (IceSlabsTransect_name!='20180423_01_056_056'):
+        
+        if ((IceSlabsTransect_name+'.csv') not in list(list_composite)):
+            print('Not',IceSlabsTransect_name)
             continue
-        '''    
+        print('Treating',IceSlabsTransect_name)
+                
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
         IceSlabsTransect = pickle.load(f_IceSlabsTransect)
@@ -283,7 +297,7 @@ if (generate_data=='TRUE'):
         #Additional proof the extracted SAR signal with this method is correct using another way of extracting SAR signal
         ### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
         #https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
-        '''
+        
         #Load SAR data
         path_SAR = path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif'
         SAR_RIO = rasterio.open(path_SAR)
@@ -291,7 +305,7 @@ if (generate_data=='TRUE'):
         #Load SAR data - 2019-2022
         path_SAR=path+'SAR/'+'ref_2019_2022_61_106_SWGrIS_20m-0000023296-0000000000.tif'
         SAR_RIO = rasterio.open(path_SAR)
-        
+        '''
         SAR_values=[]
         for index, row in Extraction_SAR_transect.iterrows():
             #This is from https://gis.stackexchange.com/questions/190423/getting-pixel-values-at-single-point-using-rasterio
@@ -315,7 +329,7 @@ if (generate_data=='TRUE'):
         Extraction_SAR_transect_gpd = gpd.GeoDataFrame(Extraction_SAR_transect, geometry=gpd.points_from_xy(Extraction_SAR_transect.lon_3413, Extraction_SAR_transect.lat_3413), crs="EPSG:3413")
                 
         #Perform the join between ice slabs thickness and SAR data
-        pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predicate="within", how='left') #This is from https://www.matecdev.com/posts/point-in-polygon.html
+        pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
                 
         if (fig_display=='TRUE'):
@@ -342,6 +356,7 @@ if (generate_data=='TRUE'):
         upsampled_SAR_and_IceSlabs=pointInPolys.groupby('index_right').mean()
         
         if (fig_display=='TRUE'):
+            
             #Display upsampling worked
             fig = plt.figure()
             fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -351,6 +366,12 @@ if (generate_data=='TRUE'):
             ax_check_upsampling.scatter(upsampled_SAR_and_IceSlabs.lon_3413,upsampled_SAR_and_IceSlabs.lat_3413,c=upsampled_SAR_and_IceSlabs['20m_ice_content_m'],s=500,vmin=0,vmax=20)
             ax_check_upsampling.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['20m_ice_content_m'],vmin=0,vmax=20)
         
+        
+        #Sort by longitude for display
+        upsampled_SAR_and_IceSlabs_sorted=upsampled_SAR_and_IceSlabs.sort_values(by=['lon_3413']).copy()
+        upsampled_SAR_and_IceSlabs_sorted['distances']=compute_distances(np.array(upsampled_SAR_and_IceSlabs_sorted.lon_3413),
+                                                                         np.array(upsampled_SAR_and_IceSlabs_sorted.lat_3413))
+        
         #7. Plot relationship SAR VS Ice slabs thickness: display the oversampled and upsampled radar signal strength with upsampled ice content
         #Prepare plot
         fig_indiv = plt.figure()
@@ -358,42 +379,46 @@ if (generate_data=='TRUE'):
         gs = gridspec.GridSpec(6, 10)
         gs.update(wspace=2)
         gs.update(hspace=1)
-        ax_oversampled_SAR = plt.subplot(gs[0:4, 0:5])
+        ax_map_SAR = plt.subplot(gs[0:4, 0:5],projection=crs)
         ax_upsampled_SAR = plt.subplot(gs[0:4, 5:10])
         ax_radargram = plt.subplot(gs[4:6, 0:10])
-        
+                
         #Display
-        Extraction_SAR_transect.plot.scatter(x='SAR',y='20m_ice_content_m',ax=ax_oversampled_SAR)
-        ax_upsampled_SAR.scatter(upsampled_SAR_and_IceSlabs['radar_signal'],upsampled_SAR_and_IceSlabs['20m_ice_content_m'])
+        ax_map_SAR.coastlines()
+        ax_map_SAR.scatter(upsampled_SAR_and_IceSlabs_sorted['lon_3413'],upsampled_SAR_and_IceSlabs_sorted['lat_3413'],c=upsampled_SAR_and_IceSlabs_sorted['distances']/1000,cmap='magma')
+        cbar_dist=ax_upsampled_SAR.scatter(upsampled_SAR_and_IceSlabs_sorted['radar_signal'],upsampled_SAR_and_IceSlabs_sorted['20m_ice_content_m'],c=upsampled_SAR_and_IceSlabs_sorted['distances']/1000,cmap='magma')
         ax_radargram.pcolor(IceSlabsTransect['distances']/1000,
                             IceSlabsTransect['depth'],
                             IceSlabsTransect['IceSlabs_Mask'],
                             cmap='gray_r')
         #Improve axis
-        ax_oversampled_SAR.set_xlim(-15,-4)
-        ax_oversampled_SAR.set_ylim(-0.5,20.5)
+        ax_map_SAR.set_xlim(-392549, -9871)
+        ax_map_SAR.set_ylim(-2916410,-2407184)
         ax_upsampled_SAR.set_xlim(-15,-4)
         ax_upsampled_SAR.set_ylim(-0.5,20.5)
         ax_radargram.invert_yaxis() #Invert the y axis = avoid using flipud.
         ax_radargram.set_aspect(0.1)
         ax_radargram.set_title('Ice slab transect')
         #Display titles
-        ax_oversampled_SAR.set_title('Original sampling')
+        ax_map_SAR.set_title('Localisation')
         ax_upsampled_SAR.set_title('Upsampled dataset')
         ax_radargram.set_title('Radargram')
         ax_radargram.set_xlabel('Distance [km]')
         ax_radargram.set_ylabel('Depth [m]')
-        
+        fig_indiv.colorbar(cbar_dist, ax=ax_upsampled_SAR,label='Distance [km]') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+                
         #Save the figure
         fig_indiv.suptitle(IceSlabsTransect_name)
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/images/'+IceSlabsTransect_name+'.png',dpi=300,bbox_inches='tight')
-            
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/images/'+IceSlabsTransect_name+'_distances.png',dpi=300,bbox_inches='tight')
+        plt.close()
+        
+        '''
         #Export the extracted values as csv
         pointInPolys.to_csv('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/csv/'+IceSlabsTransect_name+'.csv',
                             columns=['Track_name', 'lat', 'lon',
                                    '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                    'elevation', 'year', 'index_right', 'radar_signal'])
-    
+        '''
     print('Done in generating 2018 data')
 
 pdb.set_trace()
