@@ -21,7 +21,10 @@ def compute_distances(eastings,northings):
 
 def func(x, a, b, c):
     return a * np.exp(-b * x) + c
-    
+
+def deg_n(x, a, n):
+    return a * np.power(x,n)
+
 import pickle
 import scipy.io
 import numpy as np
@@ -74,10 +77,15 @@ f_20102018_high_cleaned.close
 #This section of displaying sat data was coding using tips from
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+'''
 #Load SAR data
 SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif',
                               masked=True).squeeze() #No need to reproject satelite image
 ### almost full greenland: 0000-0000, south greenland: 00023296-00000
+'''
+#Load SAR data - 2019-2022
+SAR = rxr.open_rasterio(path+'SAR/'+'ref_2019_2022_61_106_SWGrIS_20m-0000023296-0000000000.tif',
+                              masked=True).squeeze() #No need to reproject satelite image
 
 #Extract x and y coordinates of SAR image
 x_coord_SAR=np.asarray(SAR.x)
@@ -275,8 +283,13 @@ if (generate_data=='TRUE'):
         #Additional proof the extracted SAR signal with this method is correct using another way of extracting SAR signal
         ### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
         #https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
+        '''
         #Load SAR data
         path_SAR = path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif'
+        SAR_RIO = rasterio.open(path_SAR)
+        '''
+        #Load SAR data - 2019-2022
+        path_SAR=path+'SAR/'+'ref_2019_2022_61_106_SWGrIS_20m-0000023296-0000000000.tif'
         SAR_RIO = rasterio.open(path_SAR)
         
         SAR_values=[]
@@ -300,7 +313,7 @@ if (generate_data=='TRUE'):
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
         #Convert Extraction_SAR_transect into a geopandas dataframe
         Extraction_SAR_transect_gpd = gpd.GeoDataFrame(Extraction_SAR_transect, geometry=gpd.points_from_xy(Extraction_SAR_transect.lon_3413, Extraction_SAR_transect.lat_3413), crs="EPSG:3413")
-        
+                
         #Perform the join between ice slabs thickness and SAR data
         pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predicate="within", how='left') #This is from https://www.matecdev.com/posts/point-in-polygon.html
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
@@ -311,7 +324,6 @@ if (generate_data=='TRUE'):
             ax_SAR_VS_radar_signal = plt.subplot()
             ax_SAR_VS_radar_signal.scatter(Extraction_SAR_transect['SAR'],pointInPolys['radar_signal'])
         
-        if (fig_display=='TRUE'):
             #Check extraction is correct
             #Prepare plot
             fig = plt.figure()
@@ -374,21 +386,21 @@ if (generate_data=='TRUE'):
         
         #Save the figure
         fig_indiv.suptitle(IceSlabsTransect_name)
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/images/'+IceSlabsTransect_name+'.png',dpi=300,bbox_inches='tight')
+        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/images/'+IceSlabsTransect_name+'.png',dpi=300,bbox_inches='tight')
             
         #Export the extracted values as csv
-        pointInPolys.to_csv('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'+IceSlabsTransect_name+'.csv',
+        pointInPolys.to_csv('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/csv/'+IceSlabsTransect_name+'.csv',
                             columns=['Track_name', 'lat', 'lon',
                                    '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                    'elevation', 'year', 'index_right', 'radar_signal'])
     
     print('Done in generating 2018 data')
 
-
+pdb.set_trace()
 #Once all csv files of SAR extraction are performed, load them
 if (load_data=='TRUE'):
     #Path to data
-    path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'
+    path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/2019_2022/csv/'
         
     #List all the files in the folder
     list_composite=os.listdir(path_csv_SAR_VS_IceContent) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
@@ -414,7 +426,7 @@ if (load_data=='TRUE'):
     appended_df.describe()['radar_signal']
     appended_df.describe()['20m_ice_content_m']
 
-
+pdb.set_trace()
 #Display the composite relationship using all the files
 if (composite=='TRUE'):
     
@@ -669,7 +681,6 @@ if (composite=='TRUE'):
     ###           Get rid of data points where occurrence is low!           ###
     ###########################################################################
 
-pdb.set_trace()
 
 #Consider a test dataset, derive the relationship between SAR and ice content, predict ice content from SAR, evaluate the performance of the prediction
 if (interpolation=='TRUE'):
@@ -677,7 +688,10 @@ if (interpolation=='TRUE'):
     
     #Get rid of data where NaNs
     appended_df_no_NaNs=appended_df[~appended_df['radar_signal'].isna()].copy()
-    
+    '''
+    #Select only ice content lower than 7.5m
+    appended_df_no_NaNs=appended_df_no_NaNs[appended_df_no_NaNs['20m_ice_content_m']<7.5].copy()
+    '''
     #Prepare figure to display
     fig_selection = plt.figure()
     fig_selection.set_size_inches(14, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -695,9 +709,7 @@ if (interpolation=='TRUE'):
     #Display whole df
     ax_whole_df.scatter(appended_df_no_NaNs.lon_3413,appended_df_no_NaNs.lat_3413)
     ax_whole_df_distrib.hist(appended_df_no_NaNs['20m_ice_content_m'])
-    
-    pdb.set_trace()
-    
+        
     #1. Select randomly x% of the dataset
     randomly_selected_df=appended_df_no_NaNs.sample(frac=0.5).copy()
     
@@ -710,7 +722,8 @@ if (interpolation=='TRUE'):
     
     #2. Extract the relationship between SAR and ice content
     popt, pcov = curve_fit(func, np.array(randomly_selected_df['radar_signal']),
-                           np.array(randomly_selected_df['20m_ice_content_m']))#p0=[1,0.26,-2],bounds=([-2,0,-5],[5,2,2]))
+                           np.array(randomly_selected_df['20m_ice_content_m']),
+                           p0=[1,0.26,-2],bounds=([-2,0,-5],[5,2,2]))
     
     #Display relationship
     fig_relationship, (ax_relationship) = plt.subplots()
@@ -725,12 +738,61 @@ if (interpolation=='TRUE'):
     
     ax_relationship.legend(loc='upper left',fontsize=8)
     
+    #Try other relationships
+
+    #manual fit
+    a=np.arange(-1,0,0.1)
+    b=np.arange(0.1,0.3,0.01)
+    c=np.arange(-10,0,1)
+    
+    error_best=1e20
+    err_vect=[]
+    
+    for i in range (0,len(a)):
+        print(a[i])
+        for j in range (0,len(b)):
+            for k in range (0,len(c)):
+                '''
+                ax_relationship.plot(np.array(randomly_selected_df['radar_signal']), func(np.array(randomly_selected_df['radar_signal']), a[i],b[j],c[k]),
+                                     label='manual fit: y = %f*exp(-%f*x) +%f' % tuple([a[i],b[j],c[k]]))
+                '''
+                #get the smallest error
+                error_now=np.sum(np.power(randomly_selected_df['20m_ice_content_m']-func(np.array(randomly_selected_df['radar_signal']), a[i],b[j],c[k]),2))
+                err_vect=np.append(err_vect,error_now)
+                if(error_now<error_best):
+                    error_best=error_now
+                    a_best=a[i]
+                    b_best=b[j]
+                    c_best=c[k]
+    
+    #Display where min
+    ax_relationship.plot(np.array(randomly_selected_df['radar_signal']), func(np.array(randomly_selected_df['radar_signal']), a_best,b_best,c_best),
+                         'k',label='fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple([a_best,b_best,c_best]))
+    ax_relationship.legend(loc='upper left',fontsize=8)
+    plt.show()
+    
+    fig_err, (ax_err) = plt.subplots()
+    ax_err.plot(np.arange(0,len(err_vect)),err_vect)
+    ax_err.scatter(np.where(err_vect==err_vect.min())[0][0],err_vect.min(),color='r')
+    pdb.set_trace()
+        
+    
     #3. Apply relationship to SAR
+    appended_df_no_NaNs['predicted_ice_content']=func(np.array(appended_df_no_NaNs['radar_signal']), 1,0.26,-2)
+    #Determine the absolute difference between predicted ice content and original ice content
+    appended_df_no_NaNs['abs_diff_ice_content']=np.abs(appended_df_no_NaNs['predicted_ice_content']-appended_df_no_NaNs['20m_ice_content_m'])
     
     #4. Compare the results with the remaining dataset
-
-
-
+    fig_err, (ax_err) = plt.subplots()
+    ax_err.hist(appended_df_no_NaNs['abs_diff_ice_content'],bins=np.arange(0,60,1),cumulative=True)
+    
+    #Prepare figure to display
+    fig_selection = plt.figure()
+    ax_diff = plt.subplot(projection=crs)
+    
+    #Display coastlines
+    ax_diff.coastlines(edgecolor='black',linewidth=0.075)
+    ax_diff.scatter(appended_df_no_NaNs.lon_3413,appended_df_no_NaNs.lat_3413,c=appended_df_no_NaNs['abs_diff_ice_content'])
+        
 
 #Potential improvement: determine and use the best likelihood for each transect. !Might require quite some work!
-    
