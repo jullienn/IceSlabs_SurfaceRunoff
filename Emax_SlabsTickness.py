@@ -5,84 +5,102 @@ Created on Wed Sep 28 16:00:42 2022
 @author: JullienN
 """
 
-
-def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region):
+def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func,axplot_SAR):
+    not_worked='FALSE'
+    ######################################################################
+    ############## This is from SAR_SlabsThickness_test.py ###############
+    ######################################################################
+    #SAR_SW_00_23 and SAR_NW_00_23 are not needed as no slabs in these regions
     
-    if (region == 'GrIS'):
-        ax_plot.hist(iceslabs_above['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_within['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_inbetween['20m_ice_content_m'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        #Dislay median values
-        ax_plot.axvline(x=np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),linestyle='--',color='blue')
-        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),linestyle='--',color='red')
-        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
-        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        
+    #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
+    #Suite of try except from https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block       
+    try:#from https://docs.python.org/3/tutorial/errors.html
+        print('Try intersection with SAR ...')
+        SAR_clipped = SAR_SW_00_00.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+    except rxr.exceptions.NoDataInBounds:#From https://corteva.github.io/rioxarray/html/_modules/rioxarray/exceptions.html#NoDataInBounds
+        print('   Intersection not found, try again ...')
+        try:
+            SAR_clipped = SAR_NW_00_00.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+        except rxr.exceptions.NoDataInBounds:
+            print('      Intersection not found, try again ...')
+            try:
+                SAR_clipped = SAR_N_00_00.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+            except rxr.exceptions.NoDataInBounds:
+                print('         Intersection not found, try again ...')
+                try:
+                    SAR_clipped = SAR_N_00_23.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+                except rxr.exceptions.NoDataInBounds:
+                    print('            Intersection not found!')
+                    print('               Continue')
+                    not_worked='TRUE'
+                    #Store ice slabs transect not intersected with SAR
+
+    if (not_worked=='TRUE'):
+        SAR_clipped_np=np.array([-999])
     else:
-        ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        #Dislay median values
-        ax_plot.axvline(x=np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='blue')
-        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='red')
-        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
-        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    
-    #Set x lims
-    ax_plot.set_xlim(-0.5,20)
-
-    if (region == 'NW'):
-        ax_plot.legend()
-    
-    if (region in list(['NO','NE','GrIS'])):
-        ax_plot.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
-
-    return
-
-
-def plot_histo_likelihood(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region):
-    
-    if (region == 'GrIS'):
-        ax_plot.hist(iceslabs_above['likelihood'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        ax_plot.hist(iceslabs_within['likelihood'],color='red',label='Within',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        ax_plot.hist(iceslabs_inbetween['likelihood'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        #Dislay median values
-        ax_plot.axvline(x=np.nanquantile(iceslabs_above['likelihood'],0.5),linestyle='--',color='blue')
-        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_within['likelihood'],0.5),linestyle='--',color='red')
-        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween['likelihood'],0.5),linestyle='--',color='yellow')
-        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        print("SAR intersection found!")
         
-    else:
-        ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['likelihood'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['likelihood'],color='red',label='Within',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        ax_plot.hist(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['likelihood'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        #Dislay median values
-        ax_plot.axvline(x=np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['likelihood'],0.5),linestyle='--',color='blue')
-        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['likelihood'],0.5),linestyle='--',color='red')
-        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['likelihood'],0.5),linestyle='--',color='yellow')
-        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['likelihood'],0.5),3))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        #Display clipped SAR
+        extent_SAR_clipped = [np.min(np.asarray(SAR_clipped.x)), np.max(np.asarray(SAR_clipped.x)),
+                              np.min(np.asarray(SAR_clipped.y)), np.max(np.asarray(SAR_clipped.y))]#[west limit, east limit., south limit, north limit]
+        axplot_SAR.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, origin='upper', cmap='gray',zorder=2,vmin=-20,vmax=0)
+                
+        '''
+        Do I want to do the intersection between the SAR and Ice content in the different sectors??? If yes, revisit this section
+        #4. Vectorise the SAR raster
+        ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
+        x, y, radar_signal = SAR_clipped.x.values, SAR_clipped.y.values, SAR_clipped.values
+        x, y = np.meshgrid(x, y)
+        x, y, radar_signal = x.flatten(), y.flatten(), radar_signal.flatten()
+        
+        #Convert to geodataframe
+        SAR_pd = pd.DataFrame.from_dict({'radar_signal': radar_signal, 'x': x, 'y': y})
+        #The SAR_vector is a geodataframe of points whose coordinates represent the centroid of each cell
+        SAR_vector = gpd.GeoDataFrame(SAR_pd, geometry=gpd.GeoSeries.from_xy(SAR_pd['x'], SAR_pd['y'], crs=SAR_clipped.rio.crs))
+        #Create a square buffer around each centroid to reconsititute the raster but where each cell is an individual polygon
+        SAR_grid = SAR_vector.buffer(20, cap_style=3)
+        #Convert SAR_grid into a geopandas dataframe, where we keep the information of the centroids (i.e. the SAR signal)
+        SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
+        #There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
+        ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
+        
+        #Perform the join between ice slabs thickness and SAR data
+        pointInPolys= gpd.tools.sjoin(Intersection_EmaxBuffer_slabs, SAR_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
+        
+        #6. Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
+        upsampled_SAR_and_IceSlabs=pointInPolys.groupby('index_right').mean()
+        
+        #Display upsampling worked
+        fig = plt.figure()
+        fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+        #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+        ax_check_upsampling = plt.subplot(projection=crs)
+        SAR_grid_gpd.plot(ax=ax_check_upsampling,edgecolor='black')
+        ax_check_upsampling.scatter(upsampled_SAR_and_IceSlabs.lon_3413,upsampled_SAR_and_IceSlabs.lat_3413,c=upsampled_SAR_and_IceSlabs['20m_ice_content_m'],s=500,vmin=0,vmax=20)
+        ax_check_upsampling.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['20m_ice_content_m'],vmin=0,vmax=20)
+        '''
+        
+        '''
+        #Export the grid to check on QGIS
+        SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid.shp')
+        '''
+        ######################################################################
+        ############## This is from SAR_SlabsThickness_test.py ###############
+        ######################################################################
+        
+        #Convert SAR_clipped to a numpy matrix
+        SAR_clipped_np=SAR_clipped.to_numpy()
+        #Drop NaNs
+        SAR_clipped_np=SAR_clipped_np[~np.isnan(SAR_clipped_np)]
     
-    #Set x lims
-    ax_plot.set_xlim(0,1)
+    return SAR_clipped_np
 
-    if (region == 'NW'):
-        ax_plot.legend()
-    
-    if (region in list(['NO','NE','GrIS'])):
-        ax_plot.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
 
+def save_slabs_as_csv(path_save_IceSlabs,df_to_save,sector,box_number,processed_year):
+    df_to_save.to_csv(path_save_IceSlabs+sector+'/IceSlabs_'+sector+'_box_'+str(box_number)+'_year_'+str(processed_year)+'.csv',
+                      columns=['Track_name', 'Tracenumber', 'lat', 'lon', 'alongtrack_distance_m',
+                             '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
+                             'elevation', 'year', 'geometry', 'index_right_polygon', 'FID', 'rev_subs', 'index_right'])
     return
 
 import pandas as pd
@@ -107,27 +125,47 @@ from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
 
+#Define palette for areas of interest , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
+#This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
+my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'InBetween': "#fee391"}
+
 #Type of slabs product
 type_slabs='high' #can be high or low
 
-#Define which year to plot
-desired_year=2012
+#Define which year to process
+desired_year=2019
 
-### -------------------------- Load GrIS DEM ----------------------------- ###
-#This is from paper Greenland Ice Sheet Ice Slab Expansion and Thickening, function 'extract_elevation.py'
-#https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
-import rasterio
-from rasterio.plot import show
-path_GrIS_DEM = r'C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/elevations/greenland_dem_mosaic_100m_v3.0.tif'
-GrIS_DEM = rasterio.open(path_GrIS_DEM)
-### -------------------------- Load GrIS DEM ----------------------------- ###
+#Define radius
+radius=250
+
+#Define paths
+path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
+path_rignotetal2016_GrIS_drainage_bassins=path_switchdrive+'backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
+path_data=path_switchdrive+'RT3/data/'
+path_df_with_elevation=path_data+'export_RT1_for_RT3/'
+path_2002_2003=path_switchdrive+'RT1/final_dataset_2002_2018/2002_2003/'
+
+path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
+path_NDWI=path_local+'data/NDWI_RT3_jullien/NDWI/'
+path_SAR=path_local+'data/SAR/HV_2017_2018/'
+path_save_SAR_IceSlabs=path_local+'SAR_and_IceContent/SAR_sectors/'
+
+### -------------------------- Load shapefiles --------------------------- ###
+#Load Rignot et al., 2016 Greenland drainage bassins
+GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp',rows=slice(51,57,1)) #the regions are the last rows of the shapefile
+#Extract indiv regions and create related indiv shapefiles
+NW_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NW']
+CW_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='CW']
+SW_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='SW']
+NO_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NO']
+NE_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NE']
+SE_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='SE']
+### -------------------------- Load shapefiles --------------------------- ###
 
 #Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
 #This section of displaying sat data was coding using tips from
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
-
-path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'
 #Load NDWI data for display
 NDWI_image = rxr.open_rasterio(path_NDWI+'NDWI_p10_'+str(desired_year)+'.vrt',
                               masked=True).squeeze() #No need to reproject satelite image
@@ -135,22 +173,6 @@ NDWI_image = rxr.open_rasterio(path_NDWI+'NDWI_p10_'+str(desired_year)+'.vrt',
 x_coord_NDWI=np.asarray(NDWI_image.x)
 y_coord_NDWI=np.asarray(NDWI_image.y)
 
-#Define path Boxes
-path_data='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
-
-#Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
-#This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'InBetween': "#fee391"}
-
-'''
-#Open flowlignes
-polygons_Machguth2022=gpd.read_file(path_data+'polygons_Machguth2022/Ys_polygons_v3.2b.shp')
-
-#After manual identification on QGIS, we do not need 0-79, 82-84, 121-124, 146-154, 207-208, 212-217, 223-230, 232, 242-244, 258-267, 277-282, 289-303, 318-333
-nogo_polygon=np.concatenate((np.arange(0,79+1),np.arange(82,84+1),np.arange(121,124+1),np.arange(146,154+1),np.arange(207,208+1),
-                             np.arange(212,217+1),np.arange(223,230+1),np.arange(232,233),np.arange(242,244+1),np.arange(258,267+1),
-                             np.arange(277,282+1),np.arange(289,303+1),np.arange(318,333+1)))
-'''
 #Open Boxes from Tedstone and Machguth (2022)
 Boxes_Tedstone2022=gpd.read_file(path_data+'Boxes_Tedstone2022/boxes.shp')
 
@@ -171,158 +193,116 @@ crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
 ### ---------------------------- Load dataset ---------------------------- ###
+############# IS THIS THE CORRECT DATASET TO USE????? #############
 #Dictionnaries have already been created, load them
-path_df_with_elevation='C:/Users/jullienn/switchdrive/Private/research/RT3/data/export_RT1_for_RT3/' 
-
 #Load 2010-2018
 f_20102018 = open(path_df_with_elevation+'df_20102018_with_elevation_for_RT3_masked_rignotetalregions', "rb")
 df_2010_2018 = pickle.load(f_20102018)
 f_20102018.close()
+############# IS THIS THE CORRECT DATASET TO USE????? #############
 
 #Load 2002-2003 dataset
-path_2002_2003='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/2002_2003/'
 df_2002_2003=pd.read_csv(path_2002_2003+'2002_2003_green_excel.csv')
 ### ---------------------------- Load dataset ---------------------------- ###
 
 #Load Emax from Tedstone and Machguth (2022)
-'''
-Emax_TedMach=pd.read_csv(path_data+'/Emax/xytpd.csv',delimiter=',',decimal='.')
-'''
 Emax_TedMach=pd.read_csv(path_data+'/Emax/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
 
 #Rename columns preventing intersection
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
-#Emax_TedMach.drop(columns=['Unnamed: 0'])
-
-'''
-### -------------------------- Load shapefiles --------------------------- ###
-#Load Rignot et al., 2016 Greenland drainage bassins
-path_rignotetal2016_GrIS_drainage_bassins='C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
-GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp',rows=slice(51,57,1)) #the regions are the last rows of the shapefile
-
-#Extract indiv regions and create related indiv shapefiles
-NW_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NW']
-CW_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='CW']
-SW_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='SW']
-NO_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NO']
-NE_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NE']
-SE_rignotetal=GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='SE']
-### -------------------------- Load shapefiles --------------------------- ###
-
-#Plot to check
-fig = plt.figure(figsize=(10,5))
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax1 = plt.subplot(projection=crs)
-
-#Display GrIS drainage bassins
-NO_rignotetal.plot(ax=ax1,color='white', edgecolor='black',linewidth=0.5)
-NE_rignotetal.plot(ax=ax1,color='white', edgecolor='black',linewidth=0.5) 
-SE_rignotetal.plot(ax=ax1,color='white', edgecolor='black',linewidth=0.5) 
-SW_rignotetal.plot(ax=ax1,color='white', edgecolor='black',linewidth=0.5) 
-CW_rignotetal.plot(ax=ax1,color='white', edgecolor='black',linewidth=0.5) 
-NW_rignotetal.plot(ax=ax1,color='white', edgecolor='black',linewidth=0.5)
-
-#Display region name 
-ax1.text(NO_rignotetal.centroid.x,NO_rignotetal.centroid.y-20000,np.asarray(NO_rignotetal.SUBREGION1)[0])
-ax1.text(NE_rignotetal.centroid.x,NE_rignotetal.centroid.y+20000,np.asarray(NE_rignotetal.SUBREGION1)[0])
-ax1.text(SE_rignotetal.centroid.x,SE_rignotetal.centroid.y+60000,np.asarray(SE_rignotetal.SUBREGION1)[0])
-ax1.text(SW_rignotetal.centroid.x,SW_rignotetal.centroid.y-120000,np.asarray(SW_rignotetal.SUBREGION1)[0])
-ax1.text(CW_rignotetal.centroid.x,CW_rignotetal.centroid.y+20000,np.asarray(CW_rignotetal.SUBREGION1)[0])
-ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y+20000,np.asarray(NW_rignotetal.SUBREGION1)[0])
-
-Boxes_Tedstone2022.plot(ax=ax1,color='red', edgecolor='black',linewidth=0.5)
-ax1.scatter(df_2010_2018['lon_3413'],df_2010_2018['lat_3413'],c=df_2010_2018['20m_ice_content_m'],s=0.1)
-ax1.scatter(Emax_TedMach['x'],Emax_TedMach['y'],c=Emax_TedMach['year'],s=5,cmap='magma')
-
-plt.show()
-
-pdb.set_trace()
-#Save context map figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/context_map_tedstone.png',dpi=500)
-'''
 
 #Define df_2002_2003, df_2010_2018, Emax_TedMach as being a geopandas dataframes
 points_2002_2003 = gpd.GeoDataFrame(df_2002_2003, geometry = gpd.points_from_xy(df_2002_2003['lon'],df_2002_2003['lat']),crs="EPSG:3413")
 points_ice = gpd.GeoDataFrame(df_2010_2018, geometry = gpd.points_from_xy(df_2010_2018['lon_3413'],df_2010_2018['lat_3413']),crs="EPSG:3413")
 points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_TedMach['x'],Emax_TedMach['y']),crs="EPSG:3413")
 
-#Add a unique_ID_Emax column in points_ice to flag data with its corresponding Emax point
-points_ice['unique_ID_Emax']=[np.nan]*len(points_ice)
-#Add a selected_data column in points_ice to flag data which has already been taken in the above category
-points_ice['selected_data']=[0]*len(points_ice)
-
 #Define empty dataframe
 iceslabs_above_selected_overall=pd.DataFrame()
 iceslabs_selected_overall=pd.DataFrame()
 iceslabs_inbetween_overall=pd.DataFrame()
 
-#Define radius
-radius=250
+#Open SAR image
+### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+#Load SAR data
+SAR_N_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
+SAR_N_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000023296.tif',masked=True).squeeze()
+SAR_NW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000000000.tif',masked=True).squeeze()
+SAR_NW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000023296.tif',masked=True).squeeze()
+SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
+SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
+### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
+
+#Define empty vectors for SAR storing
+SAR_within=[]
+SAR_below=[]
+SAR_above=[]
 
 for indiv_index in Boxes_Tedstone2022.FID:
     
     if (indiv_index in nogo_polygon):
-        #Zone excluded form proicessing, continue
+        #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-    '''
-    if (indiv_index < 7):
+    
+    if (indiv_index < 8):
         continue
-    '''
-    print(indiv_index)
         
-    #Prepare plot
-    fig = plt.figure()
-    fig.set_size_inches(14, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    gs = gridspec.GridSpec(10, 10)
-    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-    ax2 = plt.subplot(gs[0:10, 0:6],projection=crs)
-    ax3 = plt.subplot(gs[0:4, 7:10])
-    ax3_likelihood = plt.subplot(gs[4:8, 7:10])
-    ax4 = plt.subplot(gs[8:10, 7:10],projection=crs)
-    gs.update(hspace = 2.5)
-
-    '''
-    #Maximize plot size - This is from Fig1.py from Grenland ice slabs expansion and thickening paper.
-    figManager = plt.get_current_fig_manager()
-    figManager.window.showMaximized()
-    '''
+    print(indiv_index)
+    
     #Extract individual polygon
     indiv_polygon=Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_index]
-
-    #Display polygon
-    '''
-    indiv_polygon.plot(ax=ax1,color='orange', edgecolor='black',linewidth=0.5)
-    '''
-    indiv_polygon.plot(ax=ax2,color='none', edgecolor='black',linewidth=0.5,zorder=1)
     
-    indiv_polygon.plot(ax=ax4,color='#faf6c8', edgecolor='black',linewidth=0.5)
-    ax4.set_xlim(-667470, 738665)
-    ax4.set_ylim(-3365680, -666380)
+    #Prepare plot
+    fig = plt.figure()
+    fig.set_size_inches(16, 11.3) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(10, 6)
+    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+    ax_sectors = plt.subplot(gs[0:10, 0:2],projection=crs)
+    ax_SAR = plt.subplot(gs[0:10, 2:4],projection=crs)
+    ax_ice_distrib = plt.subplot(gs[0:3, 4:6])
+    ax_SAR_distrib = plt.subplot(gs[3:6, 4:6])
+    ax_GrIS = plt.subplot(gs[7:10, 4:6],projection=crs)
+    
     #Display coastlines
-    ax4.coastlines(edgecolor='black',linewidth=0.75)
+    ax_GrIS.coastlines(edgecolor='black',linewidth=0.75)
+    #Display GrIS drainage bassins and polygon
+    NO_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.5)
+    NE_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.5) 
+    SE_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.5) 
+    SW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.5) 
+    CW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.5) 
+    NW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.5)
+    ax_GrIS.axis('off')
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    ax_GrIS.set_extent([-634797, 856884, -3345483, -764054], crs=crs)# x0, x1, y0, y1
+    gl=ax_GrIS.gridlines(draw_labels=True, xlocs=[-35, -50], ylocs=[65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+    gl.top_labels = False
+    ###################### From Tedstone et al., 2022 #####################
+    
+    #Display polygon
+    indiv_polygon.plot(ax=ax_sectors,color='none', edgecolor='black',linewidth=0.5,zorder=1)
+    indiv_polygon.plot(ax=ax_GrIS,color='#faf6c8', edgecolor='black',linewidth=0.5)
+    indiv_polygon.plot(ax=ax_SAR,color='none', edgecolor='black',linewidth=0.5,zorder=1)
     
     #Intersection between 2002-2003 ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-    within_points_20022003 = gpd.sjoin(points_2002_2003, indiv_polygon, op='within')
+    within_points_20022003 = gpd.sjoin(points_2002_2003, indiv_polygon, predicate='within')
     #Intersection between ice slabs and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-    within_points_ice = gpd.sjoin(points_ice, indiv_polygon, op='within')
+    within_points_ice = gpd.sjoin(points_ice, indiv_polygon, predicate='within')
     #Intersection between Emax and polygon of interest, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-    within_points_Emax = gpd.sjoin(points_Emax, indiv_polygon, op='within')
+    within_points_Emax = gpd.sjoin(points_Emax, indiv_polygon, predicate='within')
     
     #rename colnames from join procedure to allow joining with Emax polygons
     within_points_ice=within_points_ice.rename(columns={"index_right":"index_right_polygon"})
     
-    '''
-    #plot
-    ax1.scatter(within_points_20022003['lon'],within_points_20022003['lat'],c='#bdbdbd',s=0.1)
-    ax1.scatter(within_points_Emax['x'],within_points_Emax['y'],c=within_points_Emax['year'],s=5,cmap='magma')
-    ax1.scatter(within_points_ice['lon_3413'],within_points_ice['lat_3413'],c=within_points_ice['20m_ice_content_m'],s=0.1)
-    '''
-    
     #Display antecedent ice slabs
-    ax2.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=1)
+    ax_sectors.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=1)
     
-    for indiv_year in list([desired_year]):#,2012,2016,2019]): #list([2010,2011,2012,2013,2014,2016,2017,2018]):
+    for indiv_year in list([desired_year]):#,2012,2016,2019]):
         
         #Define empty dataframe
         subset_iceslabs_selected=pd.DataFrame()
@@ -354,17 +334,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
         extent_NDWI = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
         
         #Display NDWI image
-        cbar=ax2.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=0,vmax=0.3) #NDWI
-                
-        #plot all the Emax points of the considered indiv_year
-        ax2.scatter(Emax_points['x'],Emax_points['y'],color='black',s=5,zorder=6)
+        ax_sectors.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=0,vmax=0.3) #NDWI
         
-        '''
-        #For method illustration in Box 7 in 2019
-        ax2.set_xlim(-158424.6613558118, -97042.21017519754)
-        ax2.set_ylim(-2698977.3494860246, -2586220.455469461)
-        '''
-
+        #plot all the Emax points of the considered indiv_year
+        ax_sectors.scatter(Emax_points['x'],Emax_points['y'],color='black',s=5,zorder=6)
+        
         #Select ice slabs thickness to display distribution
         if (indiv_year == 2002):
             #Select ice slabs data from 2002            
@@ -380,39 +354,27 @@ for indiv_index in Boxes_Tedstone2022.FID:
             #Select ice slabs data from 2010 and 2011
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,within_points_ice.year==2011)]
         elif(indiv_year == 2012):
-            '''
-            #Select ice slabs data from 2010, 2011, 2012
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2010,(within_points_ice.year==2011)|(within_points_ice.year==2012))]
-            '''
             #Select ice slabs data from 2011, 2012
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2011,within_points_ice.year==2012)]
         elif(indiv_year == 2013):
-            #Select ice slabs data from 2011, 2012, 2013
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2011,(within_points_ice.year==2012)|(within_points_ice.year==2013))]
+            #Select ice slabs data from 2012, 2013
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,within_points_ice.year==2013)]
         elif(indiv_year == 2014):
-            #Select ice slabs data from 2012, 2013, 2014
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
+            #Select ice slabs data from 2013, 2014
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,within_points_ice.year==2014)]
         elif (indiv_year == 2015):
-            #Select ice slabs data of the closest indiv_year, i.e. 2014 and the 2 previous ones
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
+            #Select ice slabs data of the closest indiv_year, i.e. 2014 and 2013
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,within_points_ice.year==2014)]
         elif (indiv_year == 2016):
-            '''
-            #Select ice slabs data of the closest indiv_year, i.e. 2014 and the 2 previous ones
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2012,(within_points_ice.year==2013)|(within_points_ice.year==2014))]
-            '''
             #Select ice slabs data of the the 2 previous closest indiv_year, i.e. 2013 and 2014
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,within_points_ice.year==2014)]
         elif (indiv_year == 2017):
-            #Select ice slabs data from 2017, 2014, 2013
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2013,(within_points_ice.year==2014)|(within_points_ice.year==2017))]
+            #Select ice slabs data from 2017 and 2014
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,within_points_ice.year==2017)]
         elif (indiv_year == 2018):
-            #Select ice slabs data from 2018, 2017, 2014
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,(within_points_ice.year==2017)|(within_points_ice.year==2018))]
+            #Select ice slabs data from 2018, 2017
+            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2017,within_points_ice.year==2018)]
         elif (indiv_year == 2019):
-            '''
-            #Select ice slabs data from 2018, 2017, 2014
-            subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2014,(within_points_ice.year==2017)|(within_points_ice.year==2018))]
-            '''
             #Select ice slabs data from 2018, 2017
             subset_iceslabs=within_points_ice[np.logical_or(within_points_ice.year==2017,within_points_ice.year==2018)]
         else:
@@ -422,47 +384,41 @@ for indiv_index in Boxes_Tedstone2022.FID:
         if (len(subset_iceslabs)==0):
             #No slab for this particular year, continue
             continue
-                
+        
         #Display antecedent ice slabs
-        ax2.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=1,zorder=1)
+        ax_sectors.scatter(within_points_ice[within_points_ice.year<=indiv_year]['lon_3413'],within_points_ice[within_points_ice.year<=indiv_year]['lat_3413'],color='gray',s=1,zorder=1)
         '''
         #Display the tracks of the current year within the polygon
-        ax2.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=4)
+        ax_sectors.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='purple',s=40,zorder=4)
         '''
         ######################### Connect Emax points #########################
-        
         #Keep only Emax points whose box_id is associated with the current box_id
         Emax_points=Emax_points[Emax_points.box_id==indiv_index]
-        
-        '''
-        #Display start and end of Emax points for line definition
-        ax2.scatter(Emax_points['x'].iloc[0],Emax_points['y'].iloc[0],color='green',s=40,zorder=7)
-        ax2.scatter(Emax_points['x'].iloc[-1],Emax_points['y'].iloc[-1],color='red',s=40,zorder=7)
-        '''
         
         #Emax as tuples
         Emax_tuple=[tuple(row[['x','y']]) for index, row in Emax_points.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
         #Connect Emax points between them
         lineEmax= LineString(Emax_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
         #Display Emax line
-        ax2.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=0.5) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax_sectors.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=0.5) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax_SAR.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=1) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         ######################### Connect Emax points #########################
 
         ########################### Polygon within ############################
         #Create a buffer around this line
         buffer_within_Emax = lineEmax.buffer(radius, cap_style=1) #from https://shapely.readthedocs.io/en/stable/code/buffer.py
         #Create polygon patch from this buffer
-        plot_buffer_within_Emax = PolygonPatch(buffer_within_Emax,zorder=2,color='red',alpha=0.2)
+        plot_buffer_within_Emax = PolygonPatch(buffer_within_Emax,zorder=2,color='grey',alpha=0.1)
         #Display patch
-        ax2.add_patch(plot_buffer_within_Emax)        
+        ax_sectors.add_patch(plot_buffer_within_Emax)        
         #Convert polygon of Emax buffer around connected Emax line into a geopandas dataframe
         Emax_within_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffer_within_Emax]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
         #Intersection between subset_iceslabs and Emax_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
-        Intersection_EmaxBuffer_slabs = gpd.sjoin(subset_iceslabs, Emax_within_polygon, op='within')
+        Intersection_EmaxBuffer_slabs = gpd.sjoin(subset_iceslabs, Emax_within_polygon, predicate='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=1,zorder=8)
+        ax_sectors.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=1,zorder=8)
         ########################### Polygon within ############################
-                
+                        
         ################################ Above ################################
         #Define a line for the above upper boundary 4000m away from Emax line        
         if ((indiv_index==7) & (indiv_year==2016)):
@@ -477,109 +433,162 @@ for indiv_index in Boxes_Tedstone2022.FID:
             lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(5000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
             
         #Plot the above upper boundaries        
-        ax2.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        #ax2.plot(lineEmax_upper_end_a.xy[0],lineEmax_upper_end_a.xy[1],zorder=5,color='red') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        ax2.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax_sectors.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax_sectors.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax_SAR.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         
-        #Create a polygon with low end begin the Emax line and upper end being the Emax line + 20000
+        #Create a polygon with low end begin the Emax line and upper end being the Emax line + 10 km
         polygon_above=Polygon([*list(lineEmax_upper_end_b.coords),*list(lineEmax_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
         #Create polygon patch of the polygon above
-        plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='blue',alpha=0.2)
+        plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='grey',alpha=0.1)
         #Display patch of polygone above
-        #ax2.add_patch(plot_buffer_above_Emax)        
+        ax_sectors.add_patch(plot_buffer_above_Emax)        
         #Convert polygon of Emax buffer above into a geopandas dataframe
         Emax_above_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_above]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
         #Intersection between subset_iceslabs and Emax_above_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-        Intersection_EmaxBufferAbove_slabs = gpd.sjoin(subset_iceslabs, Emax_above_polygon, op='within')
+        Intersection_EmaxBufferAbove_slabs = gpd.sjoin(subset_iceslabs, Emax_above_polygon, predicate='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=1,zorder=8)
+        ax_sectors.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=1,zorder=8)
         ################################ Above ################################
-
-        #Plot ice slabs thickness that are above and within Emax polygons
-        ax3.hist(Intersection_EmaxBufferAbove_slabs['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax3.hist(Intersection_EmaxBuffer_slabs['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax3.set_xlabel('Ice content [m]')
-        ax3.set_ylabel('Density [ ]')
-        ax3.set_xlim(0,20)
-
-        fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V2')
-        plt.show()
         
         ############################## In between ##############################
         lineEmax_radius = lineEmax.parallel_offset(radius, 'right', join_style=1)
-        #ax2.plot(lineEmax_radius .xy[0],lineEmax_radius .xy[1],zorder=5,color='yellow')
-        ax2.plot(lineEmax_upper_start .xy[0],lineEmax_upper_start .xy[1],zorder=5,color='yellow')
-        
+        ax_sectors.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='yellow')
+        ax_SAR.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='yellow')
         polygon_radius_4000=Polygon([*list(lineEmax_upper_start.coords),*list(lineEmax_radius.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
         plot_buffer_radius_4000 = PolygonPatch(polygon_radius_4000,zorder=2,color='yellow',alpha=0.2)
-        #ax2.add_patch(plot_buffer_radius_4000)        
+        #ax_sectors.add_patch(plot_buffer_radius_4000)        
              
         #Convert polygon of polygon_radius_4000 into a geopandas dataframe
         Emax_radius_4000_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_radius_4000]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
         #Intersection between subset_iceslabs and Emax_radius_4000_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-        Intersection_Emaxradius4000_slabs = gpd.sjoin(subset_iceslabs, Emax_radius_4000_polygon, op='within')
+        Intersection_Emaxradius4000_slabs = gpd.sjoin(subset_iceslabs, Emax_radius_4000_polygon, predicate='within')
         #Plot the result of this selection
-        ax2.scatter(Intersection_Emaxradius4000_slabs['lon_3413'],Intersection_Emaxradius4000_slabs['lat_3413'],color='yellow',s=1,zorder=7)
+        ax_sectors.scatter(Intersection_Emaxradius4000_slabs['lon_3413'],Intersection_Emaxradius4000_slabs['lat_3413'],color='yellow',s=1,zorder=7)
         '''
-        ax3.hist(Intersection_Emaxradius4000_slabs['20m_ice_content_m'],color='yellow',label='In-between',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_ice_distrib.hist(Intersection_Emaxradius4000_slabs['20m_ice_content_m'],color='yellow',label='In-between',alpha=0.5,bins=np.arange(0,17),density=True)
         '''
         ############################## In between ##############################
-        ax3.legend()
         
-        #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+        ################################ Below ################################
+        #Define a line for the below upper boundary 5000m away from Emax line   
+        lineEmax_below = lineEmax.parallel_offset(5000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+        #Plot the below boundaries        
+        ax_sectors.plot(lineEmax_below.xy[0],lineEmax_below.xy[1],zorder=5,color='green') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax_SAR.plot(lineEmax_below.xy[0],lineEmax_below.xy[1],zorder=5,color='green') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        #Create a polygon with low end begin the Emax line and upper end being the Emax line - 5000
+        polygon_below=Polygon([*list(lineEmax_below.coords),*list(lineEmax_radius.coords)]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+        #Create polygon patch of the polygon below
+        plot_buffer_below_Emax = PolygonPatch(polygon_below,zorder=2,color='grey',alpha=0.1)
+        #Display patch of polygone below
+        ax_sectors.add_patch(plot_buffer_below_Emax)        
+        #Convert below polygon into a geopandas dataframe
+        Emax_below_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_below]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+        ################################ Below ################################
+        
+        #Set limits
+        ax_sectors.set_xlim(np.min(Emax_points['x'])-1e4,
+                            np.max(Emax_points['x'])+1e4)
+        ax_sectors.set_ylim(np.min(Emax_points['y'])-1e4,
+                            np.max(Emax_points['y'])+1e4)
+        
+        ax_SAR.set_xlim(np.min(Emax_points['x'])-1e4,
+                        np.max(Emax_points['x'])+1e4)
+        ax_SAR.set_ylim(np.min(Emax_points['y'])-1e4,
+                        np.max(Emax_points['y'])+1e4)
+        
+        #Custom legend myself for ax_sectors - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
         legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
                            Line2D([0], [0], color='gray', lw=2, label='2010-18 ice slabs'),
-                           Line2D([0], [0], color='purple', lw=2, label='Considered ice slabs (3 years)'),
                            Line2D([0], [0], color='black', lw=2, label='Emax retrieval', marker='o',linestyle='None'),
-                           Line2D([0], [0], color='#a50f15', lw=2, label='Connected Emax retrieval'),
-                           Patch(facecolor='red',label='Buffer around Emax'),
-                           Patch(facecolor='blue',label='Area above Emax buffer'),
-                           Line2D([0], [0], color='red', lw=2, label='Ice slabs within Emax buffer'),
-                           Line2D([0], [0], color='blue', lw=2, label='Ice slabs above Emax buffer'),
-                           Line2D([0], [0], color='magenta', lw=2, label='Ys', marker='o',linestyle='None'),
-                           Patch(facecolor='yellow',label='Area in-between'),
-                           Line2D([0], [0], color='yellow', lw=2, label='Ice slabs in-between')]
+                           Line2D([0], [0], color='#a50f15', lw=1, label='Connected Emax retrieval'),
+                           Line2D([0], [0], color='red', lw=3, label='Ice slabs within'),
+                           Line2D([0], [0], color='yellow', lw=1, label='4 km upstream limit'),
+                           Line2D([0], [0], color='yellow', lw=3, label='Ice slabs in-between 0-4 km'),
+                           Line2D([0], [0], color='blue', lw=1, label='10 km upstream limit'),
+                           Line2D([0], [0], color='blue', lw=3, label='Ice slabs above (4-10 km)'),
+                           Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
+        fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V2')
+        plt.show()
         '''
-        ax2.legend(handles=legend_elements)
+        ax_sectors.legend(handles=legend_elements)
         plt.legend()
         '''
         
-        #Set limits
-        if (len(Intersection_EmaxBufferAbove_slabs)>0):
-            ax2.set_xlim(np.min(Emax_points['x'])-1e4,
-                         np.max(Emax_points['x'])+1e4)
-            ax2.set_ylim(np.min(Emax_points['y'])-1e4,
-                         np.max(Emax_points['y'])+1e4)
+        #Plot ice slabs thickness that are above and within Emax polygons
+        ax_ice_distrib.hist(Intersection_EmaxBufferAbove_slabs['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
+        ax_ice_distrib.hist(Intersection_EmaxBuffer_slabs['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
+        ax_ice_distrib.set_xlabel('Ice thickness [m]')
+        ax_ice_distrib.set_ylabel('Density [ ]')
+        ax_ice_distrib.set_xlim(0,20)
+        ax_ice_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.xaxis.set_label_position("top")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.xaxis.tick_top()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.legend()
         
-        ############################# Likelihood ##############################
-        #Fill NaN likelihood by zeros
-        Intersection_EmaxBufferAbove_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
-        Intersection_EmaxBuffer_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
-        Intersection_Emaxradius4000_slabs.likelihood.fillna(0,inplace=True)#from https://stackoverflow.com/questions/13295735/how-to-replace-nan-values-by-zeroes-in-a-column-of-a-pandas-dataframe
-
-        ax3_likelihood.hist(Intersection_EmaxBufferAbove_slabs['likelihood'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        ax3_likelihood.hist(Intersection_EmaxBuffer_slabs['likelihood'],color='red',label='Within',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-        #ax3_likelihood.hist(Intersection_Emaxradius4000_slabs['likelihood'],color='yellow',label='In-between',alpha=0.5,bins=np.arange(0,1.1,0.1),density=True)
-
-        ax3_likelihood.set_xlabel('Likelihood [ ]')
-        ax3_likelihood.set_ylabel('Density [ ]')
-        ax3_likelihood.set_xlim(0,1)
-        ############################# Likelihood ##############################
-
+        #Export the extracted values as csv files
+        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_EmaxBufferAbove_slabs,'above',indiv_index,indiv_year)
+        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_EmaxBuffer_slabs,'within',indiv_index,indiv_year)
+        
         #Save the iceslabs within and above of that polygon into another dataframe for overall plot
         iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
         iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
         iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
         
-        pdb.set_trace()
-        '''
+        #DEAL WITH PLACES OUTSIDE OF REGIONS OF INTEREST ('Out' CATEGORY!!!!) There should not be Out data
+        
+        
+        
+        #Extract and store SAR below, within, and above
+        indiv_SAR_below=extraction_SAR(Emax_below_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,ax_SAR)
+        indiv_SAR_within=extraction_SAR(Emax_within_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,ax_SAR)
+        indiv_SAR_above=extraction_SAR(Emax_above_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,ax_SAR)
+                
+        #Display SAR distributions
+        ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+        ax_SAR_distrib.hist(indiv_SAR_above,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+        ax_SAR_distrib.set_xlabel('Signal strength [dB]')
+        ax_SAR_distrib.set_ylabel('Density [ ]')
+        ax_SAR_distrib.set_xlim(-20,0)
+        ax_SAR_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_SAR_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_SAR_distrib.legend()
+        
+        #Save below, from https://www.pythontutorial.net/python-basics/python-write-text-file/
+        if (indiv_SAR_below[0]!=-999):
+            with open(path_save_SAR_IceContent+'below/below_box_'+str(indiv_index)+'_2019.txt', 'w') as f_below:
+                for indiv_SAR_below_line in indiv_SAR_below:
+                    f_below.write(str(indiv_SAR_below_line))
+                    f_below.write('\n')
+        
+        #save within
+        if (indiv_SAR_within[0]!=-999):
+            with open(path_save_SAR_IceContent+'within/within_box_'+str(indiv_index)+'_2019.txt', 'w') as f_within:
+                for indiv_SAR_within_line in indiv_SAR_within:
+                    f_within.write(str(indiv_SAR_within_line))
+                    f_within.write('\n')
+        
+        #Save above
+        if (indiv_SAR_above[0]!=-999):
+            with open(path_save_SAR_IceContent+'above/above_box_'+str(indiv_index)+'_2019.txt', 'w') as f_above:
+                for indiv_SAR_above_line in indiv_SAR_above:
+                    f_above.write(str(indiv_SAR_above_line))
+                    f_above.write('\n')                                             
+        
+        #Perform SAR extraction with ice slabs only in areas of interest! Do that here??
+        
+        
         #Save the figure
-        plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Emax_VS_IceSlabs_'+str(indiv_year)+'_Box'+str(indiv_index)+'_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
+        plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        '''
+        
+        #pdb.set_trace()
         plt.close()
 
+
+pdb.set_trace()
 
 #Get rid of the 'Out' region
 iceslabs_above_selected_overall=iceslabs_above_selected_overall[iceslabs_above_selected_overall.key_shp!='Out']
@@ -592,204 +601,14 @@ iceslabs_above_selected_overall.to_csv(path_to_save+'iceslabs_masked_above_Emax_
 iceslabs_selected_overall.to_csv(path_to_save+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
 iceslabs_inbetween_overall.to_csv(path_to_save+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
 
-#Display ice slabs distributions as a function of the regions
-#Prepare plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(15, 10)
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-axNW = plt.subplot(gs[0:5, 0:5])
-axCW = plt.subplot(gs[5:10, 0:5])
-axSW = plt.subplot(gs[10:15, 0:5])
-axNO = plt.subplot(gs[0:5, 5:10])
-axNE = plt.subplot(gs[5:10, 5:10])
-axGrIS = plt.subplot(gs[10:15, 5:10])
-
-#Plot histograms
-plot_histo(axNW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NW')
-plot_histo(axCW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'CW')
-plot_histo(axSW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'SW')
-plot_histo(axNO,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NO')
-plot_histo(axNE,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NE')
-plot_histo(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'GrIS')
-
-#Finalise plot
-axSW.set_xlabel('Ice content [m]')
-axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs')
-plt.show()
-#Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
-
-
-#Display ice slabs distributions as a function of the regions without 0m thick ice slabs
-#Prepare plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(15, 10)
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-axNW = plt.subplot(gs[0:5, 0:5])
-axCW = plt.subplot(gs[5:10, 0:5])
-axSW = plt.subplot(gs[10:15, 0:5])
-axNO = plt.subplot(gs[0:5, 5:10])
-axNE = plt.subplot(gs[5:10, 5:10])
-axGrIS = plt.subplot(gs[10:15, 5:10])
-
-#Plot histograms
-plot_histo(axNW,
-           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-           'NW')
-plot_histo(axCW,
-           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-           'CW')
-plot_histo(axSW,
-           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-           'SW')
-plot_histo(axNO,
-           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-           'NO')
-plot_histo(axNE,
-           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-           'NE')
-plot_histo(axGrIS,
-           iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-           iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-           iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-           'GrIS')
-
-#Finalise plot
-axSW.set_xlabel('Ice content [m]')
-axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs - 0m thick slabs excluded')
-plt.show()
-#Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
-
-
-################################## Likelihood #################################
-#Display ice slabs likelihood distributions as a function of the regions without 0m thick ice slabs
-#Prepare plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(15, 10)
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-axNW = plt.subplot(gs[0:5, 0:5])
-axCW = plt.subplot(gs[5:10, 0:5])
-axSW = plt.subplot(gs[10:15, 0:5])
-axNO = plt.subplot(gs[0:5, 5:10])
-axNE = plt.subplot(gs[5:10, 5:10])
-axGrIS = plt.subplot(gs[10:15, 5:10])
-
-#Plot histograms
-plot_histo_likelihood(axNW,
-                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-                      'NW')
-plot_histo_likelihood(axCW,
-                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-                      'CW')
-plot_histo_likelihood(axSW,
-                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-                      'SW')
-plot_histo_likelihood(axNO,
-                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-                      'NO')
-plot_histo_likelihood(axNE,
-                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-                      'NE')
-plot_histo_likelihood(axGrIS,
-                      iceslabs_above_selected_overall[iceslabs_above_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_selected_overall[iceslabs_selected_overall['20m_ice_content_m']>0],
-                      iceslabs_inbetween_overall[iceslabs_inbetween_overall['20m_ice_content_m']>0],
-                      'GrIS')
-
-#Finalise plot
-axSW.set_xlabel('Likelihood [ ]')
-axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs - 0m thick slabs excluded')
-plt.show()
-#Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/HistoNonZeros_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
-
-
-#Display ice slabs likelihood distributions as a function of the regions with 0m thick ice slabs
-#Prepare plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(15, 10)
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-axNW = plt.subplot(gs[0:5, 0:5])
-axCW = plt.subplot(gs[5:10, 0:5])
-axSW = plt.subplot(gs[10:15, 0:5])
-axNO = plt.subplot(gs[0:5, 5:10])
-axNE = plt.subplot(gs[5:10, 5:10])
-axGrIS = plt.subplot(gs[10:15, 5:10])
-
-#Plot histograms
-plot_histo_likelihood(axNW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NW')
-plot_histo_likelihood(axCW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'CW')
-plot_histo_likelihood(axSW,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'SW')
-plot_histo_likelihood(axNO,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NO')
-plot_histo_likelihood(axNE,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'NE')
-plot_histo_likelihood(axGrIS,iceslabs_above_selected_overall,iceslabs_selected_overall,iceslabs_inbetween_overall,'GrIS')
-
-#Finalise plot
-axSW.set_xlabel('Likelihood [ ]')
-axSW.set_ylabel('Density [ ]')
-fig.suptitle('Overall - '+str(indiv_year)+' - 2 years running slabs - 0m thick slabs included')
-plt.show()
-#Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Histo_Likelihood_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
-################################## Likelihood #################################
-
-#Display as boxplots
-#Aggregate data together
-iceslabs_above_selected_overall['type']=['Above']*len(iceslabs_above_selected_overall)
-iceslabs_selected_overall['type']=['Within']*len(iceslabs_selected_overall)
-iceslabs_inbetween_overall['type']=['InBetween']*len(iceslabs_inbetween_overall)
-iceslabs_boxplot=pd.concat([iceslabs_above_selected_overall,iceslabs_inbetween_overall,iceslabs_selected_overall])
-#Get rid of out region
-iceslabs_boxplot=iceslabs_boxplot[iceslabs_boxplot.key_shp!='Out']
-
-iceslabs_boxplot_GrIS=iceslabs_boxplot.copy(deep=True)
-iceslabs_boxplot_GrIS['key_shp']=['GrIS']*len(iceslabs_boxplot_GrIS)
-iceslabs_boxplot_region_GrIS=pd.concat([iceslabs_boxplot,iceslabs_boxplot_GrIS])
-
-#Display
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.boxplot(data=iceslabs_boxplot_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
-ax_regions_GrIS.set_ylabel('')
-ax_regions_GrIS.set_xlabel('Ice content [m]')
-ax_regions_GrIS.set_xlim(-0.5,20)
-ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle(str(indiv_year)+' - 2 years running slabs')
-
-#Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/'+str(indiv_year)+'/Boxplot_Emax_VS_IceSlabs_'+str(indiv_year)+'_Box_Tedstone_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+pdb.set_trace()
 
 
 '''
 
 if (indiv_year in list([2002,2003])):
     #Display the ice slabs points that are inside this buffer
-    ax2.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
+    ax_sectors.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
 else:
     #Store an empty dataframe with the index so that index is displayed in plot even without data 
     if (len(subset_iceslabs_buffered)==0):
@@ -800,7 +619,7 @@ else:
         continue
     
     #Display the ice slabs points that are inside this buffer
-    ax2.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
+    ax_sectors.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
     
     #Store subset_iceslabs_buffered 
     subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,subset_iceslabs_buffered],ignore_index=True)

@@ -79,7 +79,7 @@ f_20102018_high_cleaned.close
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 
 #Load SAR data
-SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif',
+SAR = rxr.open_rasterio(path+'SAR/HV_2017_2018/'+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',
                               masked=True).squeeze() #No need to reproject satelite image
 ### almost full greenland: 0000-0000, south greenland: 00023296-00000
 '''
@@ -93,7 +93,6 @@ y_coord_SAR=np.asarray(SAR.y)
 
 #Define extents of SAR image
 extent_SAR = [np.min(x_coord_SAR), np.max(x_coord_SAR), np.min(y_coord_SAR), np.max(y_coord_SAR)]#[west limit, east limit., south limit, north limit]
-
 
 if (generate_data=='TRUE'):
     #Generate the csv files and figures of individual relationship
@@ -131,9 +130,12 @@ if (generate_data=='TRUE'):
     
     #Loop over all the 2018 transects
     for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
-        
+        '''
+        if (IceSlabsTransect_name != '20170421_01_006_009'):
+            continue
+        '''
         print('Treating',IceSlabsTransect_name)
-                
+     
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
         IceSlabsTransect = pickle.load(f_IceSlabsTransect)
@@ -249,7 +251,7 @@ if (generate_data=='TRUE'):
         #The SAR_vector is a geodataframe of points whose coordinates represent the centroid of each cell
         SAR_vector = gpd.GeoDataFrame(SAR_pd, geometry=gpd.GeoSeries.from_xy(SAR_pd['x'], SAR_pd['y'], crs=SAR_clipped.rio.crs))
         #Create a square buffer around each centroid to reconsititute the raster but where each cell is an individual polygon
-        SAR_grid = SAR_vector.buffer(50, cap_style=3)
+        SAR_grid = SAR_vector.buffer(20, cap_style=3)
         #Convert SAR_grid into a geopandas dataframe, where we keep the information of the centroids (i.e. the SAR signal)
         SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
         #There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
@@ -282,9 +284,9 @@ if (generate_data=='TRUE'):
         #Additional proof the extracted SAR signal with this method is correct using another way of extracting SAR signal
         ### --- This is inspired from 'extract_elevation.py' from paper 'Greenland Ice Slabs Expansion and Thickening --- ###
         #https://towardsdatascience.com/reading-and-visualizing-geotiff-images-with-python-8dcca7a74510
-        
+                
         #Load SAR data
-        path_SAR = path+'SAR/HV_2017_2018/'+'ref_HV_2017_2018_32_106_100m_dynmask_blended-0000000000-0000000000.tif'
+        path_SAR = path+'SAR/HV_2017_2018/'+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif'
         SAR_RIO = rasterio.open(path_SAR)
         '''
         #Load SAR data - 2019-2022
@@ -307,7 +309,7 @@ if (generate_data=='TRUE'):
         #Note that the values stores in 'radar_signal' and SAR are the same, which prooves that the upsampling is correct!
         pointInPolys=pointInPolys.drop(labels=['SAR'],axis='columns')
         '''
-        
+
         #5. Perform the intersection between each cell of the polygonized SAR data and Ice Slabs transect data
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
         #Convert Extraction_SAR_transect into a geopandas dataframe
@@ -422,12 +424,12 @@ list_ideal=['20170421_01_006_009.csv', '20170421_01_171_174.csv','20170502_01_17
 if (load_data=='TRUE'):
     #Path to data
     path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'
-    '''
+    
     #List all the files in the folder
     list_composite=os.listdir(path_csv_SAR_VS_IceContent) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
     '''
     list_composite=list_ideal
-    
+    '''
     #Loop over all the files
     for indiv_file in list_composite:
         
@@ -618,7 +620,7 @@ if (composite=='TRUE'):
     restricted_appended_df_no_NaN_regression=restricted_appended_df_no_NaN.copy()
     
     #Get rid of low occurence grid cells
-    n=1000#let's start by excluding drig cell whose occurence is lower than 100 individuals - should have a good reason behind this value!!    
+    n=500#let's start by excluding drig cell whose occurence is lower than 100 individuals - should have a good reason behind this value!!    
     
     #Extract occurrence matrix and related x and y vectors
     occurence_matrix=hist2d_restricted_cbar[0]

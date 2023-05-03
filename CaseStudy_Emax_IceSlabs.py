@@ -7,6 +7,23 @@ Created on Wed Nov  2 11:44:06 2022
 This code include part of codes 'FigS7.py' from manuscript "Greenland Ice Slabs Thickening and Expansion"
 """
 
+##############################################################################
+################### Define function for ice lenses logging ###################
+##############################################################################
+#This function if adapted from https://stackoverflow.com/questions/37363755/python-mouse-click-coordinates-as-simply-as-possible
+def onclick(event):
+    #This functions print and save the x and y coordinates in pixels!
+    print(event.xdata, event.ydata)
+    #Fill in the file to log on the information
+    filename_flog='C:/Users/jullienn/Documents/working_environment/iceslabs_MacFerrin/flog_may12_03_36_aggregated.txt'
+    f_log = open(filename_flog, "a")
+    f_log.write(str(round(event.xdata,6))+','+str(round(event.ydata,6))+'\n')
+    f_log.close() #Close the quality assessment file when we’re done!
+##############################################################################
+################### Define function for ice lenses logging ###################
+##############################################################################
+
+
 def compute_distances(eastings,northings):
     #This function is from plot_2002_2003.py, which was originally taken from MacFerrin et al., 2019
     '''Compute the distance (in m here, not km as written originally) of the traces in the file.'''
@@ -58,7 +75,7 @@ from scalebar import scale_bar
 # self.C / (1.0 + (coefficient*density_kg_m3/1000.0))
 v= 299792458
 
-desired_map='NDWI'#'master_map' or 'NDWI'
+desired_map='master_map'#'master_map' or 'NDWI'
 
 #Define paths to data
 path_data_Jullien='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/i_out_from_IceBridgeGPR_Manager_v2.py/pickles_and_images/'
@@ -70,11 +87,18 @@ path_rignotetal2016_GrIS_drainage_bassins='C:/Users/jullienn/switchdrive/Private
 #Define palette for time periods, this is from fig2_paper_icelsabs.py
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
 #my_pal = {'2002': 'yellow', '2003': 'yellow', '2010': "#fdd49e", '2011': "#fc8d59", '2012': "#fc8d59", '2013':"#d7301f",'2014':"#d7301f",'2017':"#7f0000",'2018':"#7f0000"}
+'''
 my_pal = {'2002': '#08519c', '2003': '#4292c6', '2004': '#9ecae1', '2005': '#deebf7',
           '2006': '#ffffbf', '2007': '#feb24c', '2008': '#fc4e2a', '2009': '#bd0026',
           '2010': "#67000d", '2011': "#ce1256", '2012': "#c51b7d", '2013': "#f1b6da",
           '2014': "#e6f5d0", '2015': '#a1d99b', '2016': '#41ab5d', '2017': "#006d2c",
           '2018': "#00441b", '2019': '#01665e', '2020': 'black'}
+'''
+my_pal = {'2002': '#1b7837', '2003': '#5aae61', '2004': '#a6dba0', '2005': '#d9f0d3',
+          '2006': '#e7d4e8', '2007': '#c2a5cf', '2008': '#9970ab', '2009': '#762a83',
+          '2010': "#a50026", '2011': "#d73027", '2012': "#f46d43", '2013': "#fdae61",
+          '2014': "#fee090", '2015': '#e0f3f8', '2016': '#abd9e9', '2017': "#74add1",
+          '2018': "#4575b4", '2019': '#313695', '2020': '#1a1a1a'}
 
 from matplotlib.colors import  ListedColormap
 #Create a palette for traffic_light display
@@ -211,7 +235,7 @@ CaseStudyFS={2002:'empty',
             2018:'empty'}
 
 #Define the panel to study
-investigation_year=CaseStudy2
+investigation_year=CaseStudy1
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -220,7 +244,7 @@ ax_map = plt.subplot(projection=crs)
 GrIS_drainage_bassins.plot(ax=ax_map,facecolor='none',edgecolor='black')
 
 fig1 = plt.figure()
-gs = gridspec.GridSpec(34, 101)
+gs = gridspec.GridSpec(26, 101)
 gs.update(wspace=0.1)
 gs.update(wspace=0.5)
 
@@ -233,7 +257,17 @@ if (investigation_year==CaseStudy1):
     ax7 = plt.subplot(gs[20:24, 0:100])
     ax8 = plt.subplot(gs[24:28, 0:100])
     axc = plt.subplot(gs[8:28, 100:101])
-
+    '''
+    #For ice layers identification for Fig. 1 in paper Slabs thickening
+    ax1 = plt.subplot(gs[0:6, 0:100])
+    ax2 = plt.subplot(gs[6:12, 0:100])
+    ax3 = plt.subplot(gs[12:18, 0:100])
+    ax4 = plt.subplot(gs[18:20, 0:100])
+    ax5 = plt.subplot(gs[20:22, 0:100])
+    ax7 = plt.subplot(gs[22:24, 0:100])
+    ax8 = plt.subplot(gs[24:26, 0:100])
+    axc = plt.subplot(gs[12:26, 100:101])
+    '''
 elif (investigation_year==CaseStudy2):
     ax2 = plt.subplot(gs[0:4, 0:100])
     ax3 = plt.subplot(gs[4:8, 0:100])
@@ -560,6 +594,11 @@ for single_year in investigation_year.keys():
         vmin_plot=-4.5
         vmax_plot=4.5
     elif (investigation_year==CaseStudy1):
+        '''
+        #For ice layers identification for Fig. 1 in paper Slabs thickening
+        start_transect=-49
+        end_transect=-46.53
+        '''
         start_transect=-48.21060856534727
         end_transect=-46.88764316176339
         vmin_plot=-4.5
@@ -567,6 +606,11 @@ for single_year in investigation_year.keys():
     elif (investigation_year==CaseStudy3):
         start_transect=-47.567
         end_transect=-46.5427
+        '''
+        #For ice layers identification for Fig. 1 in paper Slabs thickening
+        start_transect=-48
+        end_transect=-46.53
+        '''
         vmin_plot=-4.5
         vmax_plot=4.5
     elif (investigation_year==CaseStudy4):
@@ -640,23 +684,35 @@ for single_year in investigation_year.keys():
     if ((single_year==2002)|(single_year==2003)):
         cb=ax_plot.pcolor(X, Y, C,cmap=plt.get_cmap('gray'),zorder=-1,vmin=np.percentile(C.flatten(),2.5), vmax=np.percentile(C.flatten(),97.5))
         ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
+        
+        #### ORIGINAL ICE LAYERS IDENTIFICATION ####
         #Display the 2002-2003 green ice lenses identification
         ax_plot.scatter(dataframe[str(single_year)]['lon_transect_4326_lenses'],
                         dataframe[str(single_year)]['depth_transect_lenses'],
                         c=dataframe[str(single_year)]['color_transect_lenses'],
                         cmap=traffic_light_cmap,vmin=-2,vmax=1,s=0.1)#add colour code!!
+        
     else:
         cb=ax_plot.pcolor(X, Y, C,cmap=plt.get_cmap('gray'),zorder=-1,vmin=vmin_plot, vmax=vmax_plot)
         ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
 
     #Activate ticks ylabel
     ax_plot.yaxis.tick_left()
+    
     #Set lims
     ax_plot.set_ylim(20,0)
     #Set yticklabels
     ax_plot.set_yticks([0,10,20])
     ax_plot.set_yticklabels(['0','10',''])
     
+    '''
+    #For ice layers identification for Fig. 1 in paper Slabs thickening
+    #Set lims
+    ax_plot.set_ylim(30,0)
+    #Set yticklabels
+    ax_plot.set_yticks([0,10,20,30])
+    ax_plot.set_yticklabels(['0','10','20',''])
+    '''
     #Set transect limits
     ax_plot.set_xlim(start_transect,end_transect)
     
@@ -668,14 +724,34 @@ for single_year in investigation_year.keys():
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
-    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=100,color=my_pal[str(single_year)])#color='black')
+    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=100,color='black')#color=my_pal[str(single_year)])#)
     
     '''
     #Store the coordinates of displayed transect
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
     lon_transet=np.append(lon_transet,dataframe[str(single_year)]['lon_3413'][index_within_bounds])
     '''
+
+plt.show()
 pdb.set_trace()
+
+'''
+#For ice layers identification for Fig. 1 in paper Slabs thickening
+#Create the file to log on the information
+filename_flog='C:/Users/jullienn/Documents/working_environment/iceslabs_MacFerrin/flog_may12_03_36_aggregated.txt'
+f_log = open(filename_flog, "a")
+f_log.write('xcoord'+','+'ycoord'+'\n')
+f_log.close() #Close the file
+
+fig1.canvas.mpl_connect('key_press_event', onclick)
+plt.show()
+pdb.set_trace()
+
+#Open, display and check
+xls_new_icelenses = pd.read_csv('C:/Users/jullienn/Documents/working_environment/iceslabs_MacFerrin/flog_may12_03_36_aggregated_6.csv',sep=';',decimal=',')
+#Display the 2002-2003 green ice lenses identification
+ax1.plot(np.array(xls_new_icelenses['xcoord']),np.array(xls_new_icelenses['ycoord']))
+'''
 
 '''
 #In order to generate transect coordinates.
@@ -698,6 +774,8 @@ elif (investigation_year==CaseStudy6):
     year_limit=2017
 elif (investigation_year==CaseStudy7):
     year_limit=2003
+elif (investigation_year==CaseStudyFS):
+    year_limit=2017
 else:
     print('Year not known')
     pdb.set_trace()
@@ -903,7 +981,7 @@ for single_year in range(2002,2021):
 
     #pdb.set_trace()
     #Display the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=15,zorder=count+1,c=my_pal[str(single_year)])#Display the best Emax points
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=50,zorder=200,c=my_pal[str(single_year)])#Display the best Emax points #count+1
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     
     ### In case yearly map of Emax point are desired to be plotted, comment this ###
@@ -1050,6 +1128,21 @@ elif (investigation_year==CaseStudy7):
     ###################### From Tedstone et al., 2022 #####################
     #from plot_map_decadal_change.py
     gl=ax_map.gridlines(draw_labels=True, xlocs=[-61,-60], ylocs=[79.6,79.7], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+
+elif (investigation_year==CaseStudyFS):
+    ax5.set_ylabel('Depth [m]')
+    ax8.set_yticklabels(['0','10','20'])
+    ticks_through=ax8.get_xticks()
+    year_ticks=2017
+    ax_tick_plot=ax8
+    ax_top=ax2
+    ax_map.set_title('Case study FS')
+    ax_top.set_title('Case study FS')
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-46,-47,-48], ylocs=[66.5,67,67.5], x_inline=False, y_inline=False,linewidth=0.5)
     ###################### From Tedstone et al., 2022 #####################
 
 else:
