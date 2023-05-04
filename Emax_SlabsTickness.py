@@ -5,7 +5,7 @@ Created on Wed Sep 28 16:00:42 2022
 @author: JullienN
 """
 
-def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func,axplot_SAR):
+def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func):
     not_worked='FALSE'
     ######################################################################
     ############## This is from SAR_SlabsThickness_test.py ###############
@@ -34,67 +34,71 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_i
                     print('               Continue')
                     not_worked='TRUE'
                     #Store ice slabs transect not intersected with SAR
-
+    
     if (not_worked=='TRUE'):
-        SAR_clipped_np=np.array([-999])
+        SAR_clipped=np.array([-999])
     else:
         print("SAR intersection found!")
         
-        #Display clipped SAR
-        extent_SAR_clipped = [np.min(np.asarray(SAR_clipped.x)), np.max(np.asarray(SAR_clipped.x)),
-                              np.min(np.asarray(SAR_clipped.y)), np.max(np.asarray(SAR_clipped.y))]#[west limit, east limit., south limit, north limit]
-        axplot_SAR.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, origin='upper', cmap='gray',zorder=2,vmin=-20,vmax=0)
-                
-        '''
-        Do I want to do the intersection between the SAR and Ice content in the different sectors??? If yes, revisit this section
-        #4. Vectorise the SAR raster
-        ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
-        x, y, radar_signal = SAR_clipped.x.values, SAR_clipped.y.values, SAR_clipped.values
-        x, y = np.meshgrid(x, y)
-        x, y, radar_signal = x.flatten(), y.flatten(), radar_signal.flatten()
-        
-        #Convert to geodataframe
-        SAR_pd = pd.DataFrame.from_dict({'radar_signal': radar_signal, 'x': x, 'y': y})
-        #The SAR_vector is a geodataframe of points whose coordinates represent the centroid of each cell
-        SAR_vector = gpd.GeoDataFrame(SAR_pd, geometry=gpd.GeoSeries.from_xy(SAR_pd['x'], SAR_pd['y'], crs=SAR_clipped.rio.crs))
-        #Create a square buffer around each centroid to reconsititute the raster but where each cell is an individual polygon
-        SAR_grid = SAR_vector.buffer(20, cap_style=3)
-        #Convert SAR_grid into a geopandas dataframe, where we keep the information of the centroids (i.e. the SAR signal)
-        SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
-        #There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
-        ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
-        
-        #Perform the join between ice slabs thickness and SAR data
-        pointInPolys= gpd.tools.sjoin(Intersection_EmaxBuffer_slabs, SAR_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
-        
-        #6. Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
-        upsampled_SAR_and_IceSlabs=pointInPolys.groupby('index_right').mean()
-        
-        #Display upsampling worked
-        fig = plt.figure()
-        fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-        ax_check_upsampling = plt.subplot(projection=crs)
-        SAR_grid_gpd.plot(ax=ax_check_upsampling,edgecolor='black')
-        ax_check_upsampling.scatter(upsampled_SAR_and_IceSlabs.lon_3413,upsampled_SAR_and_IceSlabs.lat_3413,c=upsampled_SAR_and_IceSlabs['20m_ice_content_m'],s=500,vmin=0,vmax=20)
-        ax_check_upsampling.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['20m_ice_content_m'],vmin=0,vmax=20)
-        '''
-        
-        '''
-        #Export the grid to check on QGIS
-        SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid.shp')
-        '''
-        ######################################################################
-        ############## This is from SAR_SlabsThickness_test.py ###############
-        ######################################################################
-        
-        #Convert SAR_clipped to a numpy matrix
-        SAR_clipped_np=SAR_clipped.to_numpy()
-        #Drop NaNs
-        SAR_clipped_np=SAR_clipped_np[~np.isnan(SAR_clipped_np)]
-    
-    return SAR_clipped_np
+    return SAR_clipped
+   
 
+def SAR_to_vector(SAR_matrix,axplot_SAR):
+    #Display clipped SAR    
+    extent_SAR_matrix = [np.min(np.asarray(SAR_matrix.x)), np.max(np.asarray(SAR_matrix.x)),
+                          np.min(np.asarray(SAR_matrix.y)), np.max(np.asarray(SAR_matrix.y))]#[west limit, east limit., south limit, north limit]
+    axplot_SAR.imshow(SAR_matrix, extent=extent_SAR_matrix, transform=crs, origin='upper', cmap='gray',zorder=2,vmin=-20,vmax=0)
+
+    #Convert SAR_clipped to a numpy matrix
+    SAR_np=SAR_matrix.to_numpy()
+    #Drop NaNs
+    SAR_np=SAR_np[~np.isnan(SAR_np)]
+    
+    return SAR_np
+
+     
+'''
+Do I want to do the intersection between the SAR and Ice content in the different sectors??? If yes, revisit this section
+#4. Vectorise the SAR raster
+######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
+x, y, radar_signal = SAR_clipped.x.values, SAR_clipped.y.values, SAR_clipped.values
+x, y = np.meshgrid(x, y)
+x, y, radar_signal = x.flatten(), y.flatten(), radar_signal.flatten()
+
+#Convert to geodataframe
+SAR_pd = pd.DataFrame.from_dict({'radar_signal': radar_signal, 'x': x, 'y': y})
+#The SAR_vector is a geodataframe of points whose coordinates represent the centroid of each cell
+SAR_vector = gpd.GeoDataFrame(SAR_pd, geometry=gpd.GeoSeries.from_xy(SAR_pd['x'], SAR_pd['y'], crs=SAR_clipped.rio.crs))
+#Create a square buffer around each centroid to reconsititute the raster but where each cell is an individual polygon
+SAR_grid = SAR_vector.buffer(20, cap_style=3)
+#Convert SAR_grid into a geopandas dataframe, where we keep the information of the centroids (i.e. the SAR signal)
+SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
+#There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
+######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
+
+#Perform the join between ice slabs thickness and SAR data
+pointInPolys= gpd.tools.sjoin(Intersection_EmaxBuffer_slabs, SAR_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
+
+#6. Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
+upsampled_SAR_and_IceSlabs=pointInPolys.groupby('index_right').mean()
+
+#Display upsampling worked
+fig = plt.figure()
+fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+ax_check_upsampling = plt.subplot(projection=crs)
+SAR_grid_gpd.plot(ax=ax_check_upsampling,edgecolor='black')
+ax_check_upsampling.scatter(upsampled_SAR_and_IceSlabs.lon_3413,upsampled_SAR_and_IceSlabs.lat_3413,c=upsampled_SAR_and_IceSlabs['20m_ice_content_m'],s=500,vmin=0,vmax=20)
+ax_check_upsampling.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['20m_ice_content_m'],vmin=0,vmax=20)
+'''
+
+'''
+#Export the grid to check on QGIS
+SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid.shp')
+'''
+######################################################################
+############## This is from SAR_SlabsThickness_test.py ###############
+######################################################################
 
 def save_slabs_as_csv(path_save_IceSlabs,df_to_save,sector,box_number,processed_year):
     df_to_save.to_csv(path_save_IceSlabs+sector+'/IceSlabs_'+sector+'_box_'+str(box_number)+'_year_'+str(processed_year)+'.csv',
@@ -492,11 +496,6 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax_sectors.set_ylim(np.min(Emax_points['y'])-1e4,
                             np.max(Emax_points['y'])+1e4)
         
-        ax_SAR.set_xlim(np.min(Emax_points['x'])-1e4,
-                        np.max(Emax_points['x'])+1e4)
-        ax_SAR.set_ylim(np.min(Emax_points['y'])-1e4,
-                        np.max(Emax_points['y'])+1e4)
-        
         #Custom legend myself for ax_sectors - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
         legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
                            Line2D([0], [0], color='gray', lw=2, label='2010-18 ice slabs'),
@@ -539,12 +538,21 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         #DEAL WITH PLACES OUTSIDE OF REGIONS OF INTEREST ('Out' CATEGORY!!!!) There should not be Out data
         
-        
-        
         #Extract and store SAR below, within, and above
-        indiv_SAR_below=extraction_SAR(Emax_below_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,ax_SAR)
-        indiv_SAR_within=extraction_SAR(Emax_within_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,ax_SAR)
-        indiv_SAR_above=extraction_SAR(Emax_above_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,ax_SAR)
+        indiv_SAR_below_DF=extraction_SAR(Emax_below_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+        indiv_SAR_within_DF=extraction_SAR(Emax_within_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+        indiv_SAR_above_DF=extraction_SAR(Emax_above_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+        
+        #Convert into a vector, and display SAR sector
+        indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
+        indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
+        indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
+        
+        #Adapt limits
+        ax_SAR.set_xlim(np.min(Emax_points['x'])-1e4,
+                        np.max(Emax_points['x'])+1e4)
+        ax_SAR.set_ylim(np.min(Emax_points['y'])-1e4,
+                        np.max(Emax_points['y'])+1e4)
                 
         #Display SAR distributions
         ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
@@ -556,35 +564,38 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax_SAR_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
         ax_SAR_distrib.legend()
         
+        #Perform SAR extraction with ice slabs data
+        
+        pdb.set_trace()
+
         #Save below, from https://www.pythontutorial.net/python-basics/python-write-text-file/
         if (indiv_SAR_below[0]!=-999):
-            with open(path_save_SAR_IceContent+'below/below_box_'+str(indiv_index)+'_2019.txt', 'w') as f_below:
+            with open(path_save_SAR_IceSlabs+'below/below_box_'+str(indiv_index)+'_2019.txt', 'w') as f_below:
                 for indiv_SAR_below_line in indiv_SAR_below:
                     f_below.write(str(indiv_SAR_below_line))
                     f_below.write('\n')
         
         #save within
         if (indiv_SAR_within[0]!=-999):
-            with open(path_save_SAR_IceContent+'within/within_box_'+str(indiv_index)+'_2019.txt', 'w') as f_within:
+            with open(path_save_SAR_IceSlabs+'within/within_box_'+str(indiv_index)+'_2019.txt', 'w') as f_within:
                 for indiv_SAR_within_line in indiv_SAR_within:
                     f_within.write(str(indiv_SAR_within_line))
                     f_within.write('\n')
         
         #Save above
         if (indiv_SAR_above[0]!=-999):
-            with open(path_save_SAR_IceContent+'above/above_box_'+str(indiv_index)+'_2019.txt', 'w') as f_above:
+            with open(path_save_SAR_IceSlabs+'above/above_box_'+str(indiv_index)+'_2019.txt', 'w') as f_above:
                 for indiv_SAR_above_line in indiv_SAR_above:
                     f_above.write(str(indiv_SAR_above_line))
                     f_above.write('\n')                                             
         
         #Perform SAR extraction with ice slabs only in areas of interest! Do that here??
         
-        
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         
-        #pdb.set_trace()
+        pdb.set_trace()
         plt.close()
 
 
