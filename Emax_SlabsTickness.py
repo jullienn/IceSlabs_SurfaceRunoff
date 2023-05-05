@@ -327,10 +327,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-    '''
-    if (indiv_index < 8):
+    
+    if (indiv_index < 22):
         continue
-    '''
+    
     print(indiv_index)
     
     #Extract individual polygon
@@ -512,16 +512,78 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax_sectors.plot(upper_limit.xy[0],upper_limit.xy[1],zorder=15,color='magenta',linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         '''
         ################ Create polygons and extract ice slabs ################
-
+        
         ########################## Extract SAR data ##########################
         #Extract and store SAR from below to above
         indiv_SAR_below_above_DF=extraction_SAR(below_above_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,indiv_polygon)
-        #Perform clip between SAR_below_above with the individual sectors - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
-        indiv_SAR_above_DF = indiv_SAR_below_above_DF.rio.clip(above_polygon.geometry.values, above_polygon.crs, drop=True, invert=False)
-        indiv_SAR_inbetween_DF = indiv_SAR_below_above_DF.rio.clip(in_between_polygon.geometry.values, in_between_polygon.crs, drop=True, invert=False)
-        indiv_SAR_within_DF = indiv_SAR_below_above_DF.rio.clip(within_polygon.geometry.values, within_polygon.crs, drop=True, invert=False)
-        indiv_SAR_below_DF = indiv_SAR_below_above_DF.rio.clip(below_polygon.geometry.values, below_polygon.crs, drop=True, invert=False)
         
+        pdb.set_trace()
+
+        #Perform clip between SAR_below_above with the individual sectors - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
+        try:
+            indiv_SAR_above_DF = indiv_SAR_below_above_DF.rio.clip(above_polygon.geometry.values, above_polygon.crs, drop=True, invert=False)
+            #Convert SAR data into a vector, and display SAR sector
+            indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
+            if (len(indiv_SAR_above)>1):
+                #there is data, continue performing tasks
+                #Display SAR distributions
+                ax_SAR_distrib.hist(indiv_SAR_above,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+                #Export the extracted SAR as txt files
+                if (indiv_SAR_above[0]!=-999):
+                    save_SAR_data(indiv_SAR_above,indiv_index,'above',path_save_SAR_IceSlabs)
+        except rxr.exceptions.NoDataInBounds:
+            print('No SAR above')
+        
+        try:
+            indiv_SAR_inbetween_DF = indiv_SAR_below_above_DF.rio.clip(in_between_polygon.geometry.values, in_between_polygon.crs, drop=True, invert=False)
+            #Convert SAR data into a vector, and display SAR sector
+            indiv_SAR_inbetween=SAR_to_vector(indiv_SAR_inbetween_DF,ax_SAR)
+            if (len(indiv_SAR_inbetween)>1):
+                #there is data, continue performing tasks
+                #Export the extracted SAR as txt files
+                if (indiv_SAR_inbetween[0]!=-999):
+                    save_SAR_data(indiv_SAR_inbetween,indiv_index,'in_between',path_save_SAR_IceSlabs)
+        except rxr.exceptions.NoDataInBounds:
+            print('No SAR in-between')
+
+        try:
+            indiv_SAR_within_DF = indiv_SAR_below_above_DF.rio.clip(within_polygon.geometry.values, within_polygon.crs, drop=True, invert=False)
+            #Convert SAR data into a vector, and display SAR sector
+            indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
+            if (len(indiv_SAR_within)>1):
+                #there is data, continue performing tasks
+                #Export the extracted SAR as txt files
+                if (indiv_SAR_within[0]!=-999):
+                    save_SAR_data(indiv_SAR_within,indiv_index,'within',path_save_SAR_IceSlabs)
+        except rxr.exceptions.NoDataInBounds:
+            print('No SAR within')
+
+        try:
+            indiv_SAR_below_DF = indiv_SAR_below_above_DF.rio.clip(below_polygon.geometry.values, below_polygon.crs, drop=True, invert=False)
+            #Convert SAR data into a vector, and display SAR sector
+            indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
+            if (len(indiv_SAR_below)>1):
+                #there is data, continue performing tasks
+                #Display SAR distributions
+                ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+                #Export the extracted SAR as txt files
+                if (indiv_SAR_below[0]!=-999):
+                    save_SAR_data(indiv_SAR_below,indiv_index,'below',path_save_SAR_IceSlabs)
+        except rxr.exceptions.NoDataInBounds:
+            print('No SAR below')
+
+        '''
+        fig = plt.figure()
+        gs = gridspec.GridSpec(10, 6)
+        #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+        ax_check = plt.subplot(gs[0:10, 0:6],projection=crs)
+        
+        extent_SAR_NW_00_00 = [np.min(np.asarray(SAR_NW_00_00.x)), np.max(np.asarray(SAR_NW_00_00.x)),
+                               np.min(np.asarray(SAR_NW_00_00.y)), np.max(np.asarray(SAR_NW_00_00.y))]#[west limit, east limit., south limit, north limit]
+        ax_check.imshow(SAR_NW_00_00, extent=extent_SAR_NW_00_00, transform=crs, origin='upper', cmap='gray',zorder=2,vmin=-20,vmax=0)
+        
+        indiv_polygon.plot(ax=ax_check,color='none', edgecolor='black',linewidth=0.5,zorder=1)
+        '''
         '''
         #Old computation, less efficient than current solution
         #Extract and store SAR above, in-between, within and below independently of each other
@@ -530,12 +592,6 @@ for indiv_index in Boxes_Tedstone2022.FID:
         indiv_SAR_within_DF=extraction_SAR(within_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
         indiv_SAR_below_DF=extraction_SAR(below_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
         '''
-        
-        #Convert SAR data into a vector, and display SAR sector
-        indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
-        indiv_SAR_inbetween=SAR_to_vector(indiv_SAR_inbetween_DF,ax_SAR)
-        indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
-        indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
         ########################## Extract SAR data ##########################
                 
         ############# Display ice slabs thickness and SAR signal #############
@@ -563,9 +619,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax_ice_distrib.xaxis.tick_top()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
         ax_ice_distrib.legend()
         
-        #Display SAR distributions
-        ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
-        ax_SAR_distrib.hist(indiv_SAR_above,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+        #Improve display of SAR distributions
         ax_SAR_distrib.set_xlabel('Signal strength [dB]')
         ax_SAR_distrib.set_ylabel('Density [ ]')
         ax_SAR_distrib.set_xlim(-20,0)
@@ -586,37 +640,23 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V2')
-        plt.show()
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        
+        plt.close()
+
         '''
         ax_sectors.legend(handles=legend_elements)
         plt.legend()
         '''
         ############# Display ice slabs thickness and SAR signal #############
 
-        #################### Export data as csv/txt files #####################
-        #Export the extracted Ice Slabs as csv files
+        ############## Export extracted Ice Slabs as csv files ################
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_above,'above',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_InBetween,'in_between',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_within,'within',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_below,'below',indiv_index,indiv_year)
-        
-        #Export the extracted SAR as txt files
-        if (indiv_SAR_above[0]!=-999):
-            save_SAR_data(indiv_SAR_above,indiv_index,'above',path_save_SAR_IceSlabs)
-        
-        if (indiv_SAR_inbetween[0]!=-999):
-            save_SAR_data(indiv_SAR_inbetween,indiv_index,'in_between',path_save_SAR_IceSlabs)
-        
-        if (indiv_SAR_within[0]!=-999):
-            save_SAR_data(indiv_SAR_within,indiv_index,'within',path_save_SAR_IceSlabs)
-        
-        if (indiv_SAR_below[0]!=-999):
-            save_SAR_data(indiv_SAR_below,indiv_index,'below',path_save_SAR_IceSlabs)
-        #################### Export data as csv/txt files #####################
+        ############## Export extracted Ice Slabs as csv files ################
         
         #DEAL WITH PLACES OUTSIDE OF REGIONS OF INTEREST ('Out' CATEGORY!!!!) There should not be Out data
         '''
@@ -627,7 +667,6 @@ for indiv_index in Boxes_Tedstone2022.FID:
         iceslabs_below_overall=pd.concat([iceslabs_below_overall,Intersection_slabs_below])
         ########### Store ice slabs data to generate a full csv file ##########
         '''
-        plt.close()
 
 
 pdb.set_trace()
