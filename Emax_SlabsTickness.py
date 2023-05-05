@@ -4,8 +4,75 @@ Created on Wed Sep 28 16:00:42 2022
 
 @author: JullienN
 """
+def create_buffer_polygon(line_input,radius_around_line,ax_plot):
+    #Create a buffer around Emax line
+    buffer_around_line = line_input.buffer(radius_around_line, cap_style=1) #from https://shapely.readthedocs.io/en/stable/code/buffer.py    
+    #Convert polygon of Emax buffer around connected Emax line into a geopandas dataframe
+    line_buffer_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffer_around_line]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+    #Display buffer
+    line_buffer_polygon.plot(ax=ax_plot,zorder=2,color='grey',alpha=0.1)
+    
+    return line_buffer_polygon
 
-def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func):
+    
+def create_polygon_above(line_input,distance_start,distance_end,ax_plot,ax_plot_SAR,color_plot):
+    #Perform upper line start creation
+    line_upper_start = line_input.parallel_offset(distance_start, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    #Perform upper line end creation in two steps
+    line_upper_end_a = line_input.parallel_offset(distance_end, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    line_upper_end_b = line_upper_end_a.parallel_offset(distance_end, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    #Create a polygon with upper line start and upper line end
+    polygon_upper_start_end=Polygon([*list(line_upper_end_b.coords),*list(line_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+    #Convert polygon into a geopandas dataframe
+    polygon_upper_start_end_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_upper_start_end]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+    #Display polygon
+    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color='grey',alpha=0.1)
+    #Plot the above upper boundaries
+    ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot.plot(line_upper_end_b.xy[0],line_upper_end_b.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot_SAR.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot_SAR.plot(line_upper_end_b.xy[0],line_upper_end_b.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    
+    return polygon_upper_start_end_gpd, line_upper_end_b
+
+def create_polygon_offset(line_input,distance_start,distance_end,type_offset,ax_plot,ax_plot_SAR,color_plot):    
+    if (type_offset=='upstream'):
+        direction='right'
+    elif (type_offset=='downstream'):
+        direction='left'        
+    else:
+        print('Enter a correct type of offset, i.e. downstream or upstream')
+        pdb.set_trace()
+    
+    #Perform upper line start creation
+    line_upper_start = line_input.parallel_offset(distance_start, direction, join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    #Perform upper line end creation
+    line_upper_end = line_input.parallel_offset(distance_end, direction, join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    #Create a polygon with upper line start and upper line end
+    polygon_upper_start_end=Polygon([*list(line_upper_end.coords),*list(line_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+    #Convert polygon into a geopandas dataframe
+    polygon_upper_start_end_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_upper_start_end]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+    #Display polygon
+    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color='grey',alpha=0.1)
+    #Plot the above upper boundaries
+    ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot.plot(line_upper_end.xy[0],line_upper_end.xy[1],zorder=6,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+
+    ax_plot_SAR.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot_SAR.plot(line_upper_end.xy[0],line_upper_end.xy[1],zorder=6,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    
+    return polygon_upper_start_end_gpd,line_upper_end
+
+
+def perform_extraction_in_polygon(dataframe_to_intersect,polygon_for_intersection,ax_plot,color_plot):                
+    #Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+    Intersection_polygon_dataframe_slabs = gpd.sjoin(dataframe_to_intersect, polygon_for_intersection, predicate='within')
+    #Plot the result of this intersection
+    ax_plot.scatter(Intersection_polygon_dataframe_slabs['lon_3413'],Intersection_polygon_dataframe_slabs['lat_3413'],color=color_plot,s=1,zorder=8)
+    
+    return Intersection_polygon_dataframe_slabs
+
+def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func,polygon_in_use):
     not_worked='FALSE'
     ######################################################################
     ############## This is from SAR_SlabsThickness_test.py ###############
@@ -38,9 +105,32 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_i
     if (not_worked=='TRUE'):
         SAR_clipped=np.array([-999])
     else:
-        print("SAR intersection found!")
+        print("SAR intersection found!")        
+        #Perform clip between indiv box and SAR to get rid of SAR data outside of box
+        SAR_clipped_within_polygon = SAR_clipped.rio.clip(polygon_in_use.geometry.values, polygon_in_use.crs, drop=True, invert=False)
         
-    return SAR_clipped
+        '''
+        #Check clip performed well: Yes it did!
+        fig = plt.figure()
+        gs = gridspec.GridSpec(10, 6)
+        ax_1 = plt.subplot(gs[0:10, 0:6],projection=crs)
+        polygon_in_use.plot(ax=ax_1,alpha=0.5)
+        #Display clipped SAR    
+        extent_SAR_clipped = [np.min(np.asarray(SAR_clipped.x)), np.max(np.asarray(SAR_clipped.x)),
+                              np.min(np.asarray(SAR_clipped.y)), np.max(np.asarray(SAR_clipped.y))]#[west limit, east limit., south limit, north limit]
+        ax_1.imshow(SAR_clipped, extent=extent_SAR_clipped, transform=crs, origin='upper', cmap='gray',zorder=2,vmin=-20,vmax=0)
+
+        fig = plt.figure()
+        gs = gridspec.GridSpec(10, 6)
+        ax_2 = plt.subplot(gs[0:10, 0:6],projection=crs)
+        polygon_in_use.plot(ax=ax_2,alpha=0.5)
+        #Display clipped SAR    
+        extent_SAR_clipped_within_polygon = [np.min(np.asarray(SAR_clipped_within_polygon.x)), np.max(np.asarray(SAR_clipped_within_polygon.x)),
+                                             np.min(np.asarray(SAR_clipped_within_polygon.y)), np.max(np.asarray(SAR_clipped_within_polygon.y))]#[west limit, east limit., south limit, north limit]
+        ax_2.imshow(SAR_clipped_within_polygon, extent=extent_SAR_clipped_within_polygon, transform=crs, origin='upper', cmap='gray',zorder=2,vmin=-20,vmax=0)
+        '''
+    
+    return SAR_clipped_within_polygon
    
 
 def SAR_to_vector(SAR_matrix,axplot_SAR):
@@ -56,49 +146,26 @@ def SAR_to_vector(SAR_matrix,axplot_SAR):
     
     return SAR_np
 
-     
-'''
-Do I want to do the intersection between the SAR and Ice content in the different sectors??? If yes, revisit this section
-#4. Vectorise the SAR raster
-######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
-x, y, radar_signal = SAR_clipped.x.values, SAR_clipped.y.values, SAR_clipped.values
-x, y = np.meshgrid(x, y)
-x, y, radar_signal = x.flatten(), y.flatten(), radar_signal.flatten()
 
-#Convert to geodataframe
-SAR_pd = pd.DataFrame.from_dict({'radar_signal': radar_signal, 'x': x, 'y': y})
-#The SAR_vector is a geodataframe of points whose coordinates represent the centroid of each cell
-SAR_vector = gpd.GeoDataFrame(SAR_pd, geometry=gpd.GeoSeries.from_xy(SAR_pd['x'], SAR_pd['y'], crs=SAR_clipped.rio.crs))
-#Create a square buffer around each centroid to reconsititute the raster but where each cell is an individual polygon
-SAR_grid = SAR_vector.buffer(20, cap_style=3)
-#Convert SAR_grid into a geopandas dataframe, where we keep the information of the centroids (i.e. the SAR signal)
-SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
-#There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
-######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
 
-#Perform the join between ice slabs thickness and SAR data
-pointInPolys= gpd.tools.sjoin(Intersection_EmaxBuffer_slabs, SAR_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
+def SAR_raster_to_polygon(SAR_to_vectorize):
+    ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
+    x, y, radar_signal = SAR_to_vectorize.x.values, SAR_to_vectorize.y.values, SAR_to_vectorize.values
+    x, y = np.meshgrid(x, y)
+    x, y, radar_signal = x.flatten(), y.flatten(), radar_signal.flatten()
+    
+    #Convert to geodataframe
+    SAR_pd = pd.DataFrame.from_dict({'radar_signal': radar_signal, 'x': x, 'y': y})
+    #The SAR_vector is a geodataframe of points whose coordinates represent the centroid of each cell
+    SAR_vector = gpd.GeoDataFrame(SAR_pd, geometry=gpd.GeoSeries.from_xy(SAR_pd['x'], SAR_pd['y'], crs=SAR_to_vectorize.rio.crs))
+    #Create a square buffer around each centroid to reconsititute the raster but where each cell is an individual polygon
+    SAR_grid = SAR_vector.buffer(20, cap_style=3)
+    #Convert SAR_grid into a geopandas dataframe, where we keep the information of the centroids (i.e. the SAR signal)
+    SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
+    #There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
+    ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
+    return SAR_grid_gpd
 
-#6. Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
-upsampled_SAR_and_IceSlabs=pointInPolys.groupby('index_right').mean()
-
-#Display upsampling worked
-fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax_check_upsampling = plt.subplot(projection=crs)
-SAR_grid_gpd.plot(ax=ax_check_upsampling,edgecolor='black')
-ax_check_upsampling.scatter(upsampled_SAR_and_IceSlabs.lon_3413,upsampled_SAR_and_IceSlabs.lat_3413,c=upsampled_SAR_and_IceSlabs['20m_ice_content_m'],s=500,vmin=0,vmax=20)
-ax_check_upsampling.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['20m_ice_content_m'],vmin=0,vmax=20)
-'''
-
-'''
-#Export the grid to check on QGIS
-SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid.shp')
-'''
-######################################################################
-############## This is from SAR_SlabsThickness_test.py ###############
-######################################################################
 
 def save_slabs_as_csv(path_save_IceSlabs,df_to_save,sector,box_number,processed_year):
     df_to_save.to_csv(path_save_IceSlabs+sector+'/IceSlabs_'+sector+'_box_'+str(box_number)+'_year_'+str(processed_year)+'.csv',
@@ -106,6 +173,15 @@ def save_slabs_as_csv(path_save_IceSlabs,df_to_save,sector,box_number,processed_
                              '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                              'elevation', 'year', 'geometry', 'index_right_polygon', 'FID', 'rev_subs', 'index_right'])
     return
+
+def save_SAR_data(SAR_input,index_input,sector,path_save):
+    #from https://www.pythontutorial.net/python-basics/python-write-text-file/
+    with open(path_save+sector+'/SAR_'+sector+'_box_'+str(index_input)+'_2019.txt', 'w') as f_below:
+        for SAR_input_line in SAR_input:
+            f_below.write(str(SAR_input_line))
+            f_below.write('\n')
+    return
+
 
 import pandas as pd
 import numpy as np
@@ -197,13 +273,13 @@ crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
 ### ---------------------------- Load dataset ---------------------------- ###
-############# IS THIS THE CORRECT DATASET TO USE????? #############
+############# IS THIS THE CORRECT DATASET TO USE????? TBD #############
 #Dictionnaries have already been created, load them
 #Load 2010-2018
 f_20102018 = open(path_df_with_elevation+'df_20102018_with_elevation_for_RT3_masked_rignotetalregions', "rb")
 df_2010_2018 = pickle.load(f_20102018)
 f_20102018.close()
-############# IS THIS THE CORRECT DATASET TO USE????? #############
+############# IS THIS THE CORRECT DATASET TO USE????? TBD #############
 
 #Load 2002-2003 dataset
 df_2002_2003=pd.read_csv(path_2002_2003+'2002_2003_green_excel.csv')
@@ -222,8 +298,9 @@ points_Emax = gpd.GeoDataFrame(Emax_TedMach, geometry = gpd.points_from_xy(Emax_
 
 #Define empty dataframe
 iceslabs_above_selected_overall=pd.DataFrame()
-iceslabs_selected_overall=pd.DataFrame()
 iceslabs_inbetween_overall=pd.DataFrame()
+iceslabs_within_overall=pd.DataFrame()
+iceslabs_below_overall=pd.DataFrame()
 
 #Open SAR image
 ### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
@@ -250,10 +327,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
+    '''
     if (indiv_index < 8):
         continue
-        
+    '''
     print(indiv_index)
     
     #Extract individual polygon
@@ -398,7 +475,6 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ######################### Connect Emax points #########################
         #Keep only Emax points whose box_id is associated with the current box_id
         Emax_points=Emax_points[Emax_points.box_id==indiv_index]
-        
         #Emax as tuples
         Emax_tuple=[tuple(row[['x','y']]) for index, row in Emax_points.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
         #Connect Emax points between them
@@ -407,94 +483,95 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax_sectors.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=0.5) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         ax_SAR.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=1) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
         ######################### Connect Emax points #########################
+        
+        ################ Create polygons and extract ice slabs ################
+        #Perform polygon above creation and slabs extraction
+        above_polygon,upper_limit=create_polygon_above(lineEmax,4000,5000,ax_sectors,ax_SAR,'#045a8d')
+        Intersection_slabs_above = perform_extraction_in_polygon(subset_iceslabs,above_polygon,ax_sectors,'blue')
+        
+        #Perform polygon in-between creation and slabs extraction
+        in_between_polygon,lower_inbetween_limit=create_polygon_offset(lineEmax,radius,4000,'upstream',ax_sectors,ax_SAR,'yellow')
+        Intersection_slabs_InBetween = perform_extraction_in_polygon(subset_iceslabs,in_between_polygon,ax_sectors,'yellow')
+        
+        #Perform polygon within creation and slabs extraction
+        within_polygon = create_buffer_polygon(lineEmax,radius,ax_sectors)
+        Intersection_slabs_within = perform_extraction_in_polygon(subset_iceslabs,within_polygon,ax_sectors,'red')
+        
+        #Perform polygon below creation and slabs extraction
+        below_polygon,lower_limit=create_polygon_offset(lineEmax,radius,5000,'downstream',ax_sectors,ax_SAR,'green')
+        Intersection_slabs_below = perform_extraction_in_polygon(subset_iceslabs,below_polygon,ax_sectors,'green')
+        
+        #Perform polygon from below to above creation
+        polygon_below_to_above=Polygon([*list(upper_limit.coords),*list(lower_limit.coords)]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+        #Convert from below to above polygon into a geopandas dataframe
+        below_above_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_below_to_above]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+        '''
+        #Display from below to above gpd
+        below_above_gpd.plot(ax=ax_sectors,alpha=0.2,color='magenta',zorder=10)
+        ax_sectors.plot(lower_limit.xy[0],lower_limit.xy[1],zorder=15,color='magenta',linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ax_sectors.plot(upper_limit.xy[0],upper_limit.xy[1],zorder=15,color='magenta',linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        '''
+        ################ Create polygons and extract ice slabs ################
 
-        ########################### Polygon within ############################
-        #Create a buffer around this line
-        buffer_within_Emax = lineEmax.buffer(radius, cap_style=1) #from https://shapely.readthedocs.io/en/stable/code/buffer.py
-        #Create polygon patch from this buffer
-        plot_buffer_within_Emax = PolygonPatch(buffer_within_Emax,zorder=2,color='grey',alpha=0.1)
-        #Display patch
-        ax_sectors.add_patch(plot_buffer_within_Emax)        
-        #Convert polygon of Emax buffer around connected Emax line into a geopandas dataframe
-        Emax_within_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffer_within_Emax]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
-        #Intersection between subset_iceslabs and Emax_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
-        Intersection_EmaxBuffer_slabs = gpd.sjoin(subset_iceslabs, Emax_within_polygon, predicate='within')
-        #Plot the result of this selection
-        ax_sectors.scatter(Intersection_EmaxBuffer_slabs['lon_3413'],Intersection_EmaxBuffer_slabs['lat_3413'],color='red',s=1,zorder=8)
-        ########################### Polygon within ############################
-                        
-        ################################ Above ################################
-        #Define a line for the above upper boundary 4000m away from Emax line        
-        if ((indiv_index==7) & (indiv_year==2016)):
-            lineEmax_upper_start_pre = lineEmax.parallel_offset(2000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-            lineEmax_upper_start = lineEmax_upper_start_pre.parallel_offset(2000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-            #We choose 10km, should we choose another value??
-            lineEmax_upper_end_b = lineEmax_upper_start.parallel_offset(6000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        else:
-            lineEmax_upper_start = lineEmax.parallel_offset(4000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-            #We choose 10km, should we choose another value??
-            lineEmax_upper_end_a = lineEmax.parallel_offset(5000, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-            lineEmax_upper_end_b = lineEmax_upper_end_a.parallel_offset(5000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-            
-        #Plot the above upper boundaries        
-        ax_sectors.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        ax_sectors.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        ax_SAR.plot(lineEmax_upper_end_b.xy[0],lineEmax_upper_end_b.xy[1],zorder=5,color='#045a8d') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+        ########################## Extract SAR data ##########################
+        #Extract and store SAR from below to above
+        indiv_SAR_below_above_DF=extraction_SAR(below_above_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,indiv_polygon)
+        #Perform clip between SAR_below_above with the individual sectors - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
+        indiv_SAR_above_DF = indiv_SAR_below_above_DF.rio.clip(above_polygon.geometry.values, above_polygon.crs, drop=True, invert=False)
+        indiv_SAR_inbetween_DF = indiv_SAR_below_above_DF.rio.clip(in_between_polygon.geometry.values, in_between_polygon.crs, drop=True, invert=False)
+        indiv_SAR_within_DF = indiv_SAR_below_above_DF.rio.clip(within_polygon.geometry.values, within_polygon.crs, drop=True, invert=False)
+        indiv_SAR_below_DF = indiv_SAR_below_above_DF.rio.clip(below_polygon.geometry.values, below_polygon.crs, drop=True, invert=False)
         
-        #Create a polygon with low end begin the Emax line and upper end being the Emax line + 10 km
-        polygon_above=Polygon([*list(lineEmax_upper_end_b.coords),*list(lineEmax_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
-        #Create polygon patch of the polygon above
-        plot_buffer_above_Emax = PolygonPatch(polygon_above,zorder=2,color='grey',alpha=0.1)
-        #Display patch of polygone above
-        ax_sectors.add_patch(plot_buffer_above_Emax)        
-        #Convert polygon of Emax buffer above into a geopandas dataframe
-        Emax_above_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_above]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
-        #Intersection between subset_iceslabs and Emax_above_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-        Intersection_EmaxBufferAbove_slabs = gpd.sjoin(subset_iceslabs, Emax_above_polygon, predicate='within')
-        #Plot the result of this selection
-        ax_sectors.scatter(Intersection_EmaxBufferAbove_slabs['lon_3413'],Intersection_EmaxBufferAbove_slabs['lat_3413'],color='blue',s=1,zorder=8)
-        ################################ Above ################################
-        
-        ############################## In between ##############################
-        lineEmax_radius = lineEmax.parallel_offset(radius, 'right', join_style=1)
-        ax_sectors.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='yellow')
-        ax_SAR.plot(lineEmax_upper_start.xy[0],lineEmax_upper_start.xy[1],zorder=5,color='yellow')
-        polygon_radius_4000=Polygon([*list(lineEmax_upper_start.coords),*list(lineEmax_radius.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
-        plot_buffer_radius_4000 = PolygonPatch(polygon_radius_4000,zorder=2,color='yellow',alpha=0.2)
-        #ax_sectors.add_patch(plot_buffer_radius_4000)        
-             
-        #Convert polygon of polygon_radius_4000 into a geopandas dataframe
-        Emax_radius_4000_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_radius_4000]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
-        #Intersection between subset_iceslabs and Emax_radius_4000_polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-        Intersection_Emaxradius4000_slabs = gpd.sjoin(subset_iceslabs, Emax_radius_4000_polygon, predicate='within')
-        #Plot the result of this selection
-        ax_sectors.scatter(Intersection_Emaxradius4000_slabs['lon_3413'],Intersection_Emaxradius4000_slabs['lat_3413'],color='yellow',s=1,zorder=7)
         '''
-        ax_ice_distrib.hist(Intersection_Emaxradius4000_slabs['20m_ice_content_m'],color='yellow',label='In-between',alpha=0.5,bins=np.arange(0,17),density=True)
+        #Old computation, less efficient than current solution
+        #Extract and store SAR above, in-between, within and below independently of each other
+        indiv_SAR_above_DF=extraction_SAR(above_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+        indiv_SAR_inbetween_DF=extraction_SAR(in_between_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+        indiv_SAR_within_DF=extraction_SAR(within_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+        indiv_SAR_below_DF=extraction_SAR(below_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
         '''
-        ############################## In between ##############################
         
-        ################################ Below ################################
-        #Define a line for the below upper boundary 5000m away from Emax line   
-        lineEmax_below = lineEmax.parallel_offset(5000, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-        #Plot the below boundaries        
-        ax_sectors.plot(lineEmax_below.xy[0],lineEmax_below.xy[1],zorder=5,color='green') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        ax_SAR.plot(lineEmax_below.xy[0],lineEmax_below.xy[1],zorder=5,color='green') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-        #Create a polygon with low end begin the Emax line and upper end being the Emax line - 5000
-        polygon_below=Polygon([*list(lineEmax_below.coords),*list(lineEmax_radius.coords)]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
-        #Create polygon patch of the polygon below
-        plot_buffer_below_Emax = PolygonPatch(polygon_below,zorder=2,color='grey',alpha=0.1)
-        #Display patch of polygone below
-        ax_sectors.add_patch(plot_buffer_below_Emax)        
-        #Convert below polygon into a geopandas dataframe
-        Emax_below_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_below]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
-        ################################ Below ################################
-        
+        #Convert SAR data into a vector, and display SAR sector
+        indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
+        indiv_SAR_inbetween=SAR_to_vector(indiv_SAR_inbetween_DF,ax_SAR)
+        indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
+        indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
+        ########################## Extract SAR data ##########################
+                
+        ############# Display ice slabs thickness and SAR signal #############
         #Set limits
         ax_sectors.set_xlim(np.min(Emax_points['x'])-1e4,
                             np.max(Emax_points['x'])+1e4)
         ax_sectors.set_ylim(np.min(Emax_points['y'])-1e4,
                             np.max(Emax_points['y'])+1e4)
+        
+        ax_SAR.set_xlim(np.min(Emax_points['x'])-1e4,
+                        np.max(Emax_points['x'])+1e4)
+        ax_SAR.set_ylim(np.min(Emax_points['y'])-1e4,
+                        np.max(Emax_points['y'])+1e4)
+        
+        #Plot ice slabs thickness that are above and within Emax polygons
+        ax_ice_distrib.hist(Intersection_slabs_below['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
+        ax_ice_distrib.hist(Intersection_slabs_above['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
+        ax_ice_distrib.hist(Intersection_slabs_within['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
+        ax_ice_distrib.set_xlabel('Ice thickness [m]')
+        ax_ice_distrib.set_ylabel('Density [ ]')
+        ax_ice_distrib.set_xlim(0,20)
+        ax_ice_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.xaxis.set_label_position("top")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.xaxis.tick_top()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_ice_distrib.legend()
+        
+        #Display SAR distributions
+        ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+        ax_SAR_distrib.hist(indiv_SAR_above,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+        ax_SAR_distrib.set_xlabel('Signal strength [dB]')
+        ax_SAR_distrib.set_ylabel('Density [ ]')
+        ax_SAR_distrib.set_xlim(-20,0)
+        ax_SAR_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_SAR_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+        ax_SAR_distrib.legend()
         
         #Custom legend myself for ax_sectors - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
         legend_elements = [Line2D([0], [0], color='#bdbdbd', lw=2, label='2002-03 ice slabs'),
@@ -510,97 +587,52 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V2')
         plt.show()
+        #Save the figure
+        plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500,bbox_inches='tight')
+        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+        
         '''
         ax_sectors.legend(handles=legend_elements)
         plt.legend()
         '''
+        ############# Display ice slabs thickness and SAR signal #############
+
+        #################### Export data as csv/txt files #####################
+        #Export the extracted Ice Slabs as csv files
+        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_above,'above',indiv_index,indiv_year)
+        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_InBetween,'in_between',indiv_index,indiv_year)
+        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_within,'within',indiv_index,indiv_year)
+        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_below,'below',indiv_index,indiv_year)
         
-        #Plot ice slabs thickness that are above and within Emax polygons
-        ax_ice_distrib.hist(Intersection_EmaxBufferAbove_slabs['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
-        ax_ice_distrib.hist(Intersection_EmaxBuffer_slabs['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
-        ax_ice_distrib.set_xlabel('Ice thickness [m]')
-        ax_ice_distrib.set_ylabel('Density [ ]')
-        ax_ice_distrib.set_xlim(0,20)
-        ax_ice_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
-        ax_ice_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
-        ax_ice_distrib.xaxis.set_label_position("top")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
-        ax_ice_distrib.xaxis.tick_top()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
-        ax_ice_distrib.legend()
+        #Export the extracted SAR as txt files
+        if (indiv_SAR_above[0]!=-999):
+            save_SAR_data(indiv_SAR_above,indiv_index,'above',path_save_SAR_IceSlabs)
         
-        #Export the extracted values as csv files
-        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_EmaxBufferAbove_slabs,'above',indiv_index,indiv_year)
-        save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_EmaxBuffer_slabs,'within',indiv_index,indiv_year)
+        if (indiv_SAR_inbetween[0]!=-999):
+            save_SAR_data(indiv_SAR_inbetween,indiv_index,'in_between',path_save_SAR_IceSlabs)
         
-        #Save the iceslabs within and above of that polygon into another dataframe for overall plot
-        iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_EmaxBufferAbove_slabs])
-        iceslabs_selected_overall=pd.concat([iceslabs_selected_overall,Intersection_EmaxBuffer_slabs])
-        iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_Emaxradius4000_slabs])
+        if (indiv_SAR_within[0]!=-999):
+            save_SAR_data(indiv_SAR_within,indiv_index,'within',path_save_SAR_IceSlabs)
+        
+        if (indiv_SAR_below[0]!=-999):
+            save_SAR_data(indiv_SAR_below,indiv_index,'below',path_save_SAR_IceSlabs)
+        #################### Export data as csv/txt files #####################
         
         #DEAL WITH PLACES OUTSIDE OF REGIONS OF INTEREST ('Out' CATEGORY!!!!) There should not be Out data
-        
-        #Extract and store SAR below, within, and above
-        indiv_SAR_below_DF=extraction_SAR(Emax_below_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
-        indiv_SAR_within_DF=extraction_SAR(Emax_within_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
-        indiv_SAR_above_DF=extraction_SAR(Emax_above_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
-        
-        #Convert into a vector, and display SAR sector
-        indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
-        indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
-        indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
-        
-        #Adapt limits
-        ax_SAR.set_xlim(np.min(Emax_points['x'])-1e4,
-                        np.max(Emax_points['x'])+1e4)
-        ax_SAR.set_ylim(np.min(Emax_points['y'])-1e4,
-                        np.max(Emax_points['y'])+1e4)
-                
-        #Display SAR distributions
-        ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
-        ax_SAR_distrib.hist(indiv_SAR_above,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
-        ax_SAR_distrib.set_xlabel('Signal strength [dB]')
-        ax_SAR_distrib.set_ylabel('Density [ ]')
-        ax_SAR_distrib.set_xlim(-20,0)
-        ax_SAR_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
-        ax_SAR_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
-        ax_SAR_distrib.legend()
-        
-        #Perform SAR extraction with ice slabs data
-        
-        pdb.set_trace()
-
-        #Save below, from https://www.pythontutorial.net/python-basics/python-write-text-file/
-        if (indiv_SAR_below[0]!=-999):
-            with open(path_save_SAR_IceSlabs+'below/below_box_'+str(indiv_index)+'_2019.txt', 'w') as f_below:
-                for indiv_SAR_below_line in indiv_SAR_below:
-                    f_below.write(str(indiv_SAR_below_line))
-                    f_below.write('\n')
-        
-        #save within
-        if (indiv_SAR_within[0]!=-999):
-            with open(path_save_SAR_IceSlabs+'within/within_box_'+str(indiv_index)+'_2019.txt', 'w') as f_within:
-                for indiv_SAR_within_line in indiv_SAR_within:
-                    f_within.write(str(indiv_SAR_within_line))
-                    f_within.write('\n')
-        
-        #Save above
-        if (indiv_SAR_above[0]!=-999):
-            with open(path_save_SAR_IceSlabs+'above/above_box_'+str(indiv_index)+'_2019.txt', 'w') as f_above:
-                for indiv_SAR_above_line in indiv_SAR_above:
-                    f_above.write(str(indiv_SAR_above_line))
-                    f_above.write('\n')                                             
-        
-        #Perform SAR extraction with ice slabs only in areas of interest! Do that here??
-        
-        #Save the figure
-        plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_2YearsRunSlabsMasked_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs_likelihood.png',dpi=500,bbox_inches='tight')
-        #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-        
-        pdb.set_trace()
+        '''
+        ########### Store ice slabs data to generate a full csv file ##########
+        iceslabs_above_selected_overall=pd.concat([iceslabs_above_selected_overall,Intersection_slabs_above])
+        iceslabs_inbetween_overall=pd.concat([iceslabs_inbetween_overall,Intersection_slabs_InBetween])
+        iceslabs_within_overall=pd.concat([iceslabs_within_overall,Intersection_slabs_within])
+        iceslabs_below_overall=pd.concat([iceslabs_below_overall,Intersection_slabs_below])
+        ########### Store ice slabs data to generate a full csv file ##########
+        '''
         plt.close()
 
 
 pdb.set_trace()
 
+'''
 #Get rid of the 'Out' region
 iceslabs_above_selected_overall=iceslabs_above_selected_overall[iceslabs_above_selected_overall.key_shp!='Out']
 iceslabs_selected_overall=iceslabs_selected_overall[iceslabs_selected_overall.key_shp!='Out']
@@ -611,9 +643,7 @@ path_to_save='C:/Users/jullienn/switchdrive/Private/research/RT3/data/extracted_
 iceslabs_above_selected_overall.to_csv(path_to_save+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
 iceslabs_selected_overall.to_csv(path_to_save+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
 iceslabs_inbetween_overall.to_csv(path_to_save+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
-
-pdb.set_trace()
-
+'''
 
 '''
 
