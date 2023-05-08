@@ -118,9 +118,6 @@ from scipy.optimize import curve_fit
 import os.path
 
 generate_data='TRUE' #If true, generate the individual csv files and figures
-load_data='TRUE'
-composite='TRUE'
-interpolation='FALSE'
 fig_display='TRUE' #If TRUE, generate figures
 check_oversampling_over='FALSE'
 
@@ -173,12 +170,12 @@ if (generate_data=='TRUE'):
         #If transect already processes, continue
         if (os.path.isfile(path_local+'SAR_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
             print(IceSlabsTransect_name,' already generated, continue')    
-        continue
+            continue
                     
         if (IceSlabsTransect_name == '20180419_02_056_072'):
             print('Do not process ',IceSlabsTransect_name)
             continue
-        
+                
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
         IceSlabsTransect = pickle.load(f_IceSlabsTransect)
