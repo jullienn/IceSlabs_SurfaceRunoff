@@ -126,6 +126,10 @@ from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
 
+#Improve this code to display boxplots at VS above VS below MVRL but also SAR!!
+
+#Extract relationship 
+
 radius=250
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
@@ -363,14 +367,10 @@ above_all=[]
 within_all=[]
 below_all=[]
 
-for indiv_box in range(0,33):
-    '''
-    if (indiv_box):
-        continue
-    '''
+for indiv_box in range(0,40):
     #open above
     try:
-        above = np.asarray(pd.read_csv(path_SAR+'above/above_box_'+str(indiv_box)+'_2019.txt', header=None))
+        above = np.asarray(pd.read_csv(path_SAR+'above/SAR_above_box_'+str(indiv_box)+'_2019.txt', header=None))
         #Append data
         above_all=np.append(above_all,above)
     except FileNotFoundError:
@@ -378,7 +378,7 @@ for indiv_box in range(0,33):
     
     #open within
     try:
-        within = np.asarray(pd.read_csv(path_SAR+'within/within_box_'+str(indiv_box)+'_2019.txt', header=None))
+        within = np.asarray(pd.read_csv(path_SAR+'within/SAR_within_box_'+str(indiv_box)+'_2019.txt', header=None))
         #Append data
         within_all=np.append(within_all,within)
     except FileNotFoundError:
@@ -386,20 +386,17 @@ for indiv_box in range(0,33):
     
     #open below
     try:
-        below = np.asarray(pd.read_csv(path_SAR+'below/below_box_'+str(indiv_box)+'_2019.txt', header=None))
+        below = np.asarray(pd.read_csv(path_SAR+'below/SAR_below_box_'+str(indiv_box)+'_2019.txt', header=None))
         #Append data
         below_all=np.append(below_all,below)
     except FileNotFoundError:
         print('No below')
-
-pdb.set_trace()
 
 #Display figure distribution
 fig, (ax_distrib) = plt.subplots()      
 ax_distrib.hist(below_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
 #ax_distrib.hist(within_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='red',label='Within')
 ax_distrib.hist(above_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
-
 ax_distrib.set_xlim(-20,-2)
 ax_distrib.set_xlabel('Signal strength [dB]')
 ax_distrib.set_ylabel('Density')
@@ -408,14 +405,12 @@ ax_distrib.legend()
 #Display boxplot
 df_below_all=pd.DataFrame(below_all,columns=['signal'])
 df_below_all['cat']=['below']*len(df_below_all)
-
 '''
 df_within_all=pd.DataFrame(within_all,columns=['signal'])
 df_within_all['cat']=['within']*len(df_within_all)
 '''
 df_above_all=pd.DataFrame(above_all,columns=['signal'])
 df_above_all['cat']=['above']*len(df_above_all)
-
 SAR_boxplot_GrIS=pd.concat([df_below_all,df_above_all])
 
 #Display
@@ -425,8 +420,20 @@ ax_SAR = plt.subplot(gs[0:10, 0:6])
 sns.boxplot(data=SAR_boxplot_GrIS, x="cat", y="signal",ax=ax_SAR)#, kde=True)
 ax_SAR.set_ylabel('Signal strength [dB]')
 ax_SAR.set_xlabel('Category')
+
+pdb.set_trace()
 ############################# Plot 2019 SAR #############################
 
+
+############################# 2019 binary map #############################
+#Choose cutoff signal
+
+#Apply binary cutoff
+
+#Display map of efficient aquitard with 2019 MVRL
+
+
+############################# 2019 binary map #############################
 
 
 
