@@ -6,90 +6,44 @@ Created on Wed Oct 26 14:01:33 2022
 """
 
 #The fuction plot_histo is from Emax_SlabsThickness.py
-def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_inbetween,region):
-    
+def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
     if (region == 'GrIS'):
         ax_plot.hist(iceslabs_above['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_inbetween['20m_ice_content_m'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_below['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Dislay median values
         ax_plot.axvline(x=np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),linestyle='--',color='blue')
         ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),linestyle='--',color='red')
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
-        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.nanquantile(iceslabs_below['20m_ice_content_m'],0.5),linestyle='--',color='green')
+        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_below['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='green')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Display sample size
         print(region,':\n')
         print('   Above: ',len(iceslabs_above),'\n')
         print('   Within: ',len(iceslabs_within),'\n')
+        print('   Below: ',len(iceslabs_below),'\n')
         
     else:
         ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],color='yellow',label='In Between',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Dislay median values
         ax_plot.axvline(x=np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='blue')
         ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='red')
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
-        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_inbetween[iceslabs_inbetween['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.nanquantile(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='green')
+        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='green')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         
         #Display sample size
         print(region,':\n')
         print('   Above: ',len(iceslabs_above[iceslabs_above['key_shp']==region]),'\n')
         print('   Within: ',len(iceslabs_within[iceslabs_within['key_shp']==region]),'\n')
-
-    #Set x lims
-    ax_plot.set_xlim(-0.5,20)
-
-    if (region == 'NW'):
-        ax_plot.legend()
+        print('   Below: ',len(iceslabs_below[iceslabs_below['key_shp']==region]),'\n')
     
-    if (region in list(['NO','NE','GrIS'])):
-        ax_plot.yaxis.tick_right()#This is from Fig4andS6andS7.py from paper 'Greenland Ice Slabs Expansion and Thickening'
-    
-    if (region in list(['NW','NO','CW','NE'])):
-        ax_plot.set_xticklabels([])
-
-    return
-
-
-#The fuction plot_histo is from Emax_SlabsThickness.py
-def plot_histo_EGU(ax_plot,iceslabs_above,iceslabs_within,region):
-    
-    if (region == 'GrIS'):
-        ax_plot.hist(iceslabs_above['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_within['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        #Dislay median values
-        ax_plot.axvline(x=np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),linestyle='--',color='blue')
-        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),linestyle='--',color='red')
-        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        #Display sample size
-        print(region,':\n')
-        print('   Above: ',len(iceslabs_above),'\n')
-        print('   Within: ',len(iceslabs_within),'\n')
-        
-    else:
-        ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        #Dislay median values
-        ax_plot.axvline(x=np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='blue')
-        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='red')
-        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        
-        #Display sample size
-        print(region,':\n')
-        print('   Above: ',len(iceslabs_above[iceslabs_above['key_shp']==region]),'\n')
-        print('   Within: ',len(iceslabs_within[iceslabs_within['key_shp']==region]),'\n')
-
     #Set x lims
     ax_plot.set_xlim(-0.5,20)
 
@@ -125,41 +79,70 @@ from shapely.geometry import Polygon
 from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
+import os
 
 #Improve this code to display boxplots at VS above VS below MVRL but also SAR!!
-
 #Extract relationship 
 
-radius=250
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'InBetween': "#fee391"}
+my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'Below': "green"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
-path_load_data='C:/Users/jullienn/switchdrive/Private/research/RT3/data/extracted_slabs/'
+path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
 
+###############################################################################
+###                      Load Ice Slabs Thickness data                      ###
+###############################################################################
 #Define empty dataframe
-iceslabs_within_121619=pd.DataFrame()
-iceslabs_inbetween_121619=pd.DataFrame()
-iceslabs_above_121619=pd.DataFrame()
+IceThickness_above=pd.DataFrame()
+IceThickness_within=pd.DataFrame()
+IceThickness_below=pd.DataFrame()
 
-#Loop over the years
-#for indiv_year in list([2012,2016,2019]):
-for indiv_year in list([2019]):
-
-    #Load data
-    iceslabs_within_load=pd.read_csv(path_load_data+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
-    iceslabs_inbetween_load=pd.read_csv(path_load_data+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
-    iceslabs_above_load=pd.read_csv(path_load_data+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
+for indiv_box in range(0,40):
+    print(indiv_box)
+    #open above
+    try:
+        above = pd.read_csv(path_data+'SAR_sectors/above/IceSlabs_above_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(above)>0):
+            #Append data
+            IceThickness_above=pd.concat([IceThickness_above,above])
+    except FileNotFoundError:
+        print('No above')
     
-    #Append data to each other
-    iceslabs_within_121619=pd.concat([iceslabs_within_121619,iceslabs_within_load])
-    iceslabs_inbetween_121619=pd.concat([iceslabs_inbetween_121619,iceslabs_inbetween_load])
-    iceslabs_above_121619=pd.concat([iceslabs_above_121619,iceslabs_above_load])
+    #open within
+    try:
+        within = pd.read_csv(path_data+'SAR_sectors/within/IceSlabs_within_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(within)>0):
+            #Append data
+            IceThickness_within=pd.concat([IceThickness_within,within])
+    except FileNotFoundError:
+        print('No within')
+    
+    #open below
+    try:
+        below = pd.read_csv(path_data+'SAR_sectors/below/IceSlabs_below_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(below)>0):
+            #Append data
+            IceThickness_below=pd.concat([IceThickness_below,below])
+    except FileNotFoundError:
+        print('No below')
 
+###############################################################################
+###                      Load Ice Slabs Thickness data                      ###
+###############################################################################
+
+
+
+
+
+###############################################################################
+###                      Plot Ice Slabs Thickness data                      ###
+###############################################################################
 
 ######################## Plot with 0m thick ice slabs #########################
+
 #Display ice slabs distributions as a function of the regions - This is fromEmax_SLabsThickness.py
 #Prepare plot
 fig = plt.figure(figsize=(10,6))
@@ -173,17 +156,17 @@ axNE = plt.subplot(gs[5:10, 5:10])
 axGrIS = plt.subplot(gs[10:15, 5:10])
 
 #Plot histograms
-plot_histo(axNW,iceslabs_above_121619,iceslabs_within_121619,iceslabs_inbetween_121619,'NW')
-plot_histo(axCW,iceslabs_above_121619,iceslabs_within_121619,iceslabs_inbetween_121619,'CW')
-plot_histo(axSW,iceslabs_above_121619,iceslabs_within_121619,iceslabs_inbetween_121619,'SW')
-plot_histo(axNO,iceslabs_above_121619,iceslabs_within_121619,iceslabs_inbetween_121619,'NO')
-plot_histo(axNE,iceslabs_above_121619,iceslabs_within_121619,iceslabs_inbetween_121619,'NE')
-plot_histo(axGrIS,iceslabs_above_121619,iceslabs_within_121619,iceslabs_inbetween_121619,'GrIS')
+plot_histo(axNW,IceThickness_above,IceThickness_within,IceThickness_below,'NW')
+plot_histo(axCW,IceThickness_above,IceThickness_within,IceThickness_below,'CW')
+plot_histo(axSW,IceThickness_above,IceThickness_within,IceThickness_below,'SW')
+plot_histo(axNO,IceThickness_above,IceThickness_within,IceThickness_below,'NO')
+plot_histo(axNE,IceThickness_above,IceThickness_within,IceThickness_below,'NE')
+plot_histo(axGrIS,IceThickness_above,IceThickness_within,IceThickness_below,'GrIS')
 
 #Finalise plot
-axSW.set_xlabel('Ice content [m]')
+axSW.set_xlabel('Ice Thickness [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('2012-16-19 - 2 years running slabs')
+fig.suptitle('2019 - 2 years running slabs')
 plt.show()
 
 '''
@@ -193,10 +176,10 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 
 #Display as boxplots
 #Aggregate data together
-iceslabs_above_121619['type']=['Above']*len(iceslabs_above_121619)
-iceslabs_within_121619['type']=['Within']*len(iceslabs_within_121619)
-iceslabs_inbetween_121619['type']=['InBetween']*len(iceslabs_inbetween_121619)
-iceslabs_boxplot=pd.concat([iceslabs_above_121619,iceslabs_inbetween_121619,iceslabs_within_121619])
+IceThickness_above['type']=['Above']*len(IceThickness_above)
+IceThickness_within['type']=['Within']*len(IceThickness_within)
+IceThickness_below['type']=['Below']*len(IceThickness_below)
+iceslabs_boxplot=pd.concat([IceThickness_above,IceThickness_within,IceThickness_below])
 
 iceslabs_boxplot_GrIS=iceslabs_boxplot.copy(deep=True)
 iceslabs_boxplot_GrIS['key_shp']=['GrIS']*len(iceslabs_boxplot_GrIS)
@@ -208,10 +191,11 @@ gs = gridspec.GridSpec(10, 6)
 ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
 box_plot_regions_GrIS=sns.boxplot(data=iceslabs_boxplot_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
 ax_regions_GrIS.set_ylabel('')
-ax_regions_GrIS.set_xlabel('Ice content [m]')
+ax_regions_GrIS.set_xlabel('Ice Thickness [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2012-16-19 - 2 years running slabs')
+fig.suptitle('2019 - 2 years running slabs')
+
 
 '''
 #Save the figure
@@ -234,40 +218,40 @@ axGrIS = plt.subplot(gs[10:15, 5:10])
 
 #Plot histograms
 plot_histo(axNW,
-           iceslabs_above_121619[iceslabs_above_121619['20m_ice_content_m']>0],
-           iceslabs_within_121619[iceslabs_within_121619['20m_ice_content_m']>0],
-           iceslabs_inbetween_121619[iceslabs_inbetween_121619['20m_ice_content_m']>0],
+           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
+           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
+           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
            'NW')
 plot_histo(axCW,
-           iceslabs_above_121619[iceslabs_above_121619['20m_ice_content_m']>0],
-           iceslabs_within_121619[iceslabs_within_121619['20m_ice_content_m']>0],
-           iceslabs_inbetween_121619[iceslabs_inbetween_121619['20m_ice_content_m']>0],
+           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
+           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
+           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
            'CW')
 plot_histo(axSW,
-           iceslabs_above_121619[iceslabs_above_121619['20m_ice_content_m']>0],
-           iceslabs_within_121619[iceslabs_within_121619['20m_ice_content_m']>0],
-           iceslabs_inbetween_121619[iceslabs_inbetween_121619['20m_ice_content_m']>0],
+           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
+           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
+           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
            'SW')
 plot_histo(axNO,
-           iceslabs_above_121619[iceslabs_above_121619['20m_ice_content_m']>0],
-           iceslabs_within_121619[iceslabs_within_121619['20m_ice_content_m']>0],
-           iceslabs_inbetween_121619[iceslabs_inbetween_121619['20m_ice_content_m']>0],
+           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
+           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
+           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
            'NO')
 plot_histo(axNE,
-           iceslabs_above_121619[iceslabs_above_121619['20m_ice_content_m']>0],
-           iceslabs_within_121619[iceslabs_within_121619['20m_ice_content_m']>0],
-           iceslabs_inbetween_121619[iceslabs_inbetween_121619['20m_ice_content_m']>0],
+           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
+           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
+           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
            'NE')
 plot_histo(axGrIS,
-           iceslabs_above_121619[iceslabs_above_121619['20m_ice_content_m']>0],
-           iceslabs_within_121619[iceslabs_within_121619['20m_ice_content_m']>0],
-           iceslabs_inbetween_121619[iceslabs_inbetween_121619['20m_ice_content_m']>0],
+           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
+           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
+           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
            'GrIS')
 
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('2012-16-19 - 2 years running slabs - 0m thick slabs excluded')
+fig.suptitle('2019 - 2 years running slabs - 0m thick slabs excluded')
 plt.show()
 '''
 #Save the figure
@@ -283,86 +267,27 @@ ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2012-16-19 - 2 years running slabs - 0m thick slabs excluded')
+fig.suptitle('2019 - 2 years running slabs - 0m thick slabs excluded')
 
 '''
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/BoxplotNonZeros_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
 '''
-
 ####################### Plot without 0m thick ice slabs #######################
 
+###############################################################################
+###                      Plot Ice Slabs Thickness data                      ###
+###############################################################################
 
 
 
 
 
-####################### Plot 2019 above and within #######################
-#Display ice slabs distributions as a function of the regions - This is fromEmax_SLabsThickness.py
-#Prepare plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(15, 10)
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-axNW = plt.subplot(gs[0:5, 0:5])
-axCW = plt.subplot(gs[5:10, 0:5])
-axSW = plt.subplot(gs[10:15, 0:5])
-axNO = plt.subplot(gs[0:5, 5:10])
-axNE = plt.subplot(gs[5:10, 5:10])
-axGrIS = plt.subplot(gs[10:15, 5:10])
+###############################################################################
+###                                   SAR                                   ###
+###############################################################################
 
-#Plot histograms
-plot_histo_EGU(axNW,iceslabs_above_121619,iceslabs_within_121619,'NW')
-plot_histo_EGU(axCW,iceslabs_above_121619,iceslabs_within_121619,'CW')
-plot_histo_EGU(axSW,iceslabs_above_121619,iceslabs_within_121619,'SW')
-plot_histo_EGU(axNO,iceslabs_above_121619,iceslabs_within_121619,'NO')
-plot_histo_EGU(axNE,iceslabs_above_121619,iceslabs_within_121619,'NE')
-plot_histo_EGU(axGrIS,iceslabs_above_121619,iceslabs_within_121619,'GrIS')
-
-#Finalise plot
-axSW.set_xlabel('Ice slabs thickness [m]')
-axSW.set_ylabel('Density [ ]')
-fig.suptitle('2019 MVRL - 2017-18 ice slabs thicknesses')
-plt.show()
-
-'''
-#Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Histo_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
-'''
-
-#Display as boxplots
-#Aggregate data together
-iceslabs_above_121619['type']=['Above']*len(iceslabs_above_121619)
-iceslabs_within_121619['type']=['Within']*len(iceslabs_within_121619)
-iceslabs_boxplot=pd.concat([iceslabs_above_121619,iceslabs_within_121619])
-
-iceslabs_boxplot_GrIS=iceslabs_boxplot.copy(deep=True)
-iceslabs_boxplot_GrIS['key_shp']=['GrIS']*len(iceslabs_boxplot_GrIS)
-iceslabs_boxplot_region_GrIS=pd.concat([iceslabs_boxplot,iceslabs_boxplot_GrIS])
-
-#Display
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.boxplot(data=iceslabs_boxplot_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
-ax_regions_GrIS.set_ylabel('')
-ax_regions_GrIS.set_xlabel('Ice content [m]')
-ax_regions_GrIS.set_xlim(-0.5,20)
-ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2019 MVRL - 2017-18 ice slabs thicknesses')
-
-
-'''
-#Save the figure
-plt.savefig('C:/Users/jullienn/switchdrive/Private/research/conferences/EGU2023/figures/2019MVRL_above_within_EGU.png',dpi=500,bbox_inches='tight')
-#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
-####################### Plot 2019 above and within #######################
-
-
-############################# Plot 2019 SAR #############################
-
-path_SAR='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/SAR_sectors/'
-
+############################# Sectors - 2019 MVRL #############################
 above_all=[]
 within_all=[]
 below_all=[]
@@ -370,7 +295,7 @@ below_all=[]
 for indiv_box in range(0,40):
     #open above
     try:
-        above = np.asarray(pd.read_csv(path_SAR+'above/SAR_above_box_'+str(indiv_box)+'_2019.txt', header=None))
+        above = np.asarray(pd.read_csv(path_data+'SAR_sectors/above/SAR_above_box_'+str(indiv_box)+'_2019.txt', header=None))
         #Append data
         above_all=np.append(above_all,above)
     except FileNotFoundError:
@@ -378,7 +303,7 @@ for indiv_box in range(0,40):
     
     #open within
     try:
-        within = np.asarray(pd.read_csv(path_SAR+'within/SAR_within_box_'+str(indiv_box)+'_2019.txt', header=None))
+        within = np.asarray(pd.read_csv(path_data+'SAR_sectors/within/SAR_within_box_'+str(indiv_box)+'_2019.txt', header=None))
         #Append data
         within_all=np.append(within_all,within)
     except FileNotFoundError:
@@ -386,7 +311,7 @@ for indiv_box in range(0,40):
     
     #open below
     try:
-        below = np.asarray(pd.read_csv(path_SAR+'below/SAR_below_box_'+str(indiv_box)+'_2019.txt', header=None))
+        below = np.asarray(pd.read_csv(path_data+'SAR_sectors/below/SAR_below_box_'+str(indiv_box)+'_2019.txt', header=None))
         #Append data
         below_all=np.append(below_all,below)
     except FileNotFoundError:
@@ -421,24 +346,66 @@ sns.boxplot(data=SAR_boxplot_GrIS, x="cat", y="signal",ax=ax_SAR)#, kde=True)
 ax_SAR.set_ylabel('Signal strength [dB]')
 ax_SAR.set_xlabel('Category')
 
+############################# Sectors - 2019 MVRL #############################
+
+###############################################################################
+###                                   SAR                                   ###
+###############################################################################
+
+
+
+
+
+###############################################################################
+###                           Aquitard map                                  ###
+###############################################################################
 pdb.set_trace()
-############################# Plot 2019 SAR #############################
 
+import rioxarray as rxr
 
-############################# 2019 binary map #############################
+#Define paths where data are stored
+path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
+path_SAR=path_local+'data/SAR/HV_2017_2018/'
+
+#Open SAR image
+### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+#Load SAR data
+SAR_N_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
+SAR_N_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000023296.tif',masked=True).squeeze()
+SAR_NW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000000000.tif',masked=True).squeeze()
+SAR_NW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000023296.tif',masked=True).squeeze()
+SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
+SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
+
 #Choose cutoff signal
-
+cutoff=-8
 #Apply binary cutoff
 
 #Display map of efficient aquitard with 2019 MVRL
 
 
-############################# 2019 binary map #############################
+###############################################################################
+###                           Aquitard map                                  ###
+###############################################################################
 
 
 
 
-#Once all csv files of SAR extraction are performed, load them
+
+
+
+###############################################################################
+###                          SAR and Ice Thickness                          ###
+###############################################################################
+
+################### Relationship using data in sectors only ###################
+
+################### Relationship using data in sectors only ###################
+
+
 
 #Define a list of data where the relationship could be ideal
 list_ideal=['20170421_01_006_009.csv', '20170421_01_171_174.csv','20170502_01_171_173.csv',
@@ -449,36 +416,41 @@ list_ideal=['20170421_01_006_009.csv', '20170421_01_171_174.csv','20170502_01_17
               '20180425_01_166_169.csv', '20180427_01_004_006.csv',
               '20180427_01_170_172.csv', '20180429_01_008_014.csv']
 
+#Path to data
+path_SAR_And_IceThickness=path_data+'csv/'
 
-if (load_data=='TRUE'):
-    #Path to data
-    path_csv_SAR_VS_IceContent='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/csv/'
+#List all the files in the folder
+list_composite=os.listdir(path_SAR_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
+'''
+list_composite=list_ideal
+'''
+#Loop over all the files
+for indiv_file in list_composite:
     
-    #List all the files in the folder
-    list_composite=os.listdir(path_csv_SAR_VS_IceContent) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
-    '''
-    list_composite=list_ideal
-    '''
-    #Loop over all the files
-    for indiv_file in list_composite:
-        
-        #Open the individual file
-        indiv_csv=pd.read_csv(path_csv_SAR_VS_IceContent+indiv_file)
-        
-        #If first file of the list, create the concatenated pandas dataframe. If not, fill it in
-        if (indiv_file==list_composite[0]):
-            appended_df=indiv_csv.copy(deep=True)
-        else:
-            #Append the data to each other
-            appended_df=pd.concat([appended_df,indiv_csv])
+    #Open the individual file
+    indiv_csv=pd.read_csv(path_SAR_And_IceThickness+indiv_file)
     
-    #Create a unique indey for each line, and set this new vector as the index in dataframe
-    appended_df['index_unique']=np.arange(0,len(appended_df))
-    appended_df=appended_df.set_index('index_unique')
+    #Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
+    indiv_upsampled_SAR_and_IceSlabs=indiv_csv.groupby('index_right').mean()    
     
-    #Display some descriptive statistics
-    appended_df.describe()['radar_signal']
-    appended_df.describe()['20m_ice_content_m']
+    #If first file of the list, create the concatenated pandas dataframe. If not, fill it in
+    if (indiv_file==list_composite[0]):
+        upsampled_SAR_and_IceSlabs=indiv_upsampled_SAR_and_IceSlabs.copy(deep=True)
+    else:
+        #Append the data to each other
+        upsampled_SAR_and_IceSlabs=pd.concat([upsampled_SAR_and_IceSlabs,indiv_upsampled_SAR_and_IceSlabs])
+
+#Create a unique index for each line, and set this new vector as the index in dataframe
+upsampled_SAR_and_IceSlabs['index_unique']=np.arange(0,len(upsampled_SAR_and_IceSlabs))
+upsampled_SAR_and_IceSlabs=upsampled_SAR_and_IceSlabs.set_index('index_unique')
+
+#Display some descriptive statistics
+upsampled_SAR_and_IceSlabs.describe()['radar_signal']
+upsampled_SAR_and_IceSlabs.describe()['20m_ice_content_m']
+
+
+
+######################## TO CONTINUE ADAPT FROM HERE ONWARDS
 
 pdb.set_trace()
 #Display the composite relationship using all the files
@@ -734,6 +706,14 @@ if (composite=='TRUE'):
     ###########################################################################
     ###           Get rid of data points where occurrence is low!           ###
     ###########################################################################
+    
+    
+###############################################################################
+###                          SAR and Ice Thickness                          ###
+###############################################################################
+
+
+
 
 
 #Consider a test dataset, derive the relationship between SAR and ice content, predict ice content from SAR, evaluate the performance of the prediction

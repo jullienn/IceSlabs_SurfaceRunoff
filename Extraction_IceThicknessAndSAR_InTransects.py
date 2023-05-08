@@ -115,6 +115,7 @@ import rioxarray
 import rasterio
 import os
 from scipy.optimize import curve_fit
+import os.path
 
 generate_data='TRUE' #If true, generate the individual csv files and figures
 load_data='TRUE'
@@ -167,12 +168,17 @@ SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 if (generate_data=='TRUE'):
     #Loop over all the 2018 transects
     for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
-        '''
-        if (IceSlabsTransect_name != '20170421_01_006_009'):
-            continue
-        '''
         print('Treating',IceSlabsTransect_name)
-     
+
+        #If transect already processes, continue
+        if (os.path.isfile(path_local+'SAR_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
+            print(IceSlabsTransect_name,' already generated, continue')    
+        continue
+                    
+        if (IceSlabsTransect_name == '20180419_02_056_072'):
+            print('Do not process ',IceSlabsTransect_name)
+            continue
+        
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
         IceSlabsTransect = pickle.load(f_IceSlabsTransect)
