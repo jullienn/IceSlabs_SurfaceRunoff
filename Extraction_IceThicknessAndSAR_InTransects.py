@@ -69,7 +69,6 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_i
                     '''
                 except rxr.exceptions.NoDataInBounds:
                     print('            Intersection not found!')
-                    print('               Continue')
                     SAR_clipped=np.array([-999])
                     #Store ice slabs transect not intersected with SAR
     
@@ -226,6 +225,12 @@ if (generate_data=='TRUE'):
         #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
         #Extract SAR in the vicinity of transect by considering all SAR files
         SAR_clipped=extraction_SAR(buffered_transect_polygon_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)#,polygon_in_use)
+                
+        #If no clipping, do not continue and go to the next transect
+        if (len(SAR_clipped)==1):
+            print('No SAR data, continue')
+            continue
+        
         #Determine extent of SAR_clipped
         extent_SAR_clipped = [np.min(np.asarray(SAR_clipped.x)), np.max(np.asarray(SAR_clipped.x)),
                               np.min(np.asarray(SAR_clipped.y)), np.max(np.asarray(SAR_clipped.y))]#[west limit, east limit., south limit, north limit]
