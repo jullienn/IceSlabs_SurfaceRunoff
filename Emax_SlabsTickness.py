@@ -103,7 +103,7 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_i
                     #Store ice slabs transect not intersected with SAR
     
     if (not_worked=='TRUE'):
-        SAR_clipped=np.array([-999])
+        SAR_clipped_within_polygon=np.array([-999])
     else:
         print("SAR intersection found!")        
         #Perform clip between indiv box and SAR to get rid of SAR data outside of box
@@ -263,6 +263,14 @@ Boxes_Tedstone2022=Boxes_Tedstone2022.sort_values(by=['FID'],ascending=True)#fro
 nogo_polygon=np.concatenate((np.arange(1,4+1),np.arange(20,20+1),np.arange(27,27+1),
                              np.arange(33,33+1),np.arange(39,40+1),np.arange(42,42+1),
                              np.arange(44,53+1)))
+#Polygon 21 to divide in two part, and ignore the southernmost part
+
+
+# When we'll consider ice slabs and SA, we should include every polygon where
+# firn aquifer are no prominent, i.e. all boxes except 1-3, 20, 42, 44-53.
+# These polygon will need Emax filtering before using them!!!
+
+
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
@@ -328,7 +336,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     
-    if (indiv_index < 22):
+    if (indiv_index < 36):
         continue
     
     print(indiv_index)
@@ -517,60 +525,59 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Extract and store SAR from below to above
         indiv_SAR_below_above_DF=extraction_SAR(below_above_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,indiv_polygon)
         
-        pdb.set_trace()
-
-        #Perform clip between SAR_below_above with the individual sectors - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
-        try:
-            indiv_SAR_above_DF = indiv_SAR_below_above_DF.rio.clip(above_polygon.geometry.values, above_polygon.crs, drop=True, invert=False)
-            #Convert SAR data into a vector, and display SAR sector
-            indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
-            if (len(indiv_SAR_above)>1):
-                #there is data, continue performing tasks
-                #Display SAR distributions
-                ax_SAR_distrib.hist(indiv_SAR_above,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
-                #Export the extracted SAR as txt files
-                if (indiv_SAR_above[0]!=-999):
-                    save_SAR_data(indiv_SAR_above,indiv_index,'above',path_save_SAR_IceSlabs)
-        except rxr.exceptions.NoDataInBounds:
-            print('No SAR above')
+        #pdb.set_trace()
         
-        try:
-            indiv_SAR_inbetween_DF = indiv_SAR_below_above_DF.rio.clip(in_between_polygon.geometry.values, in_between_polygon.crs, drop=True, invert=False)
-            #Convert SAR data into a vector, and display SAR sector
-            indiv_SAR_inbetween=SAR_to_vector(indiv_SAR_inbetween_DF,ax_SAR)
-            if (len(indiv_SAR_inbetween)>1):
-                #there is data, continue performing tasks
-                #Export the extracted SAR as txt files
-                if (indiv_SAR_inbetween[0]!=-999):
+        if (indiv_SAR_below_above_DF[0]==-999):
+            print('No intersection with SAR data, continue')
+        else:
+            #Perform clip between SAR_below_above with the individual sectors - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
+            try:
+                indiv_SAR_above_DF = indiv_SAR_below_above_DF.rio.clip(above_polygon.geometry.values, above_polygon.crs, drop=True, invert=False)
+                #Convert SAR data into a vector, and display SAR sector
+                indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
+                if (len(indiv_SAR_above)>1):
+                    #there is data, continue performing tasks
+                    #Display SAR distributions
+                    ax_SAR_distrib.hist(indiv_SAR_above,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+                    #Export the extracted SAR as txt files
+                    save_SAR_data(indiv_SAR_above,indiv_index,'above',path_save_SAR_IceSlabs)
+            except rxr.exceptions.NoDataInBounds:
+                print('No SAR above')
+            
+            try:
+                indiv_SAR_inbetween_DF = indiv_SAR_below_above_DF.rio.clip(in_between_polygon.geometry.values, in_between_polygon.crs, drop=True, invert=False)
+                #Convert SAR data into a vector, and display SAR sector
+                indiv_SAR_inbetween=SAR_to_vector(indiv_SAR_inbetween_DF,ax_SAR)
+                if (len(indiv_SAR_inbetween)>1):
+                    #there is data, continue performing tasks
+                    #Export the extracted SAR as txt files
                     save_SAR_data(indiv_SAR_inbetween,indiv_index,'in_between',path_save_SAR_IceSlabs)
-        except rxr.exceptions.NoDataInBounds:
-            print('No SAR in-between')
-
-        try:
-            indiv_SAR_within_DF = indiv_SAR_below_above_DF.rio.clip(within_polygon.geometry.values, within_polygon.crs, drop=True, invert=False)
-            #Convert SAR data into a vector, and display SAR sector
-            indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
-            if (len(indiv_SAR_within)>1):
-                #there is data, continue performing tasks
-                #Export the extracted SAR as txt files
-                if (indiv_SAR_within[0]!=-999):
+            except rxr.exceptions.NoDataInBounds:
+                print('No SAR in-between')
+    
+            try:
+                indiv_SAR_within_DF = indiv_SAR_below_above_DF.rio.clip(within_polygon.geometry.values, within_polygon.crs, drop=True, invert=False)
+                #Convert SAR data into a vector, and display SAR sector
+                indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
+                if (len(indiv_SAR_within)>1):
+                    #there is data, continue performing tasks
+                    #Export the extracted SAR as txt files
                     save_SAR_data(indiv_SAR_within,indiv_index,'within',path_save_SAR_IceSlabs)
-        except rxr.exceptions.NoDataInBounds:
-            print('No SAR within')
-
-        try:
-            indiv_SAR_below_DF = indiv_SAR_below_above_DF.rio.clip(below_polygon.geometry.values, below_polygon.crs, drop=True, invert=False)
-            #Convert SAR data into a vector, and display SAR sector
-            indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
-            if (len(indiv_SAR_below)>1):
-                #there is data, continue performing tasks
-                #Display SAR distributions
-                ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
-                #Export the extracted SAR as txt files
-                if (indiv_SAR_below[0]!=-999):
+            except rxr.exceptions.NoDataInBounds:
+                print('No SAR within')
+    
+            try:
+                indiv_SAR_below_DF = indiv_SAR_below_above_DF.rio.clip(below_polygon.geometry.values, below_polygon.crs, drop=True, invert=False)
+                #Convert SAR data into a vector, and display SAR sector
+                indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
+                if (len(indiv_SAR_below)>1):
+                    #there is data, continue performing tasks
+                    #Display SAR distributions
+                    ax_SAR_distrib.hist(indiv_SAR_below,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+                    #Export the extracted SAR as txt files
                     save_SAR_data(indiv_SAR_below,indiv_index,'below',path_save_SAR_IceSlabs)
-        except rxr.exceptions.NoDataInBounds:
-            print('No SAR below')
+            except rxr.exceptions.NoDataInBounds:
+                print('No SAR below')
 
         '''
         fig = plt.figure()
