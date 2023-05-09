@@ -184,6 +184,15 @@ if (generate_data=='TRUE'):
             print('Do not process ',IceSlabsTransect_name)
             continue
         
+        if (IceSlabsTransect_name == '20170410_01_086_088'):
+            print('No SAR intersections, do not process ',IceSlabsTransect_name)
+            continue
+        
+        
+        if (IceSlabsTransect_name == '20170412_01_035_054'):
+            print('Do not process ',IceSlabsTransect_name)
+            continue
+        
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
         IceSlabsTransect = pickle.load(f_IceSlabsTransect)

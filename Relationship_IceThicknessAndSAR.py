@@ -66,6 +66,34 @@ def deg_n(x, a, n):
     return a * np.power(x,n)
 
 
+def keep_sectorial(df_input,indiv_trackname_tokeep):    
+    df_output=df_input[df_input.Track_name==indiv_trackname_tokeep].copy()
+    return df_output
+
+def sector_association(indiv_df_SAR_IceThickness,indiv_df_sectors,sector):
+    #Perform match between indiv_df_SAR_IceThickness and indiv_IceThickness_sectors 
+    indiv_df_SAR_IceThickness_sector = indiv_df_SAR_IceThickness.merge(indiv_df_sectors, how="left",on=['lat','lon'],suffixes=('_gauche','_droite'))
+    
+    #drop useless columns
+    indiv_df_SAR_IceThickness_sector=indiv_df_SAR_IceThickness_sector.drop(columns=['Unnamed: 0_droite', 'Track_name_droite', 'Tracenumber',
+                                                          'alongtrack_distance_m', '20m_ice_content_m_droite',
+                                                          'likelihood_droite', 'lat_3413_droite', 'lon_3413_droite',
+                                                          'key_shp_droite', 'elevation_droite', 'year_droite', 'geometry',
+                                                          'index_right_polygon', 'FID', 'rev_subs', 'index_right_droite'])
+    
+    #Get rid of data points which do not intersect with sector
+    indiv_df_SAR_IceThickness_sector_noNaN=indiv_df_SAR_IceThickness_sector[~indiv_df_SAR_IceThickness_sector.type.isna()]
+    
+    if (len(indiv_df_SAR_IceThickness_sector_noNaN)>0):
+        #Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
+        indiv_upsampled_SAR_and_IceSlabs_sector=indiv_df_SAR_IceThickness_sector_noNaN.groupby('index_right_gauche').mean()
+        #Add column of sector
+        indiv_upsampled_SAR_and_IceSlabs_sector['sector']=[sector]*len(indiv_upsampled_SAR_and_IceSlabs_sector)
+    else:
+        indiv_upsampled_SAR_and_IceSlabs_sector=indiv_df_SAR_IceThickness_sector_noNaN
+    
+    return indiv_upsampled_SAR_and_IceSlabs_sector
+
 import pandas as pd
 import numpy as np
 import pdb
@@ -93,8 +121,14 @@ from scipy.optimize import curve_fit
 
 composite='TRUE'
 
-#Improve this code to display boxplots at VS above VS below MVRL but also SAR!!
-#Extract relationship 
+#Define projection
+###################### From Tedstone et al., 2022 #####################
+#from plot_map_decadal_change.py
+# Define the CartoPy CRS object.
+crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
+# This can be converted into a `proj4` string/dict compatible with GeoPandas
+crs_proj4 = crs.proj4_init
+###################### From Tedstone et al., 2022 #####################
 
 
 #Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
@@ -105,10 +139,11 @@ my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'Below': "green"}
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
 
 ###############################################################################
-###                      Load Ice Slabs Thickness data                      ###
+###         Load Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 #Define empty dataframe
 IceThickness_above=pd.DataFrame()
+IceThickness_in_between=pd.DataFrame()
 IceThickness_within=pd.DataFrame()
 IceThickness_below=pd.DataFrame()
 
@@ -122,6 +157,15 @@ for indiv_box in range(0,40):
             IceThickness_above=pd.concat([IceThickness_above,above])
     except FileNotFoundError:
         print('No above')
+    
+    #open InBetween
+    try:
+        in_between = pd.read_csv(path_data+'SAR_sectors/in_between/IceSlabs_in_between_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(in_between)>0):
+            #Append data
+            IceThickness_in_between=pd.concat([IceThickness_in_between,in_between])
+    except FileNotFoundError:
+        print('No in_between')
     
     #open within
     try:
@@ -142,19 +186,14 @@ for indiv_box in range(0,40):
         print('No below')
 
 ###############################################################################
-###                      Load Ice Slabs Thickness data                      ###
+###         Load Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
-
-
-
-
 ###############################################################################
-###                      Plot Ice Slabs Thickness data                      ###
+###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
 ######################## Plot with 0m thick ice slabs #########################
-
 #Display ice slabs distributions as a function of the regions - This is fromEmax_SLabsThickness.py
 #Prepare plot
 fig = plt.figure(figsize=(10,6))
@@ -189,19 +228,20 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 #Display as boxplots
 #Aggregate data together
 IceThickness_above['type']=['Above']*len(IceThickness_above)
+IceThickness_in_between['type']=['In_Between']*len(IceThickness_in_between)
 IceThickness_within['type']=['Within']*len(IceThickness_within)
 IceThickness_below['type']=['Below']*len(IceThickness_below)
-iceslabs_boxplot=pd.concat([IceThickness_above,IceThickness_within,IceThickness_below])
+IceThickness_all_sectors=pd.concat([IceThickness_above,IceThickness_within,IceThickness_below])
 
-iceslabs_boxplot_GrIS=iceslabs_boxplot.copy(deep=True)
-iceslabs_boxplot_GrIS['key_shp']=['GrIS']*len(iceslabs_boxplot_GrIS)
-iceslabs_boxplot_region_GrIS=pd.concat([iceslabs_boxplot,iceslabs_boxplot_GrIS])
+IceThickness_all_sectors_GrIS=IceThickness_all_sectors.copy(deep=True)
+IceThickness_all_sectors_GrIS['key_shp']=['GrIS']*len(IceThickness_all_sectors)
+IceThickness_all_sectors_region_GrIS=pd.concat([IceThickness_all_sectors,IceThickness_all_sectors_GrIS])
 
 #Display
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.boxplot(data=iceslabs_boxplot_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+box_plot_regions_GrIS=sns.boxplot(data=IceThickness_all_sectors_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
 ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice Thickness [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
@@ -274,7 +314,7 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.boxplot(data=iceslabs_boxplot_region_GrIS[iceslabs_boxplot_region_GrIS['20m_ice_content_m']>0], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+box_plot_regions_GrIS=sns.boxplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS['20m_ice_content_m']>0], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
 ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
@@ -288,11 +328,8 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 ####################### Plot without 0m thick ice slabs #######################
 
 ###############################################################################
-###                      Plot Ice Slabs Thickness data                      ###
+###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
-
-
-
 
 
 ###############################################################################
@@ -303,6 +340,7 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 above_all=[]
 within_all=[]
 below_all=[]
+in_between_all=[]
 
 for indiv_box in range(0,40):
     #open above
@@ -313,6 +351,14 @@ for indiv_box in range(0,40):
     except FileNotFoundError:
         print('No above')
     
+    #open in_between
+    try:
+        in_between = np.asarray(pd.read_csv(path_data+'SAR_sectors/in_between/SAR_in_between_box_'+str(indiv_box)+'_2019.txt', header=None))
+        #Append data
+        in_between_all=np.append(in_between_all,in_between)
+    except FileNotFoundError:
+        print('No in_between')
+        
     #open within
     try:
         within = np.asarray(pd.read_csv(path_data+'SAR_sectors/within/SAR_within_box_'+str(indiv_box)+'_2019.txt', header=None))
@@ -332,17 +378,22 @@ for indiv_box in range(0,40):
 #Display figure distribution
 fig, (ax_distrib) = plt.subplots()      
 ax_distrib.hist(below_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
+#ax_distrib.hist(in_between_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='yellow',label='In Between')
 #ax_distrib.hist(within_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='red',label='Within')
 ax_distrib.hist(above_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
 ax_distrib.set_xlim(-20,-2)
 ax_distrib.set_xlabel('Signal strength [dB]')
 ax_distrib.set_ylabel('Density')
 ax_distrib.legend()
+ax_distrib.set_title('GrIS-wide')
 
 #Display boxplot
 df_below_all=pd.DataFrame(below_all,columns=['signal'])
 df_below_all['cat']=['below']*len(df_below_all)
 '''
+df_in_between_all=pd.DataFrame(in_between_all,columns=['signal'])
+df_in_between_all['cat']=['in_between']*len(in_between_all)
+
 df_within_all=pd.DataFrame(within_all,columns=['signal'])
 df_within_all['cat']=['within']*len(df_within_all)
 '''
@@ -357,99 +408,140 @@ ax_SAR = plt.subplot(gs[0:10, 0:6])
 sns.boxplot(data=SAR_boxplot_GrIS, x="cat", y="signal",ax=ax_SAR)#, kde=True)
 ax_SAR.set_ylabel('Signal strength [dB]')
 ax_SAR.set_xlabel('Category')
-
+ax_SAR.set_title('GrIS-wide')
 ############################# Sectors - 2019 MVRL #############################
 
 ###############################################################################
 ###                                   SAR                                   ###
 ###############################################################################
 
-
-
-
-'''
-###############################################################################
-###                           Aquitard map                                  ###
-###############################################################################
-
-import rioxarray as rxr
-
-#Define paths where data are stored
-path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
-path_SAR=path_local+'data/SAR/HV_2017_2018/'
-
-#Open SAR image
-### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
-#This section of displaying sat data was coding using tips from
-#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
-#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
-#Load SAR data
-SAR_N_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
-SAR_N_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000023296.tif',masked=True).squeeze()
-SAR_NW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000000000.tif',masked=True).squeeze()
-SAR_NW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000023296.tif',masked=True).squeeze()
-SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
-SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
-
-#Choose cutoff signal
-cutoff=-8
-#Apply binary cutoff
-
-#Display map of efficient aquitard with 2019 MVRL
-
-
-###############################################################################
-###                           Aquitard map                                  ###
-###############################################################################
-'''
-
-
-
-
-
-
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
 ###############################################################################
 
-################### Relationship using data in sectors only ###################
-
-################### Relationship using data in sectors only ###################
-
-
-#Define a list of data where the relationship could be ideal
-list_ideal=['20170421_01_006_009.csv', '20170421_01_171_174.csv','20170502_01_171_173.csv',
-              '20170505_02_008_010.csv', '20170505_02_181_183.csv', '20170506_01_010_012.csv',
-              '20170508_02_011_013.csv', '20170508_02_165_171.csv',
-              '20170511_01_010_025.csv', '20170511_01_176_178.csv', '20180421_01_004_007.csv',
-              '20180423_01_180_182.csv', '20180425_01_005_008.csv',
-              '20180425_01_166_169.csv', '20180427_01_004_006.csv',
-              '20180427_01_170_172.csv', '20180429_01_008_014.csv']
-
+########### Load ice slabs with SAR dataset and identify the sector ###########
 #Path to data
 path_SAR_And_IceThickness=path_data+'csv/'
-
 #List all the files in the folder
 list_composite=os.listdir(path_SAR_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
-'''
-list_composite=list_ideal
-'''
+
+#Define empty dataframe
+upsampled_SAR_and_IceSlabs=pd.DataFrame()
+upsampled_SAR_and_IceSlabs_above=pd.DataFrame()
+upsampled_SAR_and_IceSlabs_in_between=pd.DataFrame()
+upsampled_SAR_and_IceSlabs_within=pd.DataFrame()
+upsampled_SAR_and_IceSlabs_below=pd.DataFrame()
+
 #Loop over all the files
 for indiv_file in list_composite:
-    
+    print(indiv_file)
     #Open the individual file
     indiv_csv=pd.read_csv(path_SAR_And_IceThickness+indiv_file)
     
+    ### ALL ###
     #Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
-    indiv_upsampled_SAR_and_IceSlabs=indiv_csv.groupby('index_right').mean()    
+    indiv_upsampled_SAR_and_IceSlabs=indiv_csv.groupby('index_right').mean()  
+    #Append the data to each other
+    upsampled_SAR_and_IceSlabs=pd.concat([upsampled_SAR_and_IceSlabs,indiv_upsampled_SAR_and_IceSlabs])
+    ### ALL ###
     
-    #If first file of the list, create the concatenated pandas dataframe. If not, fill it in
-    if (indiv_file==list_composite[0]):
-        upsampled_SAR_and_IceSlabs=indiv_upsampled_SAR_and_IceSlabs.copy(deep=True)
-    else:
-        #Append the data to each other
-        upsampled_SAR_and_IceSlabs=pd.concat([upsampled_SAR_and_IceSlabs,indiv_upsampled_SAR_and_IceSlabs])
+    ### SECTORS ###
+    '''
+    #Transform this file into a geopandas dataframe
+    indiv_csv_gdf = gpd.GeoDataFrame(indiv_csv, geometry=gpd.points_from_xy(indiv_csv.lon_3413, indiv_csv.lat_3413), crs="EPSG:3413")
+    #Perform join between the combined ice slabs and SAR dataset with the sectorial dataframe - It could be a unique idnetifier to each data point, or spatial. Unique identifyer is not available, but could be done while generating data!
+    indiv_csv_gdf_WithSectors = indiv_csv_gdf.sjoin_nearest(df_indiv_TrackName, how="left", max_distance=1,rsuffix='droite',distance_col='distance_match')
+    '''
+    #In the sectorial dataframes, keep only data corresponding to the current TrackName
+    indiv_IceThickness_above=keep_sectorial(IceThickness_above,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_in_between=keep_sectorial(IceThickness_in_between,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_within=keep_sectorial(IceThickness_within,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_below=keep_sectorial(IceThickness_below,indiv_csv.Track_name.unique()[0])
+    
+    #Prepare figure to display
+    fig = plt.figure()
+    gs = gridspec.GridSpec(5, 5)
+    ax_check_csv_sectors = plt.subplot(gs[0:5, 0:5],projection=crs)
+    ax_check_csv_sectors.scatter(indiv_csv.lon_3413,indiv_csv.lat_3413,s=3,color='black')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_above.lon_3413,indiv_IceThickness_above.lat_3413,s=1,color='blue')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_in_between.lon_3413,indiv_IceThickness_in_between.lat_3413,s=1,color='yellow')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_within.lon_3413,indiv_IceThickness_within.lat_3413,s=1,color='red')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_below.lon_3413,indiv_IceThickness_below.lat_3413,s=1,color='green')
+        
+    #Associate the sector to the dataframe where ice thickness and SAR data are present
+    indiv_upsampled_SAR_and_IceSlabs_above=sector_association(indiv_csv,indiv_IceThickness_above,'above')
+    indiv_upsampled_SAR_and_IceSlabs_in_between=sector_association(indiv_csv,indiv_IceThickness_in_between,'InBetween')
+    indiv_upsampled_SAR_and_IceSlabs_within=sector_association(indiv_csv,indiv_IceThickness_within,'within')
+    indiv_upsampled_SAR_and_IceSlabs_below=sector_association(indiv_csv,indiv_IceThickness_below,'below')
+    
+    #Append data to obtain one dataframe per sector
+    if (len(indiv_upsampled_SAR_and_IceSlabs_above)>0):
+        upsampled_SAR_and_IceSlabs_above=pd.concat([upsampled_SAR_and_IceSlabs_above,indiv_upsampled_SAR_and_IceSlabs_above])
+    
+    if (len(indiv_upsampled_SAR_and_IceSlabs_in_between)>0):
+        upsampled_SAR_and_IceSlabs_in_between=pd.concat([upsampled_SAR_and_IceSlabs_in_between,indiv_upsampled_SAR_and_IceSlabs_in_between])
+        
+    if (len(indiv_upsampled_SAR_and_IceSlabs_within)>0):
+        upsampled_SAR_and_IceSlabs_within=pd.concat([upsampled_SAR_and_IceSlabs_within,indiv_upsampled_SAR_and_IceSlabs_within])
+        
+    if (len(indiv_upsampled_SAR_and_IceSlabs_below)>0):
+        upsampled_SAR_and_IceSlabs_below=pd.concat([upsampled_SAR_and_IceSlabs_below,indiv_upsampled_SAR_and_IceSlabs_below])
+    
+    plt.close()
+    ### SECTORS ###
 
+########### Load ice slabs with SAR dataset and identify the sector ###########
+
+pdb.set_trace()
+################### Relationship using data in sectors only ###################
+
+#Prepare plot
+fig = plt.figure()
+fig.set_size_inches(14, 8) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+gs = gridspec.GridSpec(6, 6)
+ax_scatter = plt.subplot(gs[0:6, 0:2])
+ax_map = plt.subplot(gs[0:6, 2:4],projection=crs)
+ax_above = plt.subplot(gs[0:6, 4:6])
+
+ax_scatter.scatter(upsampled_SAR_and_IceSlabs_below.radar_signal,upsampled_SAR_and_IceSlabs_below['20m_ice_content_m_gauche'],color='green')
+ax_scatter.scatter(upsampled_SAR_and_IceSlabs_in_between.radar_signal,upsampled_SAR_and_IceSlabs_in_between['20m_ice_content_m_gauche'],color='yellow')
+ax_scatter.scatter(upsampled_SAR_and_IceSlabs_within.radar_signal,upsampled_SAR_and_IceSlabs_within['20m_ice_content_m_gauche'],color='red')
+ax_scatter.scatter(upsampled_SAR_and_IceSlabs_above.radar_signal,upsampled_SAR_and_IceSlabs_above['20m_ice_content_m_gauche'],color='blue')
+
+#Append data to each other
+upsampled_SAR_and_IceSlabs_allsectors=pd.concat([upsampled_SAR_and_IceSlabs_above,upsampled_SAR_and_IceSlabs_in_between,upsampled_SAR_and_IceSlabs_within,upsampled_SAR_and_IceSlabs_below])
+
+#Display 2D histogram
+fig_heatmap = plt.figure()
+fig_heatmap.set_size_inches(14, 5) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+gs = gridspec.GridSpec(5, 10)
+gs.update(wspace=3)
+gs.update(hspace=3)
+ax_hist2d = plt.subplot(gs[0:5, 0:5])
+ax_hist2d_log = plt.subplot(gs[0:5, 5:10])
+
+hist2d_cbar = ax_hist2d.hist2d(upsampled_SAR_and_IceSlabs_allsectors['radar_signal'],upsampled_SAR_and_IceSlabs_allsectors['20m_ice_content_m_gauche'],bins=30,cmap='magma_r')
+hist2d_log_cbar = ax_hist2d_log.hist2d(upsampled_SAR_and_IceSlabs_allsectors['radar_signal'],upsampled_SAR_and_IceSlabs_allsectors['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
+
+#ax_hist2d.set_xlim(-18,1)
+ax_hist2d_log.set_xlabel('SAR [dB]')
+ax_hist2d_log.set_ylabel('Ice content [m]')
+fig_heatmap.suptitle('Occurrence map - only data from sectors')
+
+ax_hist2d.set_ylim(0,16)
+ax_hist2d_log.set_ylim(0,16)
+ax_hist2d.set_xlim(-15,-2)
+ax_hist2d_log.set_xlim(-15,-2)
+
+#Display colorbars    
+fig_heatmap.colorbar(hist2d_cbar[3], ax=ax_hist2d,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+fig_heatmap.colorbar(hist2d_log_cbar[3], ax=ax_hist2d_log,label='log(Occurence)')
+################### Relationship using data in sectors only ###################
+
+
+pdb.set_trace()
+
+############### Relationship using the whole ice slabs dataset ###############
 #Create a unique index for each line, and set this new vector as the index in dataframe
 upsampled_SAR_and_IceSlabs['index_unique']=np.arange(0,len(upsampled_SAR_and_IceSlabs))
 upsampled_SAR_and_IceSlabs=upsampled_SAR_and_IceSlabs.set_index('index_unique')
@@ -544,7 +636,6 @@ if (composite=='TRUE'):
     fig_heatmap.colorbar(hist2d_restricted_log_cbar[3], ax=ax_hist2d_restricted_log,label='log(Occurence)')
     
     
-    
     #sort restricted_appended_df
     restricted_upsampled_SAR_and_IceSlabs_no_NaN=restricted_upsampled_SAR_and_IceSlabs_no_NaN.sort_values(by=['radar_signal'])
     
@@ -564,7 +655,9 @@ if (composite=='TRUE'):
 
     ax_hist2d_restricted.legend(loc='upper left',fontsize=6)
     ax_hist2d_restricted_log.legend(loc='upper left',fontsize=6)
-        
+    
+    pdb.set_trace()
+    
     '''
     #Save figure
     plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent.png',dpi=300,bbox_inches='tight')
@@ -667,8 +760,8 @@ if (composite=='TRUE'):
     ###           Get rid of data points where occurrence is low!           ###
     ###########################################################################
     
+############### Relationship using the whole ice slabs dataset ###############
 
-### UNTIL THERE, CHECKED AND WORKING
 
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
@@ -676,6 +769,44 @@ if (composite=='TRUE'):
 
 
 
+'''
+###############################################################################
+###                           Aquitard map                                  ###
+###############################################################################
+
+import rioxarray as rxr
+
+#Define paths where data are stored
+path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
+path_SAR=path_local+'data/SAR/HV_2017_2018/'
+
+#Open SAR image
+### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+#Load SAR data
+SAR_N_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
+SAR_N_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000023296.tif',masked=True).squeeze()
+SAR_NW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000000000.tif',masked=True).squeeze()
+SAR_NW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000023296.tif',masked=True).squeeze()
+SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
+SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
+
+#Choose cutoff signal
+cutoff=-8
+#Apply binary cutoff
+
+#Display map of efficient aquitard with 2019 MVRL
+
+
+###############################################################################
+###                           Aquitard map                                  ###
+###############################################################################
+'''
+
+
+### UNTIL THERE, CHECKED AND WORKING
 
 
 #Consider a test dataset, derive the relationship between SAR and ice content, predict ice content from SAR, evaluate the performance of the prediction
