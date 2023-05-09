@@ -58,6 +58,14 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
 
     return
 
+
+def func(x, a, b, c):
+    return a * np.exp(-b * x) + c
+
+def deg_n(x, a, n):
+    return a * np.power(x,n)
+
+
 import pandas as pd
 import numpy as np
 import pdb
@@ -80,6 +88,10 @@ from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
 import os
+import matplotlib as mpl
+from scipy.optimize import curve_fit
+
+composite='TRUE'
 
 #Improve this code to display boxplots at VS above VS below MVRL but also SAR!!
 #Extract relationship 
@@ -355,11 +367,10 @@ ax_SAR.set_xlabel('Category')
 
 
 
-
+'''
 ###############################################################################
 ###                           Aquitard map                                  ###
 ###############################################################################
-pdb.set_trace()
 
 import rioxarray as rxr
 
@@ -390,7 +401,7 @@ cutoff=-8
 ###############################################################################
 ###                           Aquitard map                                  ###
 ###############################################################################
-
+'''
 
 
 
@@ -404,7 +415,6 @@ cutoff=-8
 ################### Relationship using data in sectors only ###################
 
 ################### Relationship using data in sectors only ###################
-
 
 
 #Define a list of data where the relationship could be ideal
@@ -448,11 +458,6 @@ upsampled_SAR_and_IceSlabs=upsampled_SAR_and_IceSlabs.set_index('index_unique')
 upsampled_SAR_and_IceSlabs.describe()['radar_signal']
 upsampled_SAR_and_IceSlabs.describe()['20m_ice_content_m']
 
-
-
-######################## TO CONTINUE ADAPT FROM HERE ONWARDS
-
-pdb.set_trace()
 #Display the composite relationship using all the files
 if (composite=='TRUE'):
     
@@ -468,79 +473,38 @@ if (composite=='TRUE'):
     ax_IceContent = plt.subplot(gs[2:10, 8:10])
     
     #Display
-    appended_df.plot.scatter(x='radar_signal',y='20m_ice_content_m',ax=ax_scatter)
+    upsampled_SAR_and_IceSlabs.plot.scatter(x='radar_signal',y='20m_ice_content_m',ax=ax_scatter)
     ax_scatter.set_xlim(-18,1)
     ax_scatter.set_ylim(-0.5,20.5)
     ax_scatter.set_xlabel('SAR [dB]')
     ax_scatter.set_ylabel('Ice content [m]')
 
-    ax_IceContent.hist(appended_df['20m_ice_content_m'],
-                       bins=np.arange(np.min(appended_df['20m_ice_content_m']),np.max(appended_df['20m_ice_content_m'])),
+    ax_IceContent.hist(upsampled_SAR_and_IceSlabs['20m_ice_content_m'],
+                       bins=np.arange(np.min(upsampled_SAR_and_IceSlabs['20m_ice_content_m']),np.max(upsampled_SAR_and_IceSlabs['20m_ice_content_m'])),
                        density=True,orientation='horizontal')
     ax_IceContent.set_xlabel('Density [ ]')
     ax_IceContent.set_ylim(-0.5,20.5)
 
-    ax_SAR.hist(appended_df['radar_signal'],
-                bins=np.arange(np.min(appended_df['radar_signal']),np.max(appended_df['radar_signal'])),
+    ax_SAR.hist(upsampled_SAR_and_IceSlabs['radar_signal'],
+                bins=np.arange(np.min(upsampled_SAR_and_IceSlabs['radar_signal']),np.max(upsampled_SAR_and_IceSlabs['radar_signal'])),
                 density=True)
     ax_SAR.set_xlim(-18,1)
     ax_SAR.set_ylabel('Density [ ]')
     fig.suptitle('Ice content and SAR')
     
-    ###########################################################################
-    ###        Keep only where ice content is: 0 < ice content < 15m        ###
-    ###########################################################################
-    restricted_appended_df=appended_df.copy()
-    restricted_appended_df=restricted_appended_df[np.logical_and(restricted_appended_df['20m_ice_content_m']>0,restricted_appended_df['20m_ice_content_m']<15)]
-    
-    #Prepare plot
-    fig = plt.figure()
-    fig.set_size_inches(14, 8) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    gs = gridspec.GridSpec(10, 10)
-    gs.update(wspace=2)
-    gs.update(hspace=1)
-    ax_SAR = plt.subplot(gs[0:2, 0:8])
-    ax_scatter = plt.subplot(gs[2:10, 0:8])
-    ax_IceContent = plt.subplot(gs[2:10, 8:10])
-    
-    #Display
-    restricted_appended_df.plot.scatter(x='radar_signal',y='20m_ice_content_m',ax=ax_scatter)
-    ax_scatter.set_xlim(-18,1)
-    ax_scatter.set_ylim(-0.5,20.5)
-    ax_scatter.set_xlabel('SAR [dB]')
-    ax_scatter.set_ylabel('Ice content [m]')
-
-    ax_IceContent.hist(restricted_appended_df['20m_ice_content_m'],
-                       bins=np.arange(np.min(restricted_appended_df['20m_ice_content_m']),np.max(restricted_appended_df['20m_ice_content_m'])),
-                       density=True,orientation='horizontal')
-    ax_IceContent.set_xlabel('Density [ ]')
-    ax_IceContent.set_ylim(-0.5,20.5)
-
-    ax_SAR.hist(restricted_appended_df['radar_signal'],
-                bins=np.arange(np.min(restricted_appended_df['radar_signal']),np.max(restricted_appended_df['radar_signal'])),
-                density=True)
-    ax_SAR.set_xlim(-18,1)
-    ax_SAR.set_ylabel('Density [ ]')
-    fig.suptitle('0 < ice content < 15 m and SAR')
-    ###########################################################################
-    ###        Keep only where ice content is: 0 < ice content < 15m        ###
-    ###########################################################################
-    '''
-    import seaborn as sns
-    #Not working, probably because dataset too large
-    sns.displot(data=appended_df, x="radar_signal", col="20m_ice_content_m", kde=True)
-    sns.jointplot(data=appended_df, x="radar_signal", y="20m_ice_content_m")
-    '''    
+    ######### Keep only where ice content is: 0 < ice content < 12m ###########
+    restricted_upsampled_SAR_and_IceSlabs=upsampled_SAR_and_IceSlabs.copy()
+    restricted_upsampled_SAR_and_IceSlabs=restricted_upsampled_SAR_and_IceSlabs[np.logical_and(restricted_upsampled_SAR_and_IceSlabs['20m_ice_content_m']>0,restricted_upsampled_SAR_and_IceSlabs['20m_ice_content_m']<12)]
+    ######### Keep only where ice content is: 0 < ice content < 12m ###########
     
     #There are places where the radar signal is a NaN. Extract it
-    appended_df_no_NaN=appended_df.copy()
-    appended_df_no_NaN=appended_df_no_NaN[~pd.isna(appended_df_no_NaN['radar_signal'])]
-    appended_df_no_NaN=appended_df_no_NaN[~pd.isna(appended_df_no_NaN['20m_ice_content_m'])]
+    upsampled_SAR_and_IceSlabs_no_NaN=upsampled_SAR_and_IceSlabs.copy()
+    upsampled_SAR_and_IceSlabs_no_NaN=upsampled_SAR_and_IceSlabs_no_NaN[~pd.isna(upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'])]
 
-    restricted_appended_df_no_NaN=restricted_appended_df.copy()
-    restricted_appended_df_no_NaN=restricted_appended_df_no_NaN[~pd.isna(restricted_appended_df_no_NaN['radar_signal'])]
+    restricted_upsampled_SAR_and_IceSlabs_no_NaN=restricted_upsampled_SAR_and_IceSlabs.copy()
+    restricted_upsampled_SAR_and_IceSlabs_no_NaN=restricted_upsampled_SAR_and_IceSlabs_no_NaN[~pd.isna(restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'])]
     
-    #Display
+    #Display heatmaps
     fig_heatmap = plt.figure()
     fig_heatmap.set_size_inches(14, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
     gs = gridspec.GridSpec(10, 10)
@@ -550,27 +514,28 @@ if (composite=='TRUE'):
     ax_hist2d_restricted = plt.subplot(gs[0:5, 5:10])
     ax_hist2d_log = plt.subplot(gs[5:10, 0:5])
     ax_hist2d_restricted_log = plt.subplot(gs[5:10, 5:10])
-    import matplotlib as mpl
     
-    hist2d_cbar = ax_hist2d.hist2d(appended_df_no_NaN['radar_signal'],appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r')
-    hist2d_log_cbar = ax_hist2d_log.hist2d(appended_df_no_NaN['radar_signal'],appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
+    hist2d_cbar = ax_hist2d.hist2d(upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'],upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r')
+    hist2d_log_cbar = ax_hist2d_log.hist2d(upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'],upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
 
-    hist2d_restricted_cbar = ax_hist2d_restricted.hist2d(restricted_appended_df_no_NaN['radar_signal'],restricted_appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r')
-    hist2d_restricted_log_cbar = ax_hist2d_restricted_log.hist2d(restricted_appended_df_no_NaN['radar_signal'],restricted_appended_df_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
+    hist2d_restricted_cbar = ax_hist2d_restricted.hist2d(restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'],restricted_upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r')
+    hist2d_restricted_log_cbar = ax_hist2d_restricted_log.hist2d(restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'],restricted_upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
                      #cmin=np.quantile(h[0].flatten(),0.5),cmax=np.max(h[0].flatten()))#density=True
     #ax_hist2d.set_xlim(-18,1)
     ax_hist2d_log.set_xlabel('SAR [dB]')
     ax_hist2d_log.set_ylabel('Ice content [m]')
     ax_hist2d.set_title('0 < ice content < 20 m')
-    ax_hist2d_restricted.set_title('0 < ice content < 15 m')
+    ax_hist2d_restricted.set_title('0 < ice content < 12 m')
     fig_heatmap.suptitle('Occurrence map')
 
-    ax_hist2d.set_ylim(0,20)
-    ax_hist2d_log.set_ylim(0,20)
-    ax_hist2d_restricted.set_ylim(0,20)
-    ax_hist2d_restricted_log.set_ylim(0,20)
-    ax_hist2d_restricted.set_xlim(-16.5,-4)
-    ax_hist2d_restricted_log.set_xlim(-16.5,-4)
+    ax_hist2d.set_ylim(0,16)
+    ax_hist2d_log.set_ylim(0,16)
+    ax_hist2d_restricted.set_ylim(0,16)
+    ax_hist2d_restricted_log.set_ylim(0,16)
+    ax_hist2d.set_xlim(-15,-2)
+    ax_hist2d_log.set_xlim(-15,-2)
+    ax_hist2d_restricted.set_xlim(-15,-2)
+    ax_hist2d_restricted_log.set_xlim(-15,-2)
     
     #Display colorbars    
     fig_heatmap.colorbar(hist2d_cbar[3], ax=ax_hist2d,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
@@ -578,47 +543,42 @@ if (composite=='TRUE'):
     fig_heatmap.colorbar(hist2d_restricted_cbar[3], ax=ax_hist2d_restricted,label='Occurence')
     fig_heatmap.colorbar(hist2d_restricted_log_cbar[3], ax=ax_hist2d_restricted_log,label='log(Occurence)')
     
-    '''
-    #Fit a polynomial to this relationship using numpy.polyfit
-    pol_fit=np.polynomial.polynomial.Polynomial.fit(restricted_appended_df['radar_signal'], restricted_appended_df['20m_ice_content_m'], 2,domain=[-12,0])
     
-    x_to_fit=np.arange(pol_fit.domain[0],pol_fit.domain[1])
-    fitted=np.polynomial.polynomial.polyval(x_to_fit,pol_fit.coef)
     
-    #Display the pèolynomial fit
-    ax_hist2d.plot(x_to_fit,fitted)
-    '''
     #sort restricted_appended_df
-    restricted_appended_df_no_NaN=restricted_appended_df_no_NaN.sort_values(by=['radar_signal'])
+    restricted_upsampled_SAR_and_IceSlabs_no_NaN=restricted_upsampled_SAR_and_IceSlabs_no_NaN.sort_values(by=['radar_signal'])
     
     #prepare data for fit        
-    xdata = np.array(restricted_appended_df_no_NaN['radar_signal'])
-    ydata = np.array(restricted_appended_df_no_NaN['20m_ice_content_m'])                           
+    xdata = np.array(restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'])
+    ydata = np.array(restricted_upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m'])                           
                            
     #manual fit
     ax_hist2d_restricted.plot(xdata, func(xdata, 1,0.26,-2),'r',label='manual fit: y = 1*exp(-0.26*x) - 2')
-        
+    ax_hist2d_restricted_log.plot(xdata, func(xdata, 1,0.26,-2),'r',label='manual fit: y = 1*exp(-0.26*x) - 2')
+
     #automatic fit: try with scipy.curve_fit - following the example on the help page
     #popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([-2,0,-5],[5,2,2]))
     popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([0,-1,-4],[2,1,2]))
     ax_hist2d_restricted.plot(xdata, func(xdata, *popt),'b',label='automatic fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
+    ax_hist2d_restricted_log.plot(xdata, func(xdata, *popt),'b',label='automatic fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
+
     ax_hist2d_restricted.legend(loc='upper left',fontsize=6)
-    
-    pdb.set_trace()
+    ax_hist2d_restricted_log.legend(loc='upper left',fontsize=6)
+        
     '''
     #Save figure
     plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceContent/relationship/relationship_SAR_IceContent.png',dpi=300,bbox_inches='tight')
     '''
     #Define binning range
-    range_binning=np.array([[restricted_appended_df_no_NaN['radar_signal'].min(),restricted_appended_df_no_NaN['radar_signal'].max()],
-                            [restricted_appended_df_no_NaN['20m_ice_content_m'].min(),restricted_appended_df_no_NaN['20m_ice_content_m'].max()]])
+    range_binning=np.array([[restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'].min(),restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal'].max()],
+                            [restricted_upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m'].min(),restricted_upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m'].max()]])
     
     ###########################################################################
     ###           Get rid of data points where occurrence is low!           ###
     ###########################################################################
 
     #Define a dataset for regression calculation
-    restricted_appended_df_no_NaN_regression=restricted_appended_df_no_NaN.copy()
+    restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression=restricted_upsampled_SAR_and_IceSlabs_no_NaN.copy()
     
     #Get rid of low occurence grid cells
     n=500#let's start by excluding drig cell whose occurence is lower than 100 individuals - should have a good reason behind this value!!    
@@ -639,8 +599,8 @@ if (composite=='TRUE'):
             #Does this SAR and ice content grid cell has less than n occurence? If yes, delete these data
             if (occurence_matrix[index_row,index_col]<n):
                 #select data that respect both the SAR and ice content bounds
-                logical_SAR=np.logical_and(restricted_appended_df_no_NaN['radar_signal']>=bounds_row[0],restricted_appended_df_no_NaN['radar_signal']<bounds_row[1])
-                logical_ice_content=np.logical_and(restricted_appended_df_no_NaN['20m_ice_content_m']>=bounds_col[0],restricted_appended_df_no_NaN['20m_ice_content_m']<bounds_col[1])
+                logical_SAR=np.logical_and(restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal']>=bounds_row[0],restricted_upsampled_SAR_and_IceSlabs_no_NaN['radar_signal']<bounds_row[1])
+                logical_ice_content=np.logical_and(restricted_upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m']>=bounds_col[0],restricted_upsampled_SAR_and_IceSlabs_no_NaN['20m_ice_content_m']<bounds_col[1])
                 #combine logical vectors
                 logical_combined=np.logical_and(logical_SAR,logical_ice_content)
                 if (logical_combined.astype(int).sum()>0):
@@ -652,7 +612,7 @@ if (composite=='TRUE'):
                                                  restricted_appended_df_no_NaN['20m_ice_content_m'].loc[np.array(logical_combined[logical_combined].index)])
                     '''
     #get rid of corresponding data
-    restricted_appended_df_no_NaN_regression=restricted_appended_df_no_NaN_regression.drop(index=np.unique(index_removal),axis=1)
+    restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression=restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression.drop(index=np.unique(index_removal),axis=1)
     
     #Display resulting grid
     fig_regression = plt.figure()
@@ -663,8 +623,8 @@ if (composite=='TRUE'):
     ax_hist2d_regression = plt.subplot(gs[0:5, 0:5])
     ax_hist2d_regression_log = plt.subplot(gs[5:10,0:5])
     
-    hist2d_regression_cbar = ax_hist2d_regression.hist2d(restricted_appended_df_no_NaN_regression['radar_signal'],restricted_appended_df_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30,range=range_binning)
-    hist2d_regression_log_cbar = ax_hist2d_regression_log.hist2d(restricted_appended_df_no_NaN_regression['radar_signal'],restricted_appended_df_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30,norm=mpl.colors.LogNorm())
+    hist2d_regression_cbar = ax_hist2d_regression.hist2d(restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression['radar_signal'],restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30,range=range_binning)
+    hist2d_regression_log_cbar = ax_hist2d_regression_log.hist2d(restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression['radar_signal'],restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression['20m_ice_content_m'],cmap='magma_r',bins=30,norm=mpl.colors.LogNorm())
     
     ax_hist2d_regression_log.set_xlabel('SAR [dB]')
     ax_hist2d_regression_log.set_ylabel('Ice content [m]')
@@ -676,8 +636,8 @@ if (composite=='TRUE'):
     ax_hist2d_regression_log.set_xlim(-16.5,-4)    
 
     #Calculate regression
-    xdata = np.array(restricted_appended_df_no_NaN_regression['radar_signal'])
-    ydata = np.array(restricted_appended_df_no_NaN_regression['20m_ice_content_m'])                           
+    xdata = np.array(restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression['radar_signal'])
+    ydata = np.array(restricted_upsampled_SAR_and_IceSlabs_no_NaN_regression['20m_ice_content_m'])                           
     
     #manual fit
     ax_hist2d_regression.plot(xdata, func(xdata, 1,0.26,-2),'r',label='manual fit: y = 1*exp(-0.26*x) - 2')
@@ -707,7 +667,9 @@ if (composite=='TRUE'):
     ###           Get rid of data points where occurrence is low!           ###
     ###########################################################################
     
-    
+
+### UNTIL THERE, CHECKED AND WORKING
+
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
 ###############################################################################

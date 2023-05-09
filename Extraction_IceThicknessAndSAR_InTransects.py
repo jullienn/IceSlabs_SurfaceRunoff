@@ -93,9 +93,6 @@ def compute_distances(eastings,northings):
 def func(x, a, b, c):
     return a * np.exp(-b * x) + c
 
-def deg_n(x, a, n):
-    return a * np.power(x,n)
-
 import pickle
 import scipy.io
 import numpy as np
@@ -163,7 +160,7 @@ SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 #Generate the csv files and figures of individual relationship    
 if (generate_data=='TRUE'):
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
 
         #If transect already processes, continue
@@ -174,7 +171,19 @@ if (generate_data=='TRUE'):
         if (IceSlabsTransect_name == '20180419_02_056_072'):
             print('Do not process ',IceSlabsTransect_name)
             continue
-                
+        
+        if (IceSlabsTransect_name == '20170327_04_050_066'):
+            print('Do not process ',IceSlabsTransect_name)
+            continue
+        
+        if (IceSlabsTransect_name == '20170328_01_046_060'):
+            print('Do not process ',IceSlabsTransect_name)
+            continue
+        
+        if (IceSlabsTransect_name == '20170328_01_066_072'):
+            print('Do not process ',IceSlabsTransect_name)
+            continue
+        
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
         IceSlabsTransect = pickle.load(f_IceSlabsTransect)
@@ -420,13 +429,15 @@ if (generate_data=='TRUE'):
         appended_df_no_NaN=upsampled_SAR_and_IceSlabs_sorted.copy()
         appended_df_no_NaN=appended_df_no_NaN[~pd.isna(appended_df_no_NaN['radar_signal'])]
         appended_df_no_NaN=appended_df_no_NaN[~pd.isna(appended_df_no_NaN['20m_ice_content_m'])]
-        appended_df_no_NaN=appended_df_no_NaN.sort_values(by=['radar_signal'])
-        xdata = np.array(appended_df_no_NaN['radar_signal'])
-        ydata = np.array(appended_df_no_NaN['20m_ice_content_m'])      
-        #Perform and display fit on figure
-        popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([0,-1,-4],[2,1,2]))
-        ax_upsampled_SAR.plot(xdata, func(xdata, *popt),'b',label='best fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
-        ax_upsampled_SAR.legend()
+        appended_df_no_NaN=appended_df_no_NaN.sort_values(by=['radar_signal'])   
+        
+        if (len(appended_df_no_NaN)>0):
+            xdata = np.array(appended_df_no_NaN['radar_signal'])
+            ydata = np.array(appended_df_no_NaN['20m_ice_content_m'])   
+            #Perform and display fit on figure
+            popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([0,-1,-4],[2,1,2]))
+            ax_upsampled_SAR.plot(xdata, func(xdata, *popt),'b',label='best fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
+            ax_upsampled_SAR.legend()
         
         #Save the figure
         fig_indiv.suptitle(IceSlabsTransect_name)
