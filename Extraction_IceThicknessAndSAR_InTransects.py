@@ -167,29 +167,16 @@ if (generate_data=='TRUE'):
         if (os.path.isfile(path_local+'SAR_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
             print(IceSlabsTransect_name,' already generated, continue')    
             continue
-                    
-        if (IceSlabsTransect_name == '20180419_02_056_072'):
-            print('Do not process ',IceSlabsTransect_name)
-            continue
-        
-        if (IceSlabsTransect_name == '20170327_04_050_066'):
-            print('Do not process ',IceSlabsTransect_name)
-            continue
-        
-        if (IceSlabsTransect_name == '20170328_01_046_060'):
-            print('Do not process ',IceSlabsTransect_name)
-            continue
-        
-        if (IceSlabsTransect_name == '20170328_01_066_072'):
-            print('Do not process ',IceSlabsTransect_name)
-            continue
         
         if (IceSlabsTransect_name == '20170410_01_086_088'):
             print('No SAR intersections, do not process ',IceSlabsTransect_name)
             continue
         
-        
         if (IceSlabsTransect_name == '20170412_01_035_054'):
+            print('Do not process ',IceSlabsTransect_name)
+            continue
+        
+        if (IceSlabsTransect_name == '20170502_01_041_060'):
             print('Do not process ',IceSlabsTransect_name)
             continue
         

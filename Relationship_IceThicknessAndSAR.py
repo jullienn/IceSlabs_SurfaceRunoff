@@ -492,7 +492,6 @@ for indiv_file in list_composite:
 
 ########### Load ice slabs with SAR dataset and identify the sector ###########
 
-pdb.set_trace()
 ################### Relationship using data in sectors only ###################
 
 #Prepare plot
