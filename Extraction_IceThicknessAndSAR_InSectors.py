@@ -270,6 +270,8 @@ nogo_polygon=np.concatenate((np.arange(1,4+1),np.arange(20,20+1),np.arange(27,27
 # firn aquifer are no prominent, i.e. all boxes except 1-3, 20, 42, 44-53.
 # These polygon will need Emax filtering before using them!!!
 
+#Check boxes: 4,26,27,29,33,34,36,39,40,41,43
+go_polygon=[26,27,29,33,34,36,39,40,41,43]
 
 
 ###################### From Tedstone et al., 2022 #####################
@@ -331,14 +333,21 @@ SAR_above=[]
 
 for indiv_index in Boxes_Tedstone2022.FID:
     
+    if (indiv_index not in go_polygon):
+        #Zone excluded form processing, continue
+        print(indiv_index,' not considered, continue')
+        continue
+    
+    '''
     if (indiv_index in nogo_polygon):
         #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
+    '''
+    '''
     if (indiv_index < 36):
         continue
-    
+    '''
     print(indiv_index)
     
     #Extract individual polygon
@@ -525,8 +534,6 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Extract and store SAR from below to above
         indiv_SAR_below_above_DF=extraction_SAR(below_above_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23,indiv_polygon)
         
-        #pdb.set_trace()
-        
         if (indiv_SAR_below_above_DF[0]==-999):
             print('No intersection with SAR data, continue')
         else:
@@ -647,9 +654,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V2')
+        '''
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+        '''
+        pdb.set_trace()
         plt.close()
 
         '''
@@ -657,14 +667,14 @@ for indiv_index in Boxes_Tedstone2022.FID:
         plt.legend()
         '''
         ############# Display ice slabs thickness and SAR signal #############
-
+        '''
         ############## Export extracted Ice Slabs as csv files ################
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_above,'above',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_InBetween,'in_between',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_within,'within',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_below,'below',indiv_index,indiv_year)
         ############## Export extracted Ice Slabs as csv files ################
-        
+        '''
         #DEAL WITH PLACES OUTSIDE OF REGIONS OF INTEREST ('Out' CATEGORY!!!!) There should not be Out data
         '''
         ########### Store ice slabs data to generate a full csv file ##########

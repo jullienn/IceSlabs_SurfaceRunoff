@@ -94,6 +94,18 @@ def sector_association(indiv_df_SAR_IceThickness,indiv_df_sectors,sector):
     
     return indiv_upsampled_SAR_and_IceSlabs_sector
 
+
+def hist_regions(df_to_plot_below,df_to_plot_above,region_to_plot,ax_region):
+    ax_region.hist(df_to_plot_below[df_to_plot_below.region==region_to_plot]['SAR'],density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
+    ax_region.hist(df_to_plot_above[df_to_plot_above.region==region_to_plot]['SAR'],density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
+    ax_region.set_xlim(-20,-2)
+    ax_region.set_xlabel('Signal strength [dB]')
+    ax_region.set_ylabel('Density')
+    ax_region.text(-19.8,0.2,region_to_plot)
+
+    return
+
+
 import pandas as pd
 import numpy as np
 import pdb
@@ -337,79 +349,103 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 ###############################################################################
 
 ############################# Sectors - 2019 MVRL #############################
-above_all=[]
-within_all=[]
-below_all=[]
-in_between_all=[]
+above_all=pd.DataFrame()
+within_all=pd.DataFrame()
+below_all=pd.DataFrame()
+in_between_all=pd.DataFrame()
 
-for indiv_box in range(0,40):
+#Create dataframe to associate each box with its region
+box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,40+1),'region': np.nan})
+box_and_region['region'].iloc[0:9]='SW'
+box_and_region['region'].iloc[9:14]='CW'
+box_and_region['region'].iloc[14:21]='NW'
+box_and_region['region'].iloc[21:28]='NO'
+box_and_region['region'].iloc[28:40]='NE'
+
+for indiv_box in range(1,40):
     #open above
     try:
         above = np.asarray(pd.read_csv(path_data+'SAR_sectors/above/SAR_above_box_'+str(indiv_box)+'_2019.txt', header=None))
+        above.shape=len(above),#format shape for pd dataframe creation
         #Append data
-        above_all=np.append(above_all,above)
+        above_all=pd.concat([above_all,pd.DataFrame(data={'SAR': above, 'sector': pd.Series(['Above']*len(above)), 'box_nb':pd.Series([indiv_box]*len(above)), 'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(above))})])
     except FileNotFoundError:
         print('No above')
     
     #open in_between
     try:
         in_between = np.asarray(pd.read_csv(path_data+'SAR_sectors/in_between/SAR_in_between_box_'+str(indiv_box)+'_2019.txt', header=None))
+        in_between.shape=len(in_between),#format shape for pd dataframe creation
         #Append data
-        in_between_all=np.append(in_between_all,in_between)
+        in_between_all=pd.concat([in_between_all,pd.DataFrame(data={'SAR': in_between, 'sector': pd.Series(['InBetween']*len(in_between)), 'box_nb':pd.Series([indiv_box]*len(in_between)),'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(in_between))})])
     except FileNotFoundError:
         print('No in_between')
         
     #open within
     try:
         within = np.asarray(pd.read_csv(path_data+'SAR_sectors/within/SAR_within_box_'+str(indiv_box)+'_2019.txt', header=None))
+        within.shape=len(within),#format shape for pd dataframe creation
         #Append data
-        within_all=np.append(within_all,within)
+        within_all=pd.concat([within_all,pd.DataFrame(data={'SAR': within, 'sector': pd.Series(['Within']*len(within)), 'box_nb':pd.Series([indiv_box]*len(within)),'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(within))})])
     except FileNotFoundError:
         print('No within')
     
     #open below
     try:
         below = np.asarray(pd.read_csv(path_data+'SAR_sectors/below/SAR_below_box_'+str(indiv_box)+'_2019.txt', header=None))
+        below.shape=len(below),#format shape for pd dataframe creation
         #Append data
-        below_all=np.append(below_all,below)
+        below_all=pd.concat([below_all,pd.DataFrame(data={'SAR': below, 'sector': pd.Series(['Below']*len(below)), 'box_nb':pd.Series([indiv_box]*len(below)),'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(below))})])
     except FileNotFoundError:
         print('No below')
 
 #Display figure distribution
 fig, (ax_distrib) = plt.subplots()      
-ax_distrib.hist(below_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
-#ax_distrib.hist(in_between_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='yellow',label='In Between')
-#ax_distrib.hist(within_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='red',label='Within')
-ax_distrib.hist(above_all,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
+ax_distrib.hist(below_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
+#ax_distrib.hist(in_between_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='yellow',label='In Between')
+#ax_distrib.hist(within_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='red',label='Within')
+ax_distrib.hist(above_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
 ax_distrib.set_xlim(-20,-2)
 ax_distrib.set_xlabel('Signal strength [dB]')
 ax_distrib.set_ylabel('Density')
 ax_distrib.legend()
 ax_distrib.set_title('GrIS-wide')
 
+
+#Display figure distribution in different regions
+fig, (ax_distrib_SW,ax_distrib_CW,ax_distrib_NW,ax_distrib_NO,ax_distrib_NE) = plt.subplots(5,1)  
+
+hist_regions(below_all,above_all,'SW',ax_distrib_SW)
+hist_regions(below_all,above_all,'CW',ax_distrib_CW)
+hist_regions(below_all,above_all,'NW',ax_distrib_NW)
+hist_regions(below_all,above_all,'NO',ax_distrib_NO)
+hist_regions(below_all,above_all,'NE',ax_distrib_NE)
+ax_distrib_SW.legend()
+fig.suptitle('Regional separation')
+
+
 #Display boxplot
-df_below_all=pd.DataFrame(below_all,columns=['signal'])
-df_below_all['cat']=['below']*len(df_below_all)
-'''
-df_in_between_all=pd.DataFrame(in_between_all,columns=['signal'])
-df_in_between_all['cat']=['in_between']*len(in_between_all)
-
-df_within_all=pd.DataFrame(within_all,columns=['signal'])
-df_within_all['cat']=['within']*len(df_within_all)
-'''
-df_above_all=pd.DataFrame(above_all,columns=['signal'])
-df_above_all['cat']=['above']*len(df_above_all)
-SAR_boxplot_GrIS=pd.concat([df_below_all,df_above_all])
-
+SAR_boxplot_GrIS=pd.concat([below_all,above_all])
 #Display
+#GrIS-wide
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_SAR = plt.subplot(gs[0:10, 0:6])
-sns.boxplot(data=SAR_boxplot_GrIS, x="cat", y="signal",ax=ax_SAR)#, kde=True)
-ax_SAR.set_ylabel('Signal strength [dB]')
-ax_SAR.set_xlabel('Category')
+sns.boxplot(data=SAR_boxplot_GrIS, y="sector", x="SAR",ax=ax_SAR)#, kde=True)
+ax_SAR.set_xlabel('Signal strength [dB]')
+ax_SAR.set_ylabel('Category')
+ax_SAR.set_title('GrIS-wide')
+
+#Regions
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_SAR = plt.subplot(gs[0:10, 0:6])
+sns.boxplot(data=SAR_boxplot_GrIS, y="region", x="SAR",hue="sector",ax=ax_SAR)#, kde=True)
+ax_SAR.set_xlabel('Signal strength [dB]')
+ax_SAR.set_ylabel('Category')
 ax_SAR.set_title('GrIS-wide')
 ############################# Sectors - 2019 MVRL #############################
+pdb.set_trace()
 
 ###############################################################################
 ###                                   SAR                                   ###
