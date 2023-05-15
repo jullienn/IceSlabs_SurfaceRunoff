@@ -106,6 +106,48 @@ def hist_regions(df_to_plot_below,df_to_plot_above,region_to_plot,ax_region):
     return
 
 
+
+def display_2d_histogram(df_to_display,sector_of_interest,FS_display):
+    
+    #Select sector of interest
+    if (sector_of_interest=='GrIS'):
+        df_to_display_sector=df_to_display.copy()
+    else:
+        df_to_display_sector=df_to_display[df_to_display.SUBREGION1==sector_of_interest].copy()
+    
+    #Display 2D histogram
+    fig_heatmap = plt.figure()
+    fig_heatmap.set_size_inches(14, 5) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    gs = gridspec.GridSpec(5, 10)
+    gs.update(wspace=3)
+    gs.update(hspace=3)
+    ax_hist2d = plt.subplot(gs[0:5, 0:5])
+    ax_hist2d_log = plt.subplot(gs[0:5, 5:10])
+
+    hist2d_cbar = ax_hist2d.hist2d(df_to_display_sector['radar_signal'],df_to_display_sector['20m_ice_content_m_gauche'],bins=30,cmap='magma_r')
+    hist2d_log_cbar = ax_hist2d_log.hist2d(df_to_display_sector['radar_signal'],df_to_display_sector['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
+        
+    #ax_hist2d.set_xlim(-18,1)
+    ax_hist2d_log.set_xlabel('SAR [dB]')
+    ax_hist2d_log.set_ylabel('Ice content [m]')
+    fig_heatmap.suptitle(['Occurrence map - '+sector_of_interest])
+
+    ax_hist2d.set_ylim(0,16)
+    ax_hist2d_log.set_ylim(0,16)
+    ax_hist2d.set_xlim(-15,-2)
+    ax_hist2d_log.set_xlim(-15,-2)
+
+    #Display colorbars    
+    fig_heatmap.colorbar(hist2d_cbar[3], ax=ax_hist2d,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+    fig_heatmap.colorbar(hist2d_log_cbar[3], ax=ax_hist2d_log,label='log(Occurence)')
+        
+    if (sector_of_interest in list(['GrIS','SW'])):
+        ax_hist2d.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='blue')
+        ax_hist2d_log.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='blue')
+
+    return
+
+
 import pandas as pd
 import numpy as np
 import pdb
@@ -149,6 +191,11 @@ my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'Below': "green"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
+path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
+
+#Load IMBIE drainage bassins
+path_rignotetal2016_GrIS_drainage_bassins=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
+GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
 ###############################################################################
 ###         Load Ice Slabs Thickness data in the different sectors          ###
@@ -343,6 +390,9 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
+pdb.set_trace()
+
+
 ###############################################################################
 ###                                   SAR                                   ###
 ###############################################################################
@@ -352,6 +402,10 @@ above_all=pd.DataFrame()
 within_all=pd.DataFrame()
 below_all=pd.DataFrame()
 in_between_all=pd.DataFrame()
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+### DO INTERSECTION WITH DRAINAGE BASSINS!! To do that, save coordinates while extracting SAR data
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 
 #Create dataframe to associate each box with its region
 box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,32),'region': np.nan})
@@ -397,6 +451,11 @@ for indiv_box in range(4,32):
         below_all=pd.concat([below_all,pd.DataFrame(data={'SAR': below, 'sector': pd.Series(['Below']*len(below)), 'box_nb':pd.Series([indiv_box]*len(below)),'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(below))})])
     except FileNotFoundError:
         print('No below')
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+### DO INTERSECTION WITH DRAINAGE BASSINS!! To do that, save coordinates while extracting SAR data
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+
 
 #Display figure distribution
 fig, (ax_distrib) = plt.subplots()      
@@ -449,7 +508,7 @@ ax_SAR.set_title('GrIS-wide')
 ###                                   SAR                                   ###
 ###############################################################################
 
-pdb.set_trace()
+
 
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
@@ -471,6 +530,7 @@ upsampled_SAR_and_IceSlabs_below=pd.DataFrame()
 #Loop over all the files
 for indiv_file in list_composite:
     print(indiv_file)
+    
     #Open the individual file
     indiv_csv=pd.read_csv(path_SAR_And_IceThickness+indiv_file)
     
@@ -524,11 +584,9 @@ for indiv_file in list_composite:
         upsampled_SAR_and_IceSlabs_below=pd.concat([upsampled_SAR_and_IceSlabs_below,indiv_upsampled_SAR_and_IceSlabs_below])
     plt.close()
     ### SECTORS ###
-
 ########### Load ice slabs with SAR dataset and identify the sector ###########
 
 ################### Relationship using data in sectors only ###################
-
 #Prepare plot
 fig = plt.figure()
 fig.set_size_inches(14, 8) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -545,31 +603,32 @@ ax_scatter.scatter(upsampled_SAR_and_IceSlabs_above.radar_signal,upsampled_SAR_a
 #Append data to each other
 upsampled_SAR_and_IceSlabs_allsectors=pd.concat([upsampled_SAR_and_IceSlabs_above,upsampled_SAR_and_IceSlabs_in_between,upsampled_SAR_and_IceSlabs_within,upsampled_SAR_and_IceSlabs_below])
 
-#Display 2D histogram
-fig_heatmap = plt.figure()
-fig_heatmap.set_size_inches(14, 5) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-gs = gridspec.GridSpec(5, 10)
-gs.update(wspace=3)
-gs.update(hspace=3)
-ax_hist2d = plt.subplot(gs[0:5, 0:5])
-ax_hist2d_log = plt.subplot(gs[0:5, 5:10])
+#Get rid of NaNs
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN=upsampled_SAR_and_IceSlabs_allsectors[~upsampled_SAR_and_IceSlabs_allsectors.radar_signal.isna()].copy()
 
-hist2d_cbar = ax_hist2d.hist2d(upsampled_SAR_and_IceSlabs_allsectors['radar_signal'],upsampled_SAR_and_IceSlabs_allsectors['20m_ice_content_m_gauche'],bins=30,cmap='magma_r')
-hist2d_log_cbar = ax_hist2d_log.hist2d(upsampled_SAR_and_IceSlabs_allsectors['radar_signal'],upsampled_SAR_and_IceSlabs_allsectors['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
+#Transform upsampled_SAR_and_IceSlabs_allsectors_NoNaN as a geopandas dataframe
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp = gpd.GeoDataFrame(upsampled_SAR_and_IceSlabs_allsectors_NoNaN,
+                                                                   geometry=gpd.GeoSeries.from_xy(upsampled_SAR_and_IceSlabs_allsectors_NoNaN['lon_3413_gauche'],
+                                                                                                  upsampled_SAR_and_IceSlabs_allsectors_NoNaN['lat_3413_gauche'],
+                                                                                                  crs='EPSG:3413'))
 
-#ax_hist2d.set_xlim(-18,1)
-ax_hist2d_log.set_xlabel('SAR [dB]')
-ax_hist2d_log.set_ylabel('Ice content [m]')
-fig_heatmap.suptitle('Occurrence map - only data from sectors')
+#Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions = gpd.sjoin(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp, GrIS_drainage_bassins, predicate='within')
 
-ax_hist2d.set_ylim(0,16)
-ax_hist2d_log.set_ylim(0,16)
-ax_hist2d.set_xlim(-15,-2)
-ax_hist2d_log.set_xlim(-15,-2)
+#Display ice thickness and SAR at FS
+FS_pd=pd.DataFrame(data={'Station': ['FS2', 'FS4', 'FS5'], '10m_ice_content_%': [95.06, 56.50, 38.44], 'SAR': [-10.44, -7.20, -6.09]})
 
-#Display colorbars    
-fig_heatmap.colorbar(hist2d_cbar[3], ax=ax_hist2d,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-fig_heatmap.colorbar(hist2d_log_cbar[3], ax=ax_hist2d_log,label='log(Occurence)')
+#Display histograms
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'GrIS',FS_pd)
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'SW',FS_pd)
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'CW',FS_pd)
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NW',FS_pd)
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NO',FS_pd)
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NE',FS_pd)
+
+#Conclusion: I think this is hard to derive a relationship between SAR and ice thickness
+
+
 ################### Relationship using data in sectors only ###################
 
 

@@ -138,14 +138,22 @@ def SAR_to_vector(SAR_matrix,axplot_SAR):
     extent_SAR_matrix = [np.min(np.asarray(SAR_matrix.x)), np.max(np.asarray(SAR_matrix.x)),
                           np.min(np.asarray(SAR_matrix.y)), np.max(np.asarray(SAR_matrix.y))]#[west limit, east limit., south limit, north limit]
     axplot_SAR.imshow(SAR_matrix, extent=extent_SAR_matrix, transform=crs, origin='upper', cmap='gray',zorder=2,vmin=-20,vmax=0)
-
+    
     #Convert SAR_clipped to a numpy matrix
     SAR_np=SAR_matrix.to_numpy()
     #Drop NaNs
     SAR_np=SAR_np[~np.isnan(SAR_np)]
     
-    return SAR_np
-
+    #Identify index of non NaN cells
+    index_x_y_noNaN=np.where(~np.isnan(SAR_matrix.data))
+    #Extract x and y coord where SAR not NaN
+    xcoord_SAR=SAR_matrix.x[index_x_y_noNaN[1]].to_numpy()
+    ycoord_SAR=SAR_matrix.y[index_x_y_noNaN[0]].to_numpy()
+    
+    #Make it a pandas df storing x, y and SAR data
+    pd_return=pd.DataFrame(data={'x_coord_SAR': xcoord_SAR, 'y_coord_SAR': ycoord_SAR, 'SAR': SAR_np})
+    
+    return pd_return
 
 
 def SAR_raster_to_polygon(SAR_to_vectorize):
@@ -172,15 +180,6 @@ def save_slabs_as_csv(path_save_IceSlabs,df_to_save,sector,box_number,processed_
                       columns=['Track_name', 'Tracenumber', 'lat', 'lon', 'alongtrack_distance_m',
                              '20m_ice_content_m', 'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                              'elevation', 'year', 'geometry', 'index_right_polygon', 'FID', 'rev_subs', 'index_right'])
-    return
-
-def save_SAR_data(SAR_input,index_input,sector,path_save):
-    if (len(SAR_input)>1):
-        #from https://www.pythontutorial.net/python-basics/python-write-text-file/
-        with open(path_save+sector+'/SAR_'+sector+'_box_'+str(index_input)+'_2019.txt', 'w') as f_below:
-            for SAR_input_line in SAR_input:
-                f_below.write(str(SAR_input_line))
-                f_below.write('\n')
     return
 
 
@@ -226,7 +225,7 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
     ########################## Extract SAR data ##########################
     #Extract and store SAR from below to above
     indiv_SAR_below_above_DF=extraction_SAR(below_above_gpd,SAR_SW_00_00_func,SAR_NW_00_00_func,SAR_N_00_00_func,SAR_N_00_23_func,indiv_polygon_func)
-    
+        
     if (len(indiv_SAR_below_above_DF)==1):
         print('No intersection with SAR data, continue')
     else:
@@ -235,6 +234,7 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
             indiv_SAR_above_DF = indiv_SAR_below_above_DF.rio.clip(above_polygon.geometry.values, above_polygon.crs, drop=True, invert=False)
             #Convert SAR data into a vector, and display SAR sector
             indiv_SAR_above=SAR_to_vector(indiv_SAR_above_DF,ax_SAR)
+            
             if (len(indiv_SAR_above)>1):
                 #there is data, continue performing tasks
                 indiv_SAR_above_return=indiv_SAR_above
@@ -248,6 +248,7 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
             indiv_SAR_inbetween_DF = indiv_SAR_below_above_DF.rio.clip(in_between_polygon.geometry.values, in_between_polygon.crs, drop=True, invert=False)
             #Convert SAR data into a vector, and display SAR sector
             indiv_SAR_inbetween=SAR_to_vector(indiv_SAR_inbetween_DF,ax_SAR)
+            
             if (len(indiv_SAR_inbetween)>1):
                 #there is data, continue performing tasks
                 indiv_SAR_inbetween_return=indiv_SAR_inbetween
@@ -261,6 +262,7 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
             indiv_SAR_within_DF = indiv_SAR_below_above_DF.rio.clip(within_polygon.geometry.values, within_polygon.crs, drop=True, invert=False)
             #Convert SAR data into a vector, and display SAR sector
             indiv_SAR_within=SAR_to_vector(indiv_SAR_within_DF,ax_SAR)
+            
             if (len(indiv_SAR_within)>1):
                 #there is data, continue performing tasks
                 indiv_SAR_within_return=indiv_SAR_within
@@ -274,6 +276,7 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
             indiv_SAR_below_DF = indiv_SAR_below_above_DF.rio.clip(below_polygon.geometry.values, below_polygon.crs, drop=True, invert=False)
             #Convert SAR data into a vector, and display SAR sector
             indiv_SAR_below=SAR_to_vector(indiv_SAR_below_DF,ax_SAR)
+            
             if (len(indiv_SAR_below)>1):
                 #there is data, continue performing tasks
                 indiv_SAR_below_return=indiv_SAR_below
@@ -430,10 +433,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
+    '''
     if (indiv_index <25):
         continue
-    
+    '''
     print(indiv_index)
     
     #Extract individual polygon
@@ -638,7 +641,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             Intersection_slabs_above_out,Intersection_slabs_InBetween_out,Intersection_slabs_within_out,Intersection_slabs_below_out,indiv_SAR_above_out,indiv_SAR_inbetween_out,indiv_SAR_within_out,indiv_SAR_below_out=perform_processing(Emax_points,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
         
         ########################## Extract SAR data ##########################
-        
+                
         ############# Display ice slabs thickness and SAR signal #############
         #Set limits
         ax_sectors.set_xlim(np.min(Emax_points['x'])-1e4,
@@ -652,8 +655,8 @@ for indiv_index in Boxes_Tedstone2022.FID:
                         np.max(Emax_points['y'])+1e4)
         
         #Display SAR distributions
-        ax_SAR_distrib.hist(indiv_SAR_above_out,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
-        ax_SAR_distrib.hist(indiv_SAR_below_out,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+        ax_SAR_distrib.hist(indiv_SAR_above_out.SAR,color='blue',label='Above',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
+        ax_SAR_distrib.hist(indiv_SAR_below_out.SAR,color='green',label='Below',alpha=0.5,bins=np.arange(-16,1,0.25),density=True)
         
         #Plot ice slabs thickness that are above, within and below Emax polygons
         ax_ice_distrib.hist(Intersection_slabs_below_out['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17,0.5),density=True)
@@ -701,19 +704,19 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ############# Display ice slabs thickness and SAR signal #############
         plt.close()
         
-        ### Export extracted Ice Slabs as csv files, SAR sectors as txt files ###
+        ### Export extracted Ice Slabs and SAR sectors as csv files ###
         # Export the extracted ice slabs in sectors as csv files
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_above_out,'above',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_InBetween_out,'in_between',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_within_out,'within',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_below_out,'below',indiv_index,indiv_year)
         
-        # Export the extracted SAR in sectors as txt files
-        save_SAR_data(indiv_SAR_above_out,indiv_index,'above',path_save_SAR_IceSlabs)
-        save_SAR_data(indiv_SAR_above_out,indiv_index,'in_between',path_save_SAR_IceSlabs)
-        save_SAR_data(indiv_SAR_within_out,indiv_index,'within',path_save_SAR_IceSlabs)
-        save_SAR_data(indiv_SAR_below_out,indiv_index,'below',path_save_SAR_IceSlabs)
-        ### Export extracted Ice Slabs as csv files, SAR sectors as txt files ###
+        # Export the extracted SAR in sectors as csv files
+        indiv_SAR_above_out.to_csv(path_save_SAR_IceSlabs+'above'+'/SAR_'+'above'+'_box_'+str(indiv_index)+'_year_'+str(indiv_year)+'.csv')
+        indiv_SAR_inbetween_out.to_csv(path_save_SAR_IceSlabs+'in_between'+'/SAR_'+'in_between'+'_box_'+str(indiv_index)+'_year_'+str(indiv_year)+'.csv')
+        indiv_SAR_within_out.to_csv(path_save_SAR_IceSlabs+'within'+'/SAR_'+'within'+'_box_'+str(indiv_index)+'_year_'+str(indiv_year)+'.csv')
+        indiv_SAR_below_out.to_csv(path_save_SAR_IceSlabs+'below'+'/SAR_'+'below'+'_box_'+str(indiv_index)+'_year_'+str(indiv_year)+'.csv')
+        ### Export extracted Ice Slabs and SAR sectors as csv files ###
         
         #DEAL WITH PLACES OUTSIDE OF REGIONS OF INTEREST ('Out' CATEGORY!!!!) There should not be Out data
         '''
@@ -725,6 +728,4 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ########### Store ice slabs data to generate a full csv file ##########
         '''
 
-
-pdb.set_trace()
 print('--- End of code ---')
