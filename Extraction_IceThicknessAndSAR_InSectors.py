@@ -688,7 +688,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Line2D([0], [0], color='blue', lw=3, label='Ice slabs above (4-10 km)'),
                            Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
-        fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V2')
+        fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V3')
         
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500,bbox_inches='tight')
@@ -727,40 +727,4 @@ for indiv_index in Boxes_Tedstone2022.FID:
 
 
 pdb.set_trace()
-
-'''
-#Get rid of the 'Out' region
-iceslabs_above_selected_overall=iceslabs_above_selected_overall[iceslabs_above_selected_overall.key_shp!='Out']
-iceslabs_selected_overall=iceslabs_selected_overall[iceslabs_selected_overall.key_shp!='Out']
-iceslabs_inbetween_overall=iceslabs_inbetween_overall[iceslabs_inbetween_overall.key_shp!='Out']
-
-#Save pandas dataframe
-path_to_save='C:/Users/jullienn/switchdrive/Private/research/RT3/data/extracted_slabs/'
-iceslabs_above_selected_overall.to_csv(path_to_save+'iceslabs_masked_above_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
-iceslabs_selected_overall.to_csv(path_to_save+'iceslabs_masked_within_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
-iceslabs_inbetween_overall.to_csv(path_to_save+'iceslabs_masked_inbetween_Emax_'+str(indiv_year)+'_cleanedxytpdV2_2years.csv')
-'''
-
-'''
-
-if (indiv_year in list([2002,2003])):
-    #Display the ice slabs points that are inside this buffer
-    ax_sectors.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
-else:
-    #Store an empty dataframe with the index so that index is displayed in plot even without data 
-    if (len(subset_iceslabs_buffered)==0):
-        #No slab for this particular year at these elevations
-        subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,pd.DataFrame(np.array([[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,indiv_index, np.nan]]),columns=subset_iceslabs_buffered.columns.values)],ignore_index=True)# from https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html and https://www.geeksforgeeks.org/how-to-get-column-names-in-pandas-dataframe/
-        #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
-        print(str(indiv_index)+' has no data')
-        continue
-    
-    #Display the ice slabs points that are inside this buffer
-    ax_sectors.scatter(subset_iceslabs_buffered['lon_3413'],subset_iceslabs_buffered['lat_3413'],color='green',s=10)
-    
-    #Store subset_iceslabs_buffered 
-    subset_iceslabs_buffered_summary=pd.concat([subset_iceslabs_buffered_summary,subset_iceslabs_buffered],ignore_index=True)
-    #From https://stackoverflow.com/questions/27236275/what-does-valueerror-cannot-reindex-from-a-duplicate-axis-mean and https://stackoverflow.com/questions/32801806/pandas-concat-ignore-index-doesnt-work
-
-plt.show()
-'''
+print('--- End of code ---')

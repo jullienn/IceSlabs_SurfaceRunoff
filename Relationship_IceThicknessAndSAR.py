@@ -143,7 +143,7 @@ crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
 
-#Define palette for time , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
+#Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
 my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'Below': "green"}
 
@@ -159,7 +159,7 @@ IceThickness_in_between=pd.DataFrame()
 IceThickness_within=pd.DataFrame()
 IceThickness_below=pd.DataFrame()
 
-for indiv_box in range(0,40):
+for indiv_box in range(4,32):
     print(indiv_box)
     #open above
     try:
@@ -343,7 +343,6 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
-
 ###############################################################################
 ###                                   SAR                                   ###
 ###############################################################################
@@ -355,14 +354,14 @@ below_all=pd.DataFrame()
 in_between_all=pd.DataFrame()
 
 #Create dataframe to associate each box with its region
-box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,40+1),'region': np.nan})
+box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,32),'region': np.nan})
 box_and_region['region'].iloc[0:9]='SW'
 box_and_region['region'].iloc[9:14]='CW'
 box_and_region['region'].iloc[14:21]='NW'
 box_and_region['region'].iloc[21:28]='NO'
 box_and_region['region'].iloc[28:40]='NE'
 
-for indiv_box in range(1,40):
+for indiv_box in range(4,32):
     #open above
     try:
         above = np.asarray(pd.read_csv(path_data+'SAR_sectors/above/SAR_above_box_'+str(indiv_box)+'_2019.txt', header=None))
@@ -445,11 +444,12 @@ ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Category')
 ax_SAR.set_title('GrIS-wide')
 ############################# Sectors - 2019 MVRL #############################
-pdb.set_trace()
 
 ###############################################################################
 ###                                   SAR                                   ###
 ###############################################################################
+
+pdb.set_trace()
 
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
@@ -522,7 +522,6 @@ for indiv_file in list_composite:
         
     if (len(indiv_upsampled_SAR_and_IceSlabs_below)>0):
         upsampled_SAR_and_IceSlabs_below=pd.concat([upsampled_SAR_and_IceSlabs_below,indiv_upsampled_SAR_and_IceSlabs_below])
-    
     plt.close()
     ### SECTORS ###
 
