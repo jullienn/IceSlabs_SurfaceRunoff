@@ -95,9 +95,9 @@ def sector_association(indiv_df_SAR_IceThickness,indiv_df_sectors,sector):
     return indiv_upsampled_SAR_and_IceSlabs_sector
 
 
-def hist_regions(df_to_plot_below,df_to_plot_above,region_to_plot,ax_region):
-    ax_region.hist(df_to_plot_below[df_to_plot_below.region==region_to_plot]['SAR'],density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
-    ax_region.hist(df_to_plot_above[df_to_plot_above.region==region_to_plot]['SAR'],density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
+def hist_regions(df_to_plot,region_to_plot,ax_region):
+    ax_region.hist(df_to_plot[df_to_plot.sector=='Below']['SAR'],density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
+    ax_region.hist(df_to_plot[df_to_plot.sector=='Above']['SAR'],density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
     ax_region.set_xlim(-20,-2)
     ax_region.set_xlabel('Signal strength [dB]')
     ax_region.set_ylabel('Density')
@@ -392,104 +392,162 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 
 pdb.set_trace()
 
-
 ###############################################################################
 ###                                   SAR                                   ###
 ###############################################################################
 
 ############################# Sectors - 2019 MVRL #############################
+
+#Create dataframe to associate each box with its region
+box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,32),'region': np.nan})
+box_and_region['region'].iloc[0:9]='SW'
+box_and_region['region'].iloc[9]='shared'
+box_and_region['region'].iloc[10:14]='CW'
+box_and_region['region'].iloc[14]='shared'
+box_and_region['region'].iloc[15:21]='NW'
+box_and_region['region'].iloc[21]='shared'
+box_and_region['region'].iloc[22:28]='NO'
+box_and_region['region'].iloc[28]='shared'
+box_and_region['region'].iloc[29:32]='NE'
+
 above_all=pd.DataFrame()
 within_all=pd.DataFrame()
 below_all=pd.DataFrame()
 in_between_all=pd.DataFrame()
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-### DO INTERSECTION WITH DRAINAGE BASSINS!! To do that, save coordinates while extracting SAR data
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-
-#Create dataframe to associate each box with its region
-box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,32),'region': np.nan})
-box_and_region['region'].iloc[0:9]='SW'
-box_and_region['region'].iloc[9:14]='CW'
-box_and_region['region'].iloc[14:21]='NW'
-box_and_region['region'].iloc[21:28]='NO'
-box_and_region['region'].iloc[28:40]='NE'
-
+#Load SAR csv files
 for indiv_box in range(4,32):
     #open above
     try:
-        above = np.asarray(pd.read_csv(path_data+'SAR_sectors/above/SAR_above_box_'+str(indiv_box)+'_2019.txt', header=None))
-        above.shape=len(above),#format shape for pd dataframe creation
+        above = pd.read_csv(path_data+'SAR_sectors/above/SAR_above_box_'+str(indiv_box)+'_year_2019.csv')
+        #drop index column
+        above=above.drop(columns=["Unnamed: 0"])
+        above['sector']=pd.Series(['Above']*len(above))
+        above['box_nb']=pd.Series([indiv_box]*len(above))
+        above['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(above))
         #Append data
-        above_all=pd.concat([above_all,pd.DataFrame(data={'SAR': above, 'sector': pd.Series(['Above']*len(above)), 'box_nb':pd.Series([indiv_box]*len(above)), 'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(above))})])
+        above_all=pd.concat([above_all,above])
     except FileNotFoundError:
         print('No above')
     
     #open in_between
     try:
-        in_between = np.asarray(pd.read_csv(path_data+'SAR_sectors/in_between/SAR_in_between_box_'+str(indiv_box)+'_2019.txt', header=None))
-        in_between.shape=len(in_between),#format shape for pd dataframe creation
+        in_between = pd.read_csv(path_data+'SAR_sectors/in_between/SAR_in_between_box_'+str(indiv_box)+'_year_2019.csv')
+        #drop index column
+        in_between=in_between.drop(columns=["Unnamed: 0"])
+        in_between['sector']=pd.Series(['InBetween']*len(in_between))
+        in_between['box_nb']=pd.Series([indiv_box]*len(in_between))
+        in_between['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(in_between))
         #Append data
-        in_between_all=pd.concat([in_between_all,pd.DataFrame(data={'SAR': in_between, 'sector': pd.Series(['InBetween']*len(in_between)), 'box_nb':pd.Series([indiv_box]*len(in_between)),'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(in_between))})])
+        in_between_all=pd.concat([in_between_all,in_between])
     except FileNotFoundError:
         print('No in_between')
         
     #open within
     try:
-        within = np.asarray(pd.read_csv(path_data+'SAR_sectors/within/SAR_within_box_'+str(indiv_box)+'_2019.txt', header=None))
-        within.shape=len(within),#format shape for pd dataframe creation
+        within = pd.read_csv(path_data+'SAR_sectors/within/SAR_within_box_'+str(indiv_box)+'_year_2019.csv')
+        #drop index column
+        within=within.drop(columns=["Unnamed: 0"])
+        within['sector']=pd.Series(['Within']*len(within))
+        within['box_nb']=pd.Series([indiv_box]*len(within))
+        within['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(within))
         #Append data
-        within_all=pd.concat([within_all,pd.DataFrame(data={'SAR': within, 'sector': pd.Series(['Within']*len(within)), 'box_nb':pd.Series([indiv_box]*len(within)),'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(within))})])
+        within_all=pd.concat([within_all,within])
     except FileNotFoundError:
         print('No within')
     
     #open below
     try:
-        below = np.asarray(pd.read_csv(path_data+'SAR_sectors/below/SAR_below_box_'+str(indiv_box)+'_2019.txt', header=None))
-        below.shape=len(below),#format shape for pd dataframe creation
+        below = pd.read_csv(path_data+'SAR_sectors/below/SAR_below_box_'+str(indiv_box)+'_year_2019.csv')
+        #drop index column
+        below=below.drop(columns=["Unnamed: 0"])
+        below['sector']=pd.Series(['Below']*len(below))
+        below['box_nb']=pd.Series([indiv_box]*len(below))
+        below['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(below))
         #Append data
-        below_all=pd.concat([below_all,pd.DataFrame(data={'SAR': below, 'sector': pd.Series(['Below']*len(below)), 'box_nb':pd.Series([indiv_box]*len(below)),'region':pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(below))})])
+        below_all=pd.concat([below_all,below])
     except FileNotFoundError:
         print('No below')
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-### DO INTERSECTION WITH DRAINAGE BASSINS!! To do that, save coordinates while extracting SAR data
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+### For boxes which share different regions, perform intersection with GrIS drainage bassins ###
+#Reunite all the sectors into one single dataframe
+SAR_all_sectors=pd.concat([above_all,in_between_all,within_all,below_all])
+#Reset index to have a single index per data point
+SAR_all_sectors=SAR_all_sectors.reset_index(drop=True)
+#Identify index which have the 'shared' region
+index_shared=SAR_all_sectors[SAR_all_sectors.region=='shared'].index
+#Select data in boxes sharing 2 regions
+SAR_all_sectors_shared=SAR_all_sectors.loc[index_shared].copy()
+#Transform SAR_all_sectors_shared into a geopandas dataframe
+SAR_all_sectors_shared_gdp = gpd.GeoDataFrame(SAR_all_sectors_shared,
+                                              geometry=gpd.GeoSeries.from_xy(SAR_all_sectors_shared['x_coord_SAR'],
+                                                                             SAR_all_sectors_shared['y_coord_SAR'],
+                                                                             crs='EPSG:3413'))
+#Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+SAR_all_sectors_shared_gdp_with_regions = gpd.sjoin(SAR_all_sectors_shared_gdp, GrIS_drainage_bassins, predicate='within')
+#Drop index of drainage bassins and the 'region' colum storing 'shared'
+SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.drop(columns=["region","index_right"])
+SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.rename(columns={"SUBREGION1":"region"})
+#fill in the SAR_all_sectors dataframe the identified regions
+SAR_all_sectors.loc[index_shared,'region']=SAR_all_sectors_shared_gdp_with_regions.region
+'''
+#Make sure identifcation went well - yes, it performs perfectly!
+fig = plt.figure()
+gs = gridspec.GridSpec(10, 6)
+ax_region_check = plt.subplot(gs[0:10, 0:6],projection=crs)
 
+GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='SW'].plot(ax=ax_region_check,color='red',alpha=0.2)
+GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='CW'].plot(ax=ax_region_check,color='magenta',alpha=0.2)
+GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NW'].plot(ax=ax_region_check,color='green',alpha=0.2)
+GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NO'].plot(ax=ax_region_check,color='blue',alpha=0.2)
+GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NE'].plot(ax=ax_region_check,color='cyan',alpha=0.2)
+
+ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='SW'].x_coord_SAR,
+                        SAR_all_sectors[SAR_all_sectors.region=='SW'].y_coord_SAR,
+                        color='red') #Perfect!
+ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='CW'].x_coord_SAR,
+                        SAR_all_sectors[SAR_all_sectors.region=='CW'].y_coord_SAR,
+                        color='magenta') #Perfect!
+ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NW'].x_coord_SAR,
+                        SAR_all_sectors[SAR_all_sectors.region=='NW'].y_coord_SAR,
+                        color='green')
+ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NO'].x_coord_SAR,
+                        SAR_all_sectors[SAR_all_sectors.region=='NO'].y_coord_SAR,
+                        color='blue') #Perfect!
+ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NE'].x_coord_SAR,
+                        SAR_all_sectors[SAR_all_sectors.region=='NE'].y_coord_SAR,
+                        color='cyan')   
+'''
+### For boxes which share different regions, perform intersection with GrIS drainage bassins ###
 
 #Display figure distribution
 fig, (ax_distrib) = plt.subplots()      
-ax_distrib.hist(below_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
+ax_distrib.hist(SAR_all_sectors[SAR_all_sectors.sector=='Below'].SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
 #ax_distrib.hist(in_between_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='yellow',label='In Between')
 #ax_distrib.hist(within_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='red',label='Within')
-ax_distrib.hist(above_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
+ax_distrib.hist(SAR_all_sectors[SAR_all_sectors.sector=='Above'].SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
 ax_distrib.set_xlim(-20,-2)
 ax_distrib.set_xlabel('Signal strength [dB]')
 ax_distrib.set_ylabel('Density')
 ax_distrib.legend()
 ax_distrib.set_title('GrIS-wide')
 
-
 #Display figure distribution in different regions
 fig, (ax_distrib_SW,ax_distrib_CW,ax_distrib_NW,ax_distrib_NO,ax_distrib_NE) = plt.subplots(5,1)  
-
-hist_regions(below_all,above_all,'SW',ax_distrib_SW)
-hist_regions(below_all,above_all,'CW',ax_distrib_CW)
-hist_regions(below_all,above_all,'NW',ax_distrib_NW)
-hist_regions(below_all,above_all,'NO',ax_distrib_NO)
-hist_regions(below_all,above_all,'NE',ax_distrib_NE)
+hist_regions(SAR_all_sectors[SAR_all_sectors.region=='SW'],'SW',ax_distrib_SW)
+hist_regions(SAR_all_sectors[SAR_all_sectors.region=='CW'],'CW',ax_distrib_CW)
+hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NW'],'NW',ax_distrib_NW)
+hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NO'],'NO',ax_distrib_NO)
+hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NE'],'NE',ax_distrib_NE)
 ax_distrib_SW.legend()
 fig.suptitle('Regional separation')
 
-
 #Display boxplot
-SAR_boxplot_GrIS=pd.concat([below_all,above_all])
-#Display
 #GrIS-wide
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_SAR = plt.subplot(gs[0:10, 0:6])
-sns.boxplot(data=SAR_boxplot_GrIS, y="sector", x="SAR",ax=ax_SAR)#, kde=True)
+sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))], y="sector", x="SAR",ax=ax_SAR)#, kde=True)
 ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Category')
 ax_SAR.set_title('GrIS-wide')
@@ -498,7 +556,7 @@ ax_SAR.set_title('GrIS-wide')
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_SAR = plt.subplot(gs[0:10, 0:6])
-sns.boxplot(data=SAR_boxplot_GrIS, y="region", x="SAR",hue="sector",ax=ax_SAR)#, kde=True)
+sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))], y="region", x="SAR",hue="sector",ax=ax_SAR)#, kde=True)
 ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Category')
 ax_SAR.set_title('GrIS-wide')
@@ -508,7 +566,24 @@ ax_SAR.set_title('GrIS-wide')
 ###                                   SAR                                   ###
 ###############################################################################
 
+pdb.set_trace()
 
+
+### ABOVE
+## --- quantiles 0.25, 0.5, 0.75
+#SW=-8.100298;-7.345824-6.67245
+#CW=-6.198427;-5.79103;-5.45288
+#NW=-7.914589;-6.623534;-5.72343
+#NO=-6.453673;-5.319692;-4.507481
+#NE=-5.779304;-5.08063;-4.402721
+
+### BELOW
+## --- quantiles 0.25, 0.5, 0.75
+#SW=-10.201291;-9.623054;-9.077484
+#CW=-10.353483;-8.994008;-7.742007
+#NW=-11.245815;-10.080444;-8.926942
+#NO=-10.186774;-8.533312;-7.128138
+#NE-8.31114;-7.101851;-6.259047
 
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###

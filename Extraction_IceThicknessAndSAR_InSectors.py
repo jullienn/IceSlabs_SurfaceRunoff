@@ -239,9 +239,9 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
                 #there is data, continue performing tasks
                 indiv_SAR_above_return=indiv_SAR_above
             else:
-                indiv_SAR_above_return=np.array([-999])
+                indiv_SAR_above_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
         except rxr.exceptions.NoDataInBounds:
-            indiv_SAR_above_return=np.array([-999])
+            indiv_SAR_above_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
             print('No SAR above')
         
         try:
@@ -253,9 +253,9 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
                 #there is data, continue performing tasks
                 indiv_SAR_inbetween_return=indiv_SAR_inbetween
             else:
-                indiv_SAR_inbetween_return=np.array([-999])
+                indiv_SAR_inbetween_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
         except rxr.exceptions.NoDataInBounds:
-            indiv_SAR_inbetween_return=np.array([-999])
+            indiv_SAR_inbetween_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
             print('No SAR in-between')
 
         try:
@@ -267,9 +267,9 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
                 #there is data, continue performing tasks
                 indiv_SAR_within_return=indiv_SAR_within
             else:
-                indiv_SAR_within_return=np.array([-999])
+                indiv_SAR_within_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
         except rxr.exceptions.NoDataInBounds:
-            indiv_SAR_within_return=np.array([-999])
+            indiv_SAR_within_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
             print('No SAR within')
 
         try:
@@ -281,9 +281,9 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
                 #there is data, continue performing tasks
                 indiv_SAR_below_return=indiv_SAR_below
             else:
-                indiv_SAR_below_return=np.array([-999])
+                indiv_SAR_below_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
         except rxr.exceptions.NoDataInBounds:
-            indiv_SAR_below_return=np.array([-999])
+            indiv_SAR_below_return=pd.DataFrame(data={'x_coord_SAR': [], 'y_coord_SAR': [], 'SAR': []})
             print('No SAR below')
     
     return Intersection_slabs_above,Intersection_slabs_InBetween,Intersection_slabs_within,Intersection_slabs_below,indiv_SAR_above_return,indiv_SAR_inbetween_return,indiv_SAR_within_return,indiv_SAR_below_return
@@ -433,10 +433,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-    '''
+    
     if (indiv_index <25):
         continue
-    '''
+    
     print(indiv_index)
     
     #Extract individual polygon
@@ -632,16 +632,16 @@ for indiv_index in Boxes_Tedstone2022.FID:
             Intersection_slabs_InBetween_out=pd.concat([Intersection_slabs_InBetween_out_sect1,Intersection_slabs_InBetween_out_sect2])
             Intersection_slabs_within_out=pd.concat([Intersection_slabs_within_out_sect1,Intersection_slabs_within_out_sect2])
             Intersection_slabs_below_out=pd.concat([Intersection_slabs_below_out_sect1,Intersection_slabs_below_out_sect2])
-            indiv_SAR_above_out=np.append(indiv_SAR_above_out_sect1,indiv_SAR_above_out_sect2)
-            indiv_SAR_inbetween_out=np.append(indiv_SAR_inbetween_out_sect1,indiv_SAR_inbetween_out_sect2)
-            indiv_SAR_within_out=np.append(indiv_SAR_within_out_sect1,indiv_SAR_within_out_sect2)
-            indiv_SAR_below_out=np.append(indiv_SAR_below_out_sect1,indiv_SAR_below_out_sect2)
+            indiv_SAR_above_out=pd.concat([indiv_SAR_above_out_sect1,indiv_SAR_above_out_sect2])
+            indiv_SAR_inbetween_out=pd.concat([indiv_SAR_inbetween_out_sect1,indiv_SAR_inbetween_out_sect2])
+            indiv_SAR_within_out=pd.concat([indiv_SAR_within_out_sect1,indiv_SAR_within_out_sect2])
+            indiv_SAR_below_out=pd.concat([indiv_SAR_below_out_sect1,indiv_SAR_below_out_sect2])
        
         else:
             Intersection_slabs_above_out,Intersection_slabs_InBetween_out,Intersection_slabs_within_out,Intersection_slabs_below_out,indiv_SAR_above_out,indiv_SAR_inbetween_out,indiv_SAR_within_out,indiv_SAR_below_out=perform_processing(Emax_points,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
         
         ########################## Extract SAR data ##########################
-                
+        
         ############# Display ice slabs thickness and SAR signal #############
         #Set limits
         ax_sectors.set_xlim(np.min(Emax_points['x'])-1e4,
