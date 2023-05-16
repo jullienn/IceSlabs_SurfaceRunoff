@@ -140,6 +140,44 @@ intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-10.186774,-7.128138)
 intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-10.186774,-7.128138)
 intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-8.31114,-6.259047)
 
+
+
+
+
+
+
+
+
+intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.100298)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.100298)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.742007,-6.198427)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-7.742007,-6.198427)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-8.926942,-7.914589)
+intersection_SAR_GrIS_bassin(SAR_N_00_00,NW_rignotetal,ax1,-8.926942,--7.914589)
+intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-7.128138,-6.453673)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.128138,-6.453673)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.259047,-5.779304)
+### ABOVE
+## --- quantiles 0.25, 0.5, 0.75
+#SW=-8.100298;-7.345824-6.67245
+#CW=-6.198427;-5.79103;-5.45288
+#NW=-7.914589;-6.623534;-5.72343
+#NO=-6.453673;-5.319692;-4.507481
+#NE=-5.779304;-5.08063;-4.402721
+
+### BELOW
+## --- quantiles 0.25, 0.5, 0.75
+#SW=-10.201291;-9.623054;-9.077484
+#CW=-10.353483;-8.994008;-7.742007
+#NW=-11.245815;-10.080444;-8.926942
+#NO=-10.186774;-8.533312;-7.128138
+#NE-8.31114;-7.101851;-6.259047
+
+
+
+
+
+
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9bc9a',edgecolor='none')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 

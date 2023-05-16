@@ -107,45 +107,70 @@ def hist_regions(df_to_plot,region_to_plot,ax_region):
 
 
 
-def display_2d_histogram(df_to_display,sector_of_interest,FS_display):
-    
-    #Select sector of interest
-    if (sector_of_interest=='GrIS'):
-        df_to_display_sector=df_to_display.copy()
-    else:
-        df_to_display_sector=df_to_display[df_to_display.SUBREGION1==sector_of_interest].copy()
+def display_2d_histogram(df_to_display,FS_display):
     
     #Display 2D histogram
-    fig_heatmap = plt.figure()
-    fig_heatmap.set_size_inches(14, 5) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    gs = gridspec.GridSpec(5, 10)
-    gs.update(wspace=3)
-    gs.update(hspace=3)
-    ax_hist2d = plt.subplot(gs[0:5, 0:5])
-    ax_hist2d_log = plt.subplot(gs[0:5, 5:10])
+    fig_heatmap, ((ax_SW, ax_CW, ax_NW), (ax_NO, ax_NE, ax_GrIS)) = plt.subplots(2, 3)
+    fig_heatmap.set_size_inches(14, 7) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
-    hist2d_cbar = ax_hist2d.hist2d(df_to_display_sector['radar_signal'],df_to_display_sector['20m_ice_content_m_gauche'],bins=30,cmap='magma_r')
-    hist2d_log_cbar = ax_hist2d_log.hist2d(df_to_display_sector['radar_signal'],df_to_display_sector['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',norm=mpl.colors.LogNorm())
-        
-    #ax_hist2d.set_xlim(-18,1)
-    ax_hist2d_log.set_xlabel('SAR [dB]')
-    ax_hist2d_log.set_ylabel('Ice content [m]')
-    fig_heatmap.suptitle(['Occurrence map - '+sector_of_interest])
 
-    ax_hist2d.set_ylim(0,16)
-    ax_hist2d_log.set_ylim(0,16)
-    ax_hist2d.set_xlim(-15,-2)
-    ax_hist2d_log.set_xlim(-15,-2)
+    cbar_SW=ax_SW.hist2d(df_to_display[df_to_display.SUBREGION1=='SW']['radar_signal'],
+                         df_to_display[df_to_display.SUBREGION1=='SW']['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',cmin=1)
+    ax_SW.set_ylim(0,16)
+    ax_SW.set_xlim(-16,-3.5)
+    ax_SW.set_title('SW')
+    fig_heatmap.colorbar(cbar_SW[3], ax=ax_SW,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
-    #Display colorbars    
-    fig_heatmap.colorbar(hist2d_cbar[3], ax=ax_hist2d,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-    fig_heatmap.colorbar(hist2d_log_cbar[3], ax=ax_hist2d_log,label='log(Occurence)')
-        
-    if (sector_of_interest in list(['GrIS','SW'])):
-        ax_hist2d.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='blue')
-        ax_hist2d_log.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='blue')
+    
+    cbar_CW=ax_CW.hist2d(df_to_display[df_to_display.SUBREGION1=='CW']['radar_signal'],
+                         df_to_display[df_to_display.SUBREGION1=='CW']['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',cmin=1)
+    ax_CW.set_ylim(0,16)
+    ax_CW.set_xlim(-16,-3.5)
+    ax_CW.set_title('CW')
+    fig_heatmap.colorbar(cbar_CW[3], ax=ax_CW,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
+
+    cbar_NW=ax_NW.hist2d(df_to_display[df_to_display.SUBREGION1=='NW']['radar_signal'],
+                         df_to_display[df_to_display.SUBREGION1=='NW']['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',cmin=1)
+    ax_NW.set_ylim(0,16)
+    ax_NW.set_xlim(-16,-3.5)
+    ax_NW.set_title('NW')
+    fig_heatmap.colorbar(cbar_NW[3], ax=ax_NW,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+
+
+    cbar_NO=ax_NO.hist2d(df_to_display[df_to_display.SUBREGION1=='NO']['radar_signal'],
+                         df_to_display[df_to_display.SUBREGION1=='NO']['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',cmin=1)
+    ax_NO.set_ylim(0,16)
+    ax_NO.set_xlim(-16,-3.5)
+    ax_NO.set_title('NO')
+    fig_heatmap.colorbar(cbar_NO[3], ax=ax_NO,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+
+
+    cbar_NE=ax_NE.hist2d(df_to_display[df_to_display.SUBREGION1=='NE']['radar_signal'],
+                         df_to_display[df_to_display.SUBREGION1=='NE']['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',cmin=1)
+    ax_NE.set_ylim(0,16)
+    ax_NE.set_xlim(-16,-3.5)
+    ax_NE.set_title('NE')
+    fig_heatmap.colorbar(cbar_NE[3], ax=ax_NE,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+
+
+    cbar_GrIS=ax_GrIS.hist2d(df_to_display['radar_signal'],
+                             df_to_display['20m_ice_content_m_gauche'],bins=30,cmap='magma_r',cmin=1)
+    ax_GrIS.set_ylim(0,16)
+    ax_GrIS.set_xlim(-16,-3.5)
+    ax_GrIS.set_title('GrIS')
+    fig_heatmap.colorbar(cbar_GrIS[3], ax=ax_GrIS,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+
+    #Display firn cores ice content and SAR
+    ax_SW.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='blue')
+    
+    #Set labels
+    ax_NO.set_xlabel('SAR [dB]')
+    ax_NO.set_ylabel('Ice thickness [m]')
+    fig_heatmap.suptitle('Occurrence map')
+    
     return
+
 
 
 import pandas as pd
@@ -310,9 +335,22 @@ fig.suptitle('2019 - 2 years running slabs')
 
 '''
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Boxplot_Emax_VS_IceSlabs_Masked_20121619_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV2_with0mslabs.png',dpi=500)
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Emax_VS_Iceslabs/whole_GrIS/Boxplot_Emax_VS_IceSlabs_Masked_2019_Box_Tedstone_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
+
+#Try violin plot
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
+box_plot_regions_GrIS=sns.violinplot(data=IceThickness_all_sectors_region_GrIS, y="20m_ice_content_m", x="key_shp",hue="type",orient="v",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+ax_regions_GrIS.set_xlabel('')
+ax_regions_GrIS.set_ylabel('Ice Thickness [m]')
+ax_regions_GrIS.set_ylim(-0.5,20)
+ax_regions_GrIS.legend(loc='lower right')
+fig.suptitle('2019 - 2 years running slabs')
 ######################## Plot with 0m thick ice slabs #########################
+
+pdb.set:trace()
 
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -390,7 +428,7 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
-pdb.set_trace()
+#pdb.set_trace()
 
 ###############################################################################
 ###                                   SAR                                   ###
@@ -560,6 +598,37 @@ sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above')
 ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Category')
 ax_SAR.set_title('GrIS-wide')
+
+#Violin plot
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_SAR = plt.subplot(gs[0:10, 0:6])
+sns.violinplot(data=pd.DataFrame(SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))].to_dict()),
+               y="region", x="SAR",hue="sector",ax=ax_SAR,palette=my_pal)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+ax_SAR.set_xlabel('Signal strength [dB]')
+ax_SAR.set_ylabel('Region')
+ax_SAR.set_title('GrIS-wide')
+
+
+'''
+from scipy import stats
+df_for_ttest=SAR_all_sectors[SAR_all_sectors.region=='SW'].copy()
+stats.ttest_ind(df_for_ttest[df_for_ttest.sector=='Above'].SAR, df_for_ttest[df_for_ttest.sector=='Below'].SAR, axis=0, equal_var=True, nan_policy='raise')
+'''
+
+#Display above, within and below violin plot!
+df_except_InBetween=SAR_all_sectors.drop(SAR_all_sectors[SAR_all_sectors.sector=='InBetween'].index.to_numpy()).copy()
+
+#Violin plot
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_SAR = plt.subplot(gs[0:10, 0:6])
+sns.violinplot(data=pd.DataFrame(df_except_InBetween.to_dict()),
+               y="region", x="SAR",hue="sector",ax=ax_SAR,palette=my_pal)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+ax_SAR.set_xlabel('Signal strength [dB]')
+ax_SAR.set_ylabel('Region')
+ax_SAR.set_title('GrIS-wide')
+
 ############################# Sectors - 2019 MVRL #############################
 
 ###############################################################################
@@ -694,13 +763,7 @@ upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions = gpd.sjoin(upsampl
 FS_pd=pd.DataFrame(data={'Station': ['FS2', 'FS4', 'FS5'], '10m_ice_content_%': [95.06, 56.50, 38.44], 'SAR': [-10.44, -7.20, -6.09]})
 
 #Display histograms
-display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'GrIS',FS_pd)
-display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'SW',FS_pd)
-display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'CW',FS_pd)
-display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NW',FS_pd)
-display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NO',FS_pd)
-display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NE',FS_pd)
-
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,FS_pd)
 #Conclusion: I think this is hard to derive a relationship between SAR and ice thickness
 
 
