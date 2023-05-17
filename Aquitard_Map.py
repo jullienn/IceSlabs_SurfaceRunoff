@@ -150,7 +150,7 @@ intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-10.186774,-7.128138)
 intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-8.31114,-6.259047)
 
 '''
-#quantile 0.75 of below to quantile 0.25 of within
+#quantile 0.75 of below to quantile 0.75 of within
 intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.653624)
 intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.653624)
 intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745)
@@ -189,7 +189,7 @@ ax1.set_ylim(-3366273, -784280)
 pdb.set_trace()
 
 #Save the figure
-plt.savefig(path_local+'/SAR_and_IceThickness/aquitard_map_2019.png',dpi=500,bbox_inches='tight')
+plt.savefig(path_local+'/SAR_and_IceThickness/aquitard_map_2019_q0.75_below_and_within.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 
