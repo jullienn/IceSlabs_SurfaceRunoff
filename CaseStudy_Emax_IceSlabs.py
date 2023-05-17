@@ -1190,22 +1190,34 @@ for indiv_tick in ticks_through:
     else:
         plot_dist=np.append(plot_dist,dataframe[str(year_ticks)]['distances'][index_min]/1000-dataframe[str(year_ticks)]['distances'][np.argmin(np.abs(dataframe[str(year_ticks)]['lon_appended']-start_transect))]/1000)
 
-#Display color code with year on map
-legend_elements=[]
-legend_elements.append([Line2D([0], [0], color='black', lw=2, label='Radargrams')][0])
-legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label='MVRL retrievals:')][0])
 
-for year in range(2002,2020+1):
-    legend_elements.append(legend_building(my_pal,year)[0])
+if (investigation_year==CaseStudy2):
+    #Display color code with year on map
+    legend_elements=[]
+    legend_elements.append([Line2D([0], [0], color='black', lw=2, label='Radargrams')][0])
+    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label='MVRL retrievals:')][0])
 
-legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
-legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
-legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
-legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+    for year in range(2002,2020+1):
+        legend_elements.append(legend_building(my_pal,year)[0])
 
-#Display legend
-ax_map.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
-plt.show()
+    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+
+    #Display legend
+    ax_map.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
+    #Display panel label
+    ax2.text(0.01, 0.70,'a',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax3.text(0.01, 0.85,'b',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax4.text(0.01, 0.85,'c',ha='center', va='center', transform=ax4.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax5.text(0.01, 0.85,'d',ha='center', va='center', transform=ax5.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax6.text(0.01, 0.85,'e',ha='center', va='center', transform=ax6.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax7.text(0.01, 0.85,'f',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax8.text(0.01, 0.85,'g',ha='center', va='center', transform=ax8.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax9.text(0.01, 0.85,'h',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax_map.text(0.005, 1.05,'i',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    plt.show()
 
 scale_bar(ax_map, (0.9, 0.8), 10, 3,0)# axis, location (x,y), length, linewidth, rotation of text
 #by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
