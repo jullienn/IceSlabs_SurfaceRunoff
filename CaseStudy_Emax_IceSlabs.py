@@ -38,6 +38,15 @@ def compute_distances(eastings,northings):
 
     return return_cumsum_distances
 
+
+
+def legend_building(color_palette,year_color):
+    #Custom legend myself for axmap - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+    list_legend_year = [Line2D([0], [0], color=color_palette[str(year_color)], lw=2, marker='o',linestyle='None', label=str(year_color),markeredgecolor='black')]
+    return list_legend_year
+
+
+
 import pickle
 import scipy.io
 import numpy as np
@@ -60,6 +69,9 @@ import shapely
 
 from descartes import PolygonPatch
 from scalebar import scale_bar
+
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 '''
 #Things to be done
@@ -94,11 +106,19 @@ my_pal = {'2002': '#08519c', '2003': '#4292c6', '2004': '#9ecae1', '2005': '#dee
           '2014': "#e6f5d0", '2015': '#a1d99b', '2016': '#41ab5d', '2017': "#006d2c",
           '2018': "#00441b", '2019': '#01665e', '2020': 'black'}
 '''
+'''
 my_pal = {'2002': '#1b7837', '2003': '#5aae61', '2004': '#a6dba0', '2005': '#d9f0d3',
           '2006': '#e7d4e8', '2007': '#c2a5cf', '2008': '#9970ab', '2009': '#762a83',
           '2010': "#a50026", '2011': "#d73027", '2012': "#f46d43", '2013': "#fdae61",
           '2014': "#fee090", '2015': '#e0f3f8', '2016': '#abd9e9', '2017': "#74add1",
           '2018': "#4575b4", '2019': '#313695', '2020': '#1a1a1a'}
+'''
+my_pal = {'2002': '#980043', '2003': '#dd1c77', '2004': '#df65b0',
+          '2005': '#54278f', '2006': '#756bb1', '2007': '#9e9ac8', '2008': '#cbc9e2', '2009': '#f2f0f7',
+          '2010': "#bd0026", '2011': "#f03b20", '2012': "#fd8d3c", '2013': "#fecc5c", '2014': "#ffffb2",
+          '2015': '#006d2c', '2016': '#31a354', '2017': "#74c476", '2018': "#bae4b3", '2019': '#edf8e9',
+          '2020': '#993404'}
+
 
 from matplotlib.colors import  ListedColormap
 #Create a palette for traffic_light display
@@ -235,7 +255,7 @@ CaseStudyFS={2002:'empty',
             2018:'empty'}
 
 #Define the panel to study
-investigation_year=CaseStudy1
+investigation_year=CaseStudy2
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -244,7 +264,7 @@ ax_map = plt.subplot(projection=crs)
 GrIS_drainage_bassins.plot(ax=ax_map,facecolor='none',edgecolor='black')
 
 fig1 = plt.figure()
-gs = gridspec.GridSpec(28, 101)
+gs = gridspec.GridSpec(32, 101)
 gs.update(wspace=0.1)
 gs.update(wspace=0.5)
 
@@ -721,7 +741,10 @@ for single_year in investigation_year.keys():
     ax_plot.set_xticklabels([])
     
     #Display year
-    ax_plot.text(0.98, 0.875,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=15,color=my_pal[str(single_year)])#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    if (single_year<2004):
+        ax_plot.text(0.98, 0.6,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    else:
+        ax_plot.text(0.98, 0.875,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
@@ -734,7 +757,6 @@ for single_year in investigation_year.keys():
     '''
 
 plt.show()
-pdb.set_trace()
 
 '''
 #For ice layers identification for Fig. 1 in paper Slabs thickening
@@ -982,7 +1004,7 @@ for single_year in range(2002,2021):
 
     #pdb.set_trace()
     #Display the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=50,zorder=200,c=my_pal[str(single_year)])#Display the best Emax points #count+1
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=50,zorder=200,c=my_pal[str(single_year)],edgecolors='black')#Display the best Emax points #count+1
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     
     ### In case yearly map of Emax point are desired to be plotted, comment this ###
@@ -1049,12 +1071,17 @@ elif (investigation_year==CaseStudy2):
     year_ticks=2014
     ax_tick_plot=ax9
     ax_top=ax2
+    '''
     ax_map.set_title('Case study 2')
     ax_top.set_title('Case study 2')
-
+    '''
     ###################### From Tedstone et al., 2022 #####################
     #from plot_map_decadal_change.py
-    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5)
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5,color='black',linestyle='dashed')
+    #Customize lat labels
+    gl.right_labels = False
+    gl.top_labels = False
+    ax_map.axis('off')
     ###################### From Tedstone et al., 2022 #####################
 elif (investigation_year==CaseStudy3):
     ax4.set_ylabel('Depth [m]')
@@ -1163,8 +1190,24 @@ for indiv_tick in ticks_through:
     else:
         plot_dist=np.append(plot_dist,dataframe[str(year_ticks)]['distances'][index_min]/1000-dataframe[str(year_ticks)]['distances'][np.argmin(np.abs(dataframe[str(year_ticks)]['lon_appended']-start_transect))]/1000)
 
+#Display color code with year on map
+legend_elements=[]
+legend_elements.append([Line2D([0], [0], color='black', lw=2, label='Radargrams')][0])
+legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label='MVRL retrievals:')][0])
 
-scale_bar(ax_map, (0.9, 0.4), 10, 3,0)# axis, location (x,y), length, linewidth, rotation of text
+for year in range(2002,2020+1):
+    legend_elements.append(legend_building(my_pal,year)[0])
+
+legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
+
+#Display legend
+ax_map.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
+plt.show()
+
+scale_bar(ax_map, (0.9, 0.8), 10, 3,0)# axis, location (x,y), length, linewidth, rotation of text
 #by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
 
 ax_tick_plot.xaxis.set_ticks_position('bottom') 
@@ -1177,11 +1220,11 @@ figManager.window.showMaximized()
 plt.show()
 
 pdb.set_trace()
-'''
+
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1_NDWI_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS2/v2/CS2_NDWI_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
+
 
 
     
