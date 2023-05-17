@@ -350,7 +350,7 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle('2019 - 2 years running slabs')
 ######################## Plot with 0m thick ice slabs #########################
 
-pdb.set:trace()
+pdb.set_trace()
 
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -654,6 +654,13 @@ pdb.set_trace()
 #NO=-10.186774;-8.533312;-7.128138
 #NE-8.31114;-7.101851;-6.259047
 
+### WITHIN
+## --- quantiles 0.25, 0.5, 0.75
+#SW=-9.739717;-9.198477;-8.653624
+#CW=-9.199174;-8.057186;-7.060745
+#NW=-10.485064;-9.141042;-8.22071
+#NO=-8.973496;-7.322135;-6.249159
+#NE=-7.455909;-6.663285;-5.716195
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
 ###############################################################################

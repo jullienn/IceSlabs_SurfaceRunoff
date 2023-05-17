@@ -21,6 +21,14 @@ Created on Mon May 15 15:58:01 2023
 #NO=-10.186774;-8.533312;-7.128138
 #NE-8.31114;-7.101851;-6.259047
 
+### WITHIN
+## --- quantiles 0.25, 0.5, 0.75
+#SW=-9.739717;-9.198477;-8.653624
+#CW=-9.199174;-8.057186;-7.060745
+#NW=-10.485064;-9.141042;-8.22071
+#NO=-8.973496;-7.322135;-6.249159
+#NE=-7.455909;-6.663285;-5.716195
+
 
 def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display,vmin_bassin,vmax_bassin):
     #Perform clip between SAR with region - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
@@ -129,6 +137,7 @@ ax1 = plt.subplot(projection=crs)
 #Display coastlines
 ax1.coastlines(edgecolor='black',linewidth=0.075)
 
+'''
 #Perform intersection between SAR data and GrIs drainage bassins, and display the aquitard results
 intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-10.201291,-9.077484)
 intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-10.201291,-9.077484)
@@ -141,17 +150,16 @@ intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-10.186774,-7.128138)
 intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-8.31114,-6.259047)
 
 '''
-#quantile 0.75 of below to quantile 0.25 of above
-intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.100298)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.100298)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.742007,-6.198427)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-7.742007,-6.198427)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-8.926942,-7.914589)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NW_rignotetal,ax1,-8.926942,--7.914589)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-7.128138,-6.453673)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.128138,-6.453673)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.259047,-5.779304)
-'''
+#quantile 0.75 of below to quantile 0.25 of within
+intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.653624)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.653624)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-8.926942,-8.22071)
+intersection_SAR_GrIS_bassin(SAR_N_00_00,NW_rignotetal,ax1,-8.926942,-8.22071)
+intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-7.128138,-6.249159)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.128138,-6.249159)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.259047,-5.716195)
 
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9bc9a',edgecolor='none')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
@@ -185,13 +193,7 @@ plt.savefig(path_local+'/SAR_and_IceThickness/aquitard_map_2019.png',dpi=500,bbo
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 
-### BELOW
-## --- quantiles 0.25, 0.5, 0.75
-#SW=-10.201291;-9.623054;-9.077484
-#CW=-10.353483;-8.994008;-7.742007
-#NW=-11.245815;-10.080444;-8.926942
-#NO=-10.186774;-8.533312;-7.128138
-#NE-8.31114;-7.101851;-6.259047
+
 
 
 
