@@ -244,7 +244,7 @@ ax_map = plt.subplot(projection=crs)
 GrIS_drainage_bassins.plot(ax=ax_map,facecolor='none',edgecolor='black')
 
 fig1 = plt.figure()
-gs = gridspec.GridSpec(26, 101)
+gs = gridspec.GridSpec(28, 101)
 gs.update(wspace=0.1)
 gs.update(wspace=0.5)
 
@@ -685,13 +685,14 @@ for single_year in investigation_year.keys():
         cb=ax_plot.pcolor(X, Y, C,cmap=plt.get_cmap('gray'),zorder=-1,vmin=np.percentile(C.flatten(),2.5), vmax=np.percentile(C.flatten(),97.5))
         ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
         
+        '''
         #### ORIGINAL ICE LAYERS IDENTIFICATION ####
         #Display the 2002-2003 green ice lenses identification
         ax_plot.scatter(dataframe[str(single_year)]['lon_transect_4326_lenses'],
                         dataframe[str(single_year)]['depth_transect_lenses'],
                         c=dataframe[str(single_year)]['color_transect_lenses'],
                         cmap=traffic_light_cmap,vmin=-2,vmax=1,s=0.1)#add colour code!!
-        
+        '''
     else:
         cb=ax_plot.pcolor(X, Y, C,cmap=plt.get_cmap('gray'),zorder=-1,vmin=vmin_plot, vmax=vmax_plot)
         ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
