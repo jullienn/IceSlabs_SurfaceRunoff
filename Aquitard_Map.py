@@ -39,12 +39,12 @@ def apply_MinMax_nornalisation(raster_to_rescale,lower_bound,upper_bound):
     index_within_bounds=np.logical_and(raster_to_rescale>=lower_bound,raster_to_rescale<=upper_bound)
     
     #Rescale outside of bounds
-    raster_to_rescale[index_below_lower_bound]=0
-    raster_to_rescale[index_above_upper_bound]=1
+    raster_to_rescale[index_below_lower_bound]=1
+    raster_to_rescale[index_above_upper_bound]=0
     
     #Rescale within bounds
     #x'=(x-min(x))/(max(x)-min(x)) - Min is lower bound, max is upper bound
-    raster_to_rescale[index_within_bounds]=(raster_to_rescale[index_within_bounds]-lower_bound)/(upper_bound-lower_bound)
+    raster_to_rescale[index_within_bounds]=1-(raster_to_rescale[index_within_bounds]-lower_bound)/(upper_bound-lower_bound)
     
     return raster_to_rescale
 
@@ -60,7 +60,7 @@ def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display
     SAR_intersected.data = apply_MinMax_nornalisation(SAR_intersected.data,vmin_bassin,vmax_bassin)
     
     #Display SAR image
-    axis_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues_r',zorder=1)
+    axis_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     return
 
 
@@ -213,7 +213,7 @@ ax1.set_ylim(-3366273, -784280)
 pdb.set_trace()
 
 #Save the figure
-plt.savefig(path_local+'/SAR_and_IceThickness/aquitard_map_2019_q0.75_below_and_within.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_local+'/SAR_and_IceThickness/Logistic_aquitard_map_2019_q0.75_below_and_within.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 
