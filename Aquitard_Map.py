@@ -49,7 +49,7 @@ def apply_MinMax_nornalisation(raster_to_rescale,lower_bound,upper_bound):
     return raster_to_rescale
 
 
-def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display,vmin_bassin,vmax_bassin):
+def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display,vmin_bassin,vmax_bassin,name_save,save_aquitard):
     #Perform clip between SAR with region - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
     SAR_intersected = SAR_to_intersect.rio.clip(individual_bassin.geometry.values, individual_bassin.crs, drop=True, invert=False)
     #Determine extent of SAR_SW_00_00_SW
@@ -61,6 +61,16 @@ def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display
     
     #Display SAR image
     axis_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+    
+    if (save_aquitard=='TRUE'):
+        print('Saving raster',name_save)
+        #Save the resulting aquitard map - this is from https://corteva.github.io/rioxarray/stable/examples/convert_to_raster.html
+        SAR_intersected.rio.to_raster(
+            "C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/aquitard/"+name_save+".tif",
+            tiled=True,  # GDAL: By default striped TIFF files are created. This option can be used to force creation of tiled TIFF files.
+            windowed=True,  # rioxarray: read & write one window at a time
+            )
+    
     return
 
 
@@ -76,6 +86,8 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 import rioxarray as rxr
 
+#If saving aquitard raster is desired
+save_aquitard_true='TRUE'
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -175,15 +187,15 @@ intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-8.31114,-6.259047)
 '''
 
 #quantile 0.75 of below to quantile 0.75 of within
-intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.653624)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.653624)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-8.926942,-8.22071)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NW_rignotetal,ax1,-8.926942,-8.22071)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-7.128138,-6.249159)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.128138,-6.249159)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.259047,-5.716195)
+intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.653624,'aquitard_SW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.653624,'aquitard_SW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745,'aquitard_CW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745,'aquitard_CW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-8.926942,-8.22071,'aquitard_NW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00,NW_rignotetal,ax1,-8.926942,-8.22071,'aquitard_NW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-7.128138,-6.249159,'aquitard_NO_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.128138,-6.249159,'aquitard_NO_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.259047,-5.716195,'aquitard_NE',save_aquitard_true)
 
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9bc9a',edgecolor='none')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
