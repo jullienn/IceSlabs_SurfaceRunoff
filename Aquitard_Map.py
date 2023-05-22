@@ -30,14 +30,37 @@ Created on Mon May 15 15:58:01 2023
 #NE=-7.455909;-6.663285;-5.716195
 
 
+
+def apply_MinMax_nornalisation(raster_to_rescale,lower_bound,upper_bound):
+
+    #Identify indexes
+    index_below_lower_bound=(raster_to_rescale<lower_bound)
+    index_above_upper_bound=(raster_to_rescale>upper_bound)
+    index_within_bounds=np.logical_and(raster_to_rescale>=lower_bound,raster_to_rescale<=upper_bound)
+    
+    #Rescale outside of bounds
+    raster_to_rescale[index_below_lower_bound]=0
+    raster_to_rescale[index_above_upper_bound]=1
+    
+    #Rescale within bounds
+    #x'=(x-min(x))/(max(x)-min(x)) - Min is lower bound, max is upper bound
+    raster_to_rescale[index_within_bounds]=(raster_to_rescale[index_within_bounds]-lower_bound)/(upper_bound-lower_bound)
+    
+    return raster_to_rescale
+
+
 def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display,vmin_bassin,vmax_bassin):
     #Perform clip between SAR with region - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
     SAR_intersected = SAR_to_intersect.rio.clip(individual_bassin.geometry.values, individual_bassin.crs, drop=True, invert=False)
     #Determine extent of SAR_SW_00_00_SW
     extent_SAR_intersected = [np.min(np.asarray(SAR_intersected.x)), np.max(np.asarray(SAR_intersected.x)),
                               np.min(np.asarray(SAR_intersected.y)), np.max(np.asarray(SAR_intersected.y))]#[west limit, east limit., south limit, north limit]
+    
+    #Perform normalisation
+    SAR_intersected.data = apply_MinMax_nornalisation(SAR_intersected.data,vmin_bassin,vmax_bassin)
+    
     #Display SAR image
-    axis_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues_r',zorder=1,vmin=vmin_bassin,vmax=vmax_bassin)
+    axis_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues_r',zorder=1)
     return
 
 
@@ -150,6 +173,7 @@ intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-10.186774,-7.128138)
 intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-8.31114,-6.259047)
 
 '''
+
 #quantile 0.75 of below to quantile 0.75 of within
 intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.653624)
 intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.653624)
