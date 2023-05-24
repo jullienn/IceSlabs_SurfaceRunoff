@@ -114,7 +114,7 @@ from scipy.optimize import curve_fit
 import os.path
 
 generate_data='TRUE' #If true, generate the individual csv files and figures
-fig_display='TRUE' #If TRUE, generate figures
+fig_display='FALSE' #If TRUE, generate figures
 check_oversampling_over='FALSE'
 
 #Define projection
@@ -171,19 +171,6 @@ if (generate_data=='TRUE'):
         if (IceSlabsTransect_name == '20170410_01_086_088'):
             print('No SAR intersections, do not process ',IceSlabsTransect_name)
             continue
-        
-        if (IceSlabsTransect_name == '20170327_04_050_066'):
-            print('Do not process',IceSlabsTransect_name)
-            pdb.set_trace()
-        
-        if (IceSlabsTransect_name == '20170412_01_035_054'):
-            print('Do not process',IceSlabsTransect_name)
-            pdb.set_trace()
-            
-        
-        if (IceSlabsTransect_name == '20170502_01_041_060'):
-            print('Do not process',IceSlabsTransect_name)
-            pdb.set_trace()
         
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
