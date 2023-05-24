@@ -342,10 +342,10 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.violinplot(data=IceThickness_all_sectors_region_GrIS, y="20m_ice_content_m", x="key_shp",hue="type",orient="v",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+box_plot_regions_GrIS=sns.violinplot(data=IceThickness_all_sectors_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
 ax_regions_GrIS.set_xlabel('')
 ax_regions_GrIS.set_ylabel('Ice Thickness [m]')
-ax_regions_GrIS.set_ylim(-0.5,20)
+ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle('2019 - 2 years running slabs')
 ######################## Plot with 0m thick ice slabs #########################
@@ -636,6 +636,9 @@ ax_SAR.set_title('GrIS-wide')
 ###############################################################################
 
 pdb.set_trace()
+
+
+#Coefficient of variation
 
 
 ### ABOVE

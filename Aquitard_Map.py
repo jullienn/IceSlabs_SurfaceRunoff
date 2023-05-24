@@ -87,7 +87,7 @@ import seaborn as sns
 import rioxarray as rxr
 
 #If saving aquitard raster is desired
-save_aquitard_true='TRUE'
+save_aquitard_true='FALSE'
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -230,8 +230,7 @@ plt.savefig(path_local+'/SAR_and_IceThickness/Logistic_aquitard_map_2019_q0.75_b
 
 
 
-
-
+### Create a new code, and perform aquitard extraction as well as raster of cumulative hydrology using ice slabs data! much simpler
 
 
 

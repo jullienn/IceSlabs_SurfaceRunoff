@@ -810,8 +810,8 @@ index_end_map=np.argmin(np.abs(np.abs(dataframe[str(year_limit)]['lon_appended']
 #Define bounds of cumulative raster map to display
 x_min=dataframe[str(year_limit)]['lon_3413'][index_start_map]
 x_max=dataframe[str(year_limit)]['lon_3413'][index_end_map]
-y_min=dataframe[str(year_limit)]['lat_3413'][index_start_map]-5e3
-y_max=dataframe[str(year_limit)]['lat_3413'][index_end_map]+5e3
+y_min=dataframe[str(year_limit)]['lat_3413'][index_start_map]-3e3
+y_max=dataframe[str(year_limit)]['lat_3413'][index_end_map]+3e3
 
 #Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
 #This section of displaying sat data was coding using tips from
