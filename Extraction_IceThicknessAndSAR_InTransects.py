@@ -172,13 +172,18 @@ if (generate_data=='TRUE'):
             print('No SAR intersections, do not process ',IceSlabsTransect_name)
             continue
         
+        if (IceSlabsTransect_name == '20170327_04_050_066'):
+            print('Do not process',IceSlabsTransect_name)
+            pdb.set_trace()
+        
         if (IceSlabsTransect_name == '20170412_01_035_054'):
-            print('Do not process ',IceSlabsTransect_name)
-            continue
+            print('Do not process',IceSlabsTransect_name)
+            pdb.set_trace()
+            
         
         if (IceSlabsTransect_name == '20170502_01_041_060'):
-            print('Do not process ',IceSlabsTransect_name)
-            continue
+            print('Do not process',IceSlabsTransect_name)
+            pdb.set_trace()
         
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
@@ -213,7 +218,7 @@ if (generate_data=='TRUE'):
         
         #2. Extract ice slabs transect of interest
         Extraction_SAR_transect=df_20102018_high_cleaned[df_20102018_high_cleaned.Track_name==IceSlabsTransect_name]
-                
+        
         #3. Extract SAR values in the vicinity of the transect to reduce computation
         ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
         #3.a. Transform transect of interest into a line
@@ -224,7 +229,6 @@ if (generate_data=='TRUE'):
         buffered_transect_polygon=transect_line.buffer(200,cap_style=3)
         #Convert polygon of buffered_transect_polygon into a geopandas dataframe
         buffered_transect_polygon_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffered_transect_polygon]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
-        
         ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
         
         #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
@@ -261,7 +265,7 @@ if (generate_data=='TRUE'):
                         c=Extraction_SAR_transect['20m_ice_content_m'],zorder=3)
             
             #Display full Ice Slabs transect (from radargram)
-            ax1.scatter(IceSlabsTransect['longitude_EPSG_3413'],IceSlabsTransect['latitude_EPSG_3413'])
+            ax1.scatter(IceSlabsTransect['longitude_EPSG_3413'],IceSlabsTransect['latitude_EPSG_3413'],color='black')
             plt.close()
 
         if (check_oversampling_over=='TRUE'):
@@ -298,7 +302,7 @@ if (generate_data=='TRUE'):
             ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
             pdb.set_trace()
             plt.close()
-        
+            
         #4. Vectorise the SAR raster
         ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
         x, y, radar_signal = SAR_clipped.x.values, SAR_clipped.y.values, SAR_clipped.values
@@ -307,15 +311,16 @@ if (generate_data=='TRUE'):
         
         #Convert to geodataframe
         SAR_pd = pd.DataFrame.from_dict({'radar_signal': radar_signal, 'x': x, 'y': y})
+        #Keep only data where SAR not NaN
+        SAR_pd_noNaN=SAR_pd[~SAR_pd.radar_signal.isna()].copy()
         #The SAR_vector is a geodataframe of points whose coordinates represent the centroid of each cell
-        SAR_vector = gpd.GeoDataFrame(SAR_pd, geometry=gpd.GeoSeries.from_xy(SAR_pd['x'], SAR_pd['y'], crs=SAR_clipped.rio.crs))
+        SAR_vector = gpd.GeoDataFrame(SAR_pd_noNaN, geometry=gpd.GeoSeries.from_xy(SAR_pd_noNaN['x'], SAR_pd_noNaN['y'], crs=SAR_clipped.rio.crs))
         #Create a square buffer around each centroid to reconsititute the raster but where each cell is an individual polygon
         SAR_grid = SAR_vector.buffer(20, cap_style=3)
         #Convert SAR_grid into a geopandas dataframe, where we keep the information of the centroids (i.e. the SAR signal)
-        SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
+        SAR_grid_gpd = gpd.GeoDataFrame(SAR_pd_noNaN,geometry=gpd.GeoSeries(SAR_grid),crs='epsg:3413')#from https://gis.stackexchange.com/questions/266098/how-to-convert-a-geoseries-to-a-geodataframe-with-geopandas
         #There is indeed one unique index for each cell in SAR_grid_gpd - it worked!
         ######### This is from https://spatial-dev.guru/2022/04/16/polygonize-raster-using-rioxarray-and-geopandas/ #########
-        
         '''
         #Export the grid to check on QGIS
         SAR_grid_gpd.to_file(path+'SAR/HV_2017_2018/SAR_grid.shp')
@@ -333,13 +338,14 @@ if (generate_data=='TRUE'):
             #Display the polygons corresponding to SAR upsampled
             SAR_grid_gpd.plot(ax=ax_check_centroid,alpha=0.2,facecolor='none',edgecolor='red')
             #Display the centroid of each polygon
-            ax_check_centroid.scatter(SAR_pd.x,SAR_pd.y,color='blue')
+            ax_check_centroid.scatter(SAR_pd_noNaN.x,SAR_pd_noNaN.y,color='blue')
             #Display buffered_transect_polygon_gpd
             buffered_transect_polygon_gpd.plot(ax=ax_check_centroid,facecolor='none',edgecolor='red',zorder=4)
             ax_check_centroid.set_title('Clipped SAR data and corresponding vector grid')
             #This does not look correct, but I am convinced this is due to a matplotlib diplay
             plt.close()
-                
+        
+        
         #5. Perform the intersection between each cell of the polygonized SAR data and Ice Slabs transect data
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
         #Convert Extraction_SAR_transect into a geopandas dataframe
@@ -348,7 +354,7 @@ if (generate_data=='TRUE'):
         #Perform the join between ice slabs thickness and SAR data
         pointInPolys= gpd.tools.sjoin(Extraction_SAR_transect_gpd, SAR_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
-
+        
         if (fig_display=='TRUE'):
             #Check extraction is correct
             #Prepare plot
