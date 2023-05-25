@@ -264,41 +264,48 @@ if (generate_data=='TRUE'):
         buffered_transect_polygon_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffered_transect_polygon]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
         ### --------------- This is from CaseStudy_Emax_IceSlabs.py --------------- ###
         
-        #with new variables names, seems it works for SAR
+        #with new variables names, seems it works for SAR and cumulative hydro
         
-        '''
-        def ExtractRadarData_at_PointLayer (raster_type,):
-        '''
         raster_type='CumHydro'
         
         pdb.set_trace()
+        
         
         if (raster_type=='SAR'):
             print('Performing SAR extraction')
             vmin_display=-20
             vmax_display=0
             resolution_raster=20
-        elif (raster_type=='CumHydro'):
+            
+            #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
+            #Extract SAR in the vicinity of transect by considering all SAR files
+            raster_clipped_SAR=extraction_SAR(buffered_transect_polygon_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)#,polygon_in_use)
+            
+            #If clipping, perform extraction. If not, continue
+            if (len(raster_clipped_SAR)>1):
+                ExtractRadarData_at_PointLayer(raster_clipped_SAR,Extraction_IceSlabs_transect,IceSlabsTransect,buffered_transect_polygon_gpd,IceSlabsTransect_name,vmin_display,vmax_display):
+
+        
+        if (raster_type=='CumHydro'):
             print('Performing Cumulative Hydrology extraction')
             vmin_display=50
             vmax_display=150
             resolution_raster=15
+            
+            #3.c. Extract CumHydro values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
+            #Extract CumHydro in the vicinity of transect by considering all CumHydro files
+            raster_clipped_CumHydro=extraction_CumHydro(buffered_transect_polygon_gpd,master_SW_mean,master_NW_mean,master_NE_mean)
+            
+            #If clipping, perform extraction. If not, continue
+            if (len(raster_clipped_CumHydro)>1):
+                ExtractRadarData_at_PointLayer(raster_clipped_CumHydro,Extraction_IceSlabs_transect,IceSlabsTransect,buffered_transect_polygon_gpd,IceSlabsTransect_name,vmin_display,vmax_display,raster_type):
+
         
-        '''
-        #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
-        #Extract SAR in the vicinity of transect by considering all SAR files
-        raster_clipped=extraction_SAR(buffered_transect_polygon_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)#,polygon_in_use)
-        '''
-        #3.c. Extract CumHydro values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
-        #Extract CumHydro in the vicinity of transect by considering all CumHydro files
-        raster_clipped=extraction_CumHydro(buffered_transect_polygon_gpd,master_SW_mean,master_NW_mean,master_NE_mean)
+
         
-        
-        #If no clipping, do not continue and go to the next transect
-        if (len(raster_clipped)==1):
-            print('No SAR data, continue')
-            continue
-        
+
+        def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_InFunc,IceSlabsTransect_InFunc,buffered_transect_polygon_gpd_InFunc,IceSlabsTransect_name_InFunc,vmin_display_InFunc,vmax_display_InFunc,raster_type_InFunc):
+
         #Determine extent of raster_clipped
         extent_raster_clipped = [np.min(np.asarray(raster_clipped.x)), np.max(np.asarray(raster_clipped.x)),
                                  np.min(np.asarray(raster_clipped.y)), np.max(np.asarray(raster_clipped.y))]#[west limit, east limit., south limit, north limit]
@@ -316,25 +323,25 @@ if (generate_data=='TRUE'):
             GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
             ### ---------- --This is from 'Greenland_Hydrology_Summary.py' ------------ ###
             #Display raster_clipped image
-            cbar=ax1.imshow(raster_clipped, extent=extent_raster_clipped, transform=crs, origin='upper', cmap='gray',zorder=1,vmin=vmin_display,vmax=vmax_display)
+            cbar=ax1.imshow(raster_clipped, extent=extent_raster_clipped, transform=crs, origin='upper', cmap='gray',zorder=1,vmin=vmin_display_InFunc,vmax=vmax_display_InFunc)
             
             #Display Ice Thickness
-            ax1.scatter(Extraction_IceSlabs_transect['lon_3413'],
-                        Extraction_IceSlabs_transect['lat_3413'],
-                        c=Extraction_IceSlabs_transect['20m_ice_content_m'],zorder=3)
+            ax1.scatter(Extraction_IceSlabs_transect_InFunc['lon_3413'],
+                        Extraction_IceSlabs_transect_InFunc['lat_3413'],
+                        c=Extraction_IceSlabs_transect_InFunc['20m_ice_content_m'],zorder=3)
             
             #Display full Ice Slabs transect (from radargram)
-            ax1.scatter(IceSlabsTransect['longitude_EPSG_3413'],IceSlabsTransect['latitude_EPSG_3413'],color='black')
+            ax1.scatter(IceSlabsTransect_InFunc['longitude_EPSG_3413'],IceSlabsTransect_InFunc['latitude_EPSG_3413'],color='black')
             plt.close()
 
         if (check_oversampling_over=='TRUE'):
             ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
             ### -------------- Proof that SAR data are not oversampled anymore -------------- ###
             #Define bounds of Emaxs in this box
-            x_min=np.min(IceSlabsTransect['longitude_EPSG_3413'])
-            x_max=np.max(IceSlabsTransect['longitude_EPSG_3413'])
-            y_min=np.min(IceSlabsTransect['latitude_EPSG_3413'])
-            y_max=np.max(IceSlabsTransect['latitude_EPSG_3413'])
+            x_min=np.min(IceSlabsTransect_InFunc['longitude_EPSG_3413'])
+            x_max=np.max(IceSlabsTransect_InFunc['longitude_EPSG_3413'])
+            y_min=np.min(IceSlabsTransect_InFunc['latitude_EPSG_3413'])
+            y_max=np.max(IceSlabsTransect_InFunc['latitude_EPSG_3413'])
             
             #Extract x and y coordinates of upsampled SAR image
             x_coord_focus=np.asarray(raster_clipped.x)
@@ -393,13 +400,13 @@ if (generate_data=='TRUE'):
             #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
             ax_check_centroid = plt.subplot(projection=crs)
             #Display the raster SAR upsampled
-            ax_check_centroid.imshow(raster_clipped, extent=extent_raster_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=vmin_display,vmax=vmax_display)
+            ax_check_centroid.imshow(raster_clipped, extent=extent_raster_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=vmin_display_InFunc,vmax=vmax_display_InFunc)
             #Display the polygons corresponding to raster upsampled
             raster_grid_gpd.plot(ax=ax_check_centroid,alpha=0.2,facecolor='none',edgecolor='red')
             #Display the centroid of each polygon
             ax_check_centroid.scatter(raster_pd_noNaN.x,raster_pd_noNaN.y,color='blue')
-            #Display buffered_transect_polygon_gpd
-            buffered_transect_polygon_gpd.plot(ax=ax_check_centroid,facecolor='none',edgecolor='red',zorder=4)
+            #Display buffered_transect_polygon_gpd_InFunc
+            buffered_transect_polygon_gpd_InFunc.plot(ax=ax_check_centroid,facecolor='none',edgecolor='red',zorder=4)
             ax_check_centroid.set_title('Clipped raster and corresponding vector grid')
             #This does not look correct, but I am convinced this is due to a matplotlib diplay
             plt.close()
@@ -407,8 +414,8 @@ if (generate_data=='TRUE'):
         
         #5. Perform the intersection between each cell of the polygonized raster data and Ice Slabs transect data
         ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
-        #Convert Extraction_IceSlabs_transect into a geopandas dataframe
-        Extraction_IceSlabs_transect_gpd = gpd.GeoDataFrame(Extraction_IceSlabs_transect, geometry=gpd.points_from_xy(Extraction_IceSlabs_transect.lon_3413, Extraction_IceSlabs_transect.lat_3413), crs="EPSG:3413")
+        #Convert Extraction_IceSlabs_transect_InFunc into a geopandas dataframe
+        Extraction_IceSlabs_transect_gpd = gpd.GeoDataFrame(Extraction_IceSlabs_transect_InFunc, geometry=gpd.points_from_xy(Extraction_IceSlabs_transect_InFunc.lon_3413, Extraction_IceSlabs_transect_InFunc.lat_3413), crs="EPSG:3413")
                 
         #Perform the join between ice slabs thickness and raster data
         pointInPolys= gpd.tools.sjoin(Extraction_IceSlabs_transect_gpd, raster_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
@@ -422,9 +429,9 @@ if (generate_data=='TRUE'):
             #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
             ax_check_extraction_clipped = plt.subplot(projection=crs)
             #Display the raster SAR upsampled
-            ax_check_extraction_clipped.imshow(raster_clipped, extent=extent_raster_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=vmin_display,vmax=vmax_display)
+            ax_check_extraction_clipped.imshow(raster_clipped, extent=extent_raster_clipped, transform=crs, origin='upper', cmap='Blues',zorder=1,vmin=vmin_display_InFunc,vmax=vmax_display_InFunc)
             #Display the extracted SAR signal
-            ax_check_extraction_clipped.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['raster_values'],cmap='Blues',vmin=vmin_display,vmax=vmax_display,edgecolor='black')
+            ax_check_extraction_clipped.scatter(pointInPolys.lon_3413,pointInPolys.lat_3413,c=pointInPolys['raster_values'],cmap='Blues',vmin=vmin_display_InFunc,vmax=vmax_display_InFunc,edgecolor='black')
             ax_check_extraction_clipped.set_title('Clipped raster data and corresponding extracted raster signal')
             #This does not look correct, but I am convinced this is due to a matplotlib diplay
             plt.close()
@@ -468,14 +475,14 @@ if (generate_data=='TRUE'):
         GrIS_drainage_bassins.plot(ax=ax_map_raster,facecolor='none',edgecolor='black')
         ax_map_raster.scatter(upsampled_raster_and_IceSlabs_sorted['lon_3413'],upsampled_raster_and_IceSlabs_sorted['lat_3413'],c=upsampled_raster_and_IceSlabs_sorted['distances']/1000,cmap='magma')
         cbar_dist=ax_upsampled_raster.scatter(upsampled_raster_and_IceSlabs_sorted['raster_values'],upsampled_raster_and_IceSlabs_sorted['20m_ice_content_m'],c=upsampled_raster_and_IceSlabs_sorted['distances']/1000,cmap='magma')
-        ax_radargram.pcolor(IceSlabsTransect['distances']/1000,
-                            IceSlabsTransect['depth'],
-                            IceSlabsTransect['IceSlabs_Mask'],
+        ax_radargram.pcolor(IceSlabsTransect_InFunc['distances']/1000,
+                            IceSlabsTransect_InFunc['depth'],
+                            IceSlabsTransect_InFunc['IceSlabs_Mask'],
                             cmap='gray_r')
         #Improve axis
         ax_map_raster.set_xlim(upsampled_raster_and_IceSlabs_sorted['lon_3413'].mean()-2.5e5, upsampled_raster_and_IceSlabs_sorted['lon_3413'].mean()+2.5e5)
         ax_map_raster.set_ylim(upsampled_raster_and_IceSlabs_sorted['lat_3413'].mean()-2.5e5, upsampled_raster_and_IceSlabs_sorted['lat_3413'].mean()+2.5e5)
-        ax_upsampled_raster.set_xlim(vmin_display,vmax_display)
+        ax_upsampled_raster.set_xlim(vmin_display_InFunc,vmax_display_InFunc)
         ax_upsampled_raster.set_ylim(-0.5,20.5)
         ax_radargram.invert_yaxis() #Invert the y axis = avoid using flipud.
         ax_radargram.set_aspect(0.1)
@@ -506,12 +513,12 @@ if (generate_data=='TRUE'):
             ax_upsampled_raster.legend()
                
         #Save the figure
-        fig_indiv.suptitle(IceSlabsTransect_name)
-        plt.savefig(path_local+raster_type+'_and_IceThickness/images/check/InTest_'+IceSlabsTransect_name+'_Upsampled.png',dpi=300,bbox_inches='tight')
+        fig_indiv.suptitle(IceSlabsTransect_name_InFunc)
+        plt.savefig(path_local+raster_type_InFunc+'_and_IceThickness/images/check/InTest_'+IceSlabsTransect_name_InFunc+'_Upsampled.png',dpi=300,bbox_inches='tight')
         plt.close()
         
         #Export the extracted values as csv
-        pointInPolys.to_csv(path_local+raster_type+'_and_IceThickness/csv/check/InTest_'+IceSlabsTransect_name+'_NotUpsampled.csv',
+        pointInPolys.to_csv(path_local+raster_type_InFunc+'_and_IceThickness/csv/check/InTest_'+IceSlabsTransect_name_InFunc+'_NotUpsampled.csv',
                             columns=['Track_name', 'lat', 'lon','20m_ice_content_m',
                                      'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                      'elevation', 'year', 'index_right', 'raster_values'])
