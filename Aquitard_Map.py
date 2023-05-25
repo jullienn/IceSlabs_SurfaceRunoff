@@ -229,8 +229,20 @@ plt.savefig(path_local+'/SAR_and_IceThickness/Logistic_aquitard_map_2019_q0.75_b
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 
+### Perform extraction of cumulative hydrology at ice slabs sampling points ###
+#No need to extract aquitard, we can just apply the values per region!
 
-### Create a new code, and perform aquitard extraction as well as raster of cumulative hydrology using ice slabs data! much simpler
+
+#Load ice slabs dataset
+### ------------------------- Load df_2010_2018 --------------------------- ###
+#Load 2010-2018 clipped to polygons high estimate datatset
+f_20102018_high_cleaned = open(path_jullienetal2023+'final_excel/high_estimate/clipped/df_20102018_with_elevation_high_estimate_rignotetalregions_cleaned', "rb")
+df_20102018_high_cleaned = pickle.load(f_20102018_high_cleaned)
+f_20102018_high_cleaned.close
+### ------------------------- Load df_2010_2018 --------------------------- ###
+
+#Upsampling is needed. Attention! check spatial resolution of cumulative hydrology and SAR
+#Resolution cumulative raster= 30x30. Resolution SAR and aquitard = 40x40 -> Make it match at 120 m resolution
 
 
 
