@@ -213,11 +213,11 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
            
     #Save the figure
     fig_indiv.suptitle(IceSlabsTransect_name_InFunc)
-    plt.savefig(path_local+raster_type_InFunc+'_and_IceThickness/images/check/InTest_'+IceSlabsTransect_name_InFunc+'_Upsampled.png',dpi=300,bbox_inches='tight')
+    plt.savefig(path_local+raster_type_InFunc+'_and_IceThickness/images/'+IceSlabsTransect_name_InFunc+'_Upsampled.png',dpi=300,bbox_inches='tight')
     plt.close()
     
     #Export the extracted values as csv
-    pointInPolys.to_csv(path_local+raster_type_InFunc+'_and_IceThickness/csv/check/InTest_'+IceSlabsTransect_name_InFunc+'_NotUpsampled.csv',
+    pointInPolys.to_csv(path_local+raster_type_InFunc+'_and_IceThickness/csv/'+IceSlabsTransect_name_InFunc+'_NotUpsampled.csv',
                         columns=['Track_name', 'lat', 'lon','20m_ice_content_m',
                                  'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                  'elevation', 'year', 'index_right', 'raster_values'])
@@ -361,12 +361,12 @@ from scipy.optimize import curve_fit
 import os.path
 
 generate_data='TRUE' #If true, generate the individual csv files and figures
-fig_display='TRUE' #If TRUE, generate figures
+fig_display='FALSE' #If TRUE, generate figures
 check_oversampling_over='FALSE'
 
 #Which raster extraction is to perform
 SAR_process='TRUE'
-CumHydro_process='TRUE'
+CumHydro_process='FALSE'
 
 #For all of these transects, there was no SAR extracted while there are, because a SAR mosaic is called beforehand, which extends there but is empty. This is now fixed!
 list_check_clip=list(['20170331_01_095_098', '20170331_01_109_111','20170331_01_120_122',

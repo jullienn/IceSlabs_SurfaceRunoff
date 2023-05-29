@@ -73,14 +73,14 @@ path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRuno
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
 
 path_firn_cores=path_switchdrive+'RT3/data/firn_cores/'
-path_SAR=path_local+'data/SAR/HV_2017_2018/'
+path_SAR=path_local+'data/SAR/HV_2021/'
 path_rignotetal2016_GrIS_drainage_bassins=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
 
 #Load IMBIE drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
 #Open SAR image
-SAR_SW_00_00 = rasterio.open(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif')
+SAR_SW_00_00 = rasterio.open(path_SAR+'ref_IW_HV_2021_2021_32_106_40m_ASCDESC_SW_minnscenes50-0000000000-0000000000.tif')
 
 '''
 ### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
