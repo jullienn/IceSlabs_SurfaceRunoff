@@ -245,15 +245,15 @@ def SAR_clipping_check(SAR_source,SAR_clipped_by_polygon,polygon_mask):
     return
 
 ### This function is adapted from Extraction_IceThicknessAndSAR_InSectors.py ###
-def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func):#,polygon_in_use):
+def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_N_00_00_EW_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func):#,polygon_in_use):
     #SAR_SW_00_23 and SAR_NW_00_23 are not needed as no slabs in these regions
     
     #Define clipping_SAR_ok to perform loop
     clipping_SAR_ok='FALSE'
     
     while (clipping_SAR_ok=='FALSE'):
-        for regional_SAR in (SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func):
-                        
+        for regional_SAR in (SAR_SW_00_00_in_func,SAR_N_00_00_EW_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func):
+            
             #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
             #Suite of try except from https://stackoverflow.com/questions/17322208/multiple-try-codes-in-one-block       
             try:#from https://docs.python.org/3/tutorial/errors.html
@@ -407,6 +407,7 @@ f_20102018_high_cleaned.close
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 #Load SAR data
+SAR_N_00_00_EW = rxr.open_rasterio(path_SAR+'ref_EW_HV_2017_2018_32_106_40m_ASCDESC_N_nscenes0_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
 SAR_N_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
 SAR_N_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000023296.tif',masked=True).squeeze()
 SAR_NW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000000000.tif',masked=True).squeeze()
@@ -492,7 +493,7 @@ if (generate_data=='TRUE'):
             
             #3.c. Extract SAR values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
             #Extract SAR in the vicinity of transect by considering all SAR files
-            raster_clipped_SAR=extraction_SAR(buffered_transect_polygon_gpd,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)#,polygon_in_use)
+            raster_clipped_SAR=extraction_SAR(buffered_transect_polygon_gpd,SAR_SW_00_00,SAR_N_00_00_EW,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)#,polygon_in_use)
                         
             #If clipping, perform extraction. If not, continue
             if (len(raster_clipped_SAR)>1):
