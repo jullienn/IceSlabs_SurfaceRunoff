@@ -10,23 +10,23 @@ def create_buffer_polygon(line_input,radius_around_line,ax_plot):
     #Convert polygon of Emax buffer around connected Emax line into a geopandas dataframe
     line_buffer_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffer_around_line]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Display buffer
-    line_buffer_polygon.plot(ax=ax_plot,zorder=2,color='grey',alpha=0.1)
+    line_buffer_polygon.plot(ax=ax_plot,zorder=2,color='red',alpha=0.1)#'grey'
     
     return line_buffer_polygon
 
     
-def create_polygon_above(line_input,distance_start,distance_end,ax_plot,ax_plot_SAR,color_plot):
+def create_polygon_above(line_input,radius_around_line,distance_start,distance_end,ax_plot,ax_plot_SAR,color_plot):
     #Perform upper line start creation
-    line_upper_start = line_input.parallel_offset(distance_start, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    line_upper_start = line_input.parallel_offset(radius_around_line+distance_start, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
     #Perform upper line end creation in two steps
-    line_upper_end_a = line_input.parallel_offset(distance_end, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-    line_upper_end_b = line_upper_end_a.parallel_offset(distance_end, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    line_upper_end_a = line_input.parallel_offset(radius_around_line+distance_end/2, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    line_upper_end_b = line_upper_end_a.parallel_offset(distance_end/2, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
     #Create a polygon with upper line start and upper line end
     polygon_upper_start_end=Polygon([*list(line_upper_end_b.coords),*list(line_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
     #Convert polygon into a geopandas dataframe
     polygon_upper_start_end_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_upper_start_end]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Display polygon
-    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color='grey',alpha=0.1)
+    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.1)#'grey'
     #Plot the above upper boundaries
     ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ax_plot.plot(line_upper_end_b.xy[0],line_upper_end_b.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
@@ -35,7 +35,7 @@ def create_polygon_above(line_input,distance_start,distance_end,ax_plot,ax_plot_
     
     return polygon_upper_start_end_gpd, line_upper_end_b
 
-def create_polygon_offset(line_input,distance_start,distance_end,type_offset,ax_plot,ax_plot_SAR,color_plot):    
+def create_polygon_offset(line_input,radius_around_line,distance_end,type_offset,ax_plot,ax_plot_SAR,color_plot):    
     if (type_offset=='upstream'):
         direction='right'
     elif (type_offset=='downstream'):
@@ -45,15 +45,15 @@ def create_polygon_offset(line_input,distance_start,distance_end,type_offset,ax_
         pdb.set_trace()
     
     #Perform upper line start creation
-    line_upper_start = line_input.parallel_offset(distance_start, direction, join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    line_upper_start = line_input.parallel_offset(radius_around_line, direction, join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
     #Perform upper line end creation
-    line_upper_end = line_input.parallel_offset(distance_end, direction, join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    line_upper_end = line_input.parallel_offset(radius_around_line+distance_end, direction, join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
     #Create a polygon with upper line start and upper line end
     polygon_upper_start_end=Polygon([*list(line_upper_end.coords),*list(line_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
     #Convert polygon into a geopandas dataframe
     polygon_upper_start_end_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_upper_start_end]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Display polygon
-    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color='grey',alpha=0.1)
+    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.1)#'grey'
     #Plot the above upper boundaries
     ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ax_plot.plot(line_upper_end.xy[0],line_upper_end.xy[1],zorder=6,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
@@ -72,7 +72,7 @@ def perform_extraction_in_polygon(dataframe_to_intersect,polygon_for_intersectio
     
     return Intersection_polygon_dataframe_slabs
 
-def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func,polygon_in_use):
+def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_N_00_00_EW_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func,polygon_in_use):
     not_worked='FALSE'
     ######################################################################
     ############## This is from SAR_SlabsThickness_test.py ###############
@@ -87,20 +87,24 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_NW_00_00_i
     except rxr.exceptions.NoDataInBounds:#From https://corteva.github.io/rioxarray/html/_modules/rioxarray/exceptions.html#NoDataInBounds
         print('   Intersection not found, try again ...')
         try:
-            SAR_clipped = SAR_NW_00_00.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+            SAR_clipped = SAR_N_00_00_EW_in_func.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
         except rxr.exceptions.NoDataInBounds:
             print('      Intersection not found, try again ...')
             try:
-                SAR_clipped = SAR_N_00_00.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+                SAR_clipped = SAR_NW_00_00.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
             except rxr.exceptions.NoDataInBounds:
                 print('         Intersection not found, try again ...')
                 try:
-                    SAR_clipped = SAR_N_00_23.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+                    SAR_clipped = SAR_N_00_00.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
                 except rxr.exceptions.NoDataInBounds:
-                    print('            Intersection not found!')
-                    print('               Continue')
-                    not_worked='TRUE'
-                    #Store ice slabs transect not intersected with SAR
+                    print('            Intersection not found, try again ...')
+                    try:
+                        SAR_clipped = SAR_N_00_23.rio.clip(polygon_to_be_intersected.geometry.values, polygon_to_be_intersected.crs, drop=True, invert=False)
+                    except rxr.exceptions.NoDataInBounds:
+                        print('               Intersection not found!')
+                        print('                  Continue')
+                        not_worked='TRUE'
+                        #Store ice slabs transect not intersected with SAR
     
     if (not_worked=='TRUE'):
         SAR_clipped_within_polygon=np.array([-999])
@@ -183,7 +187,7 @@ def save_slabs_as_csv(path_save_IceSlabs,df_to_save,sector,box_number,processed_
     return
 
 
-def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_polygon_func,SAR_SW_00_00_func,SAR_NW_00_00_func,SAR_N_00_00_func,SAR_N_00_23_func):
+def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_polygon_func,SAR_SW_00_00_func,SAR_N_00_00_EW_func,SAR_NW_00_00_func,SAR_N_00_00_func,SAR_N_00_23_func):
     #Emax as tuples
     Emax_tuple=[tuple(row[['x','y']]) for index, row in Emax_points_func.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
     #Connect Emax points between them
@@ -192,10 +196,10 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
     ax_sectors.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=0.5) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ax_SAR.plot(lineEmax.xy[0],lineEmax.xy[1],zorder=5,color='#a50f15',linewidth=1) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ######################### Connect Emax points #########################
-    
+        
     ################ Create polygons and extract ice slabs ################
     #Perform polygon above creation and slabs extraction
-    above_polygon,upper_limit=create_polygon_above(lineEmax,4000,5000,ax_sectors,ax_SAR,'#045a8d')
+    above_polygon,upper_limit=create_polygon_above(lineEmax,radius_func,4000,9000,ax_sectors,ax_SAR,'#045a8d')
     Intersection_slabs_above = perform_extraction_in_polygon(subset_iceslabs_func,above_polygon,ax_sectors,'blue')
     
     #Perform polygon in-between creation and slabs extraction
@@ -224,7 +228,7 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
     
     ########################## Extract SAR data ##########################
     #Extract and store SAR from below to above
-    indiv_SAR_below_above_DF=extraction_SAR(below_above_gpd,SAR_SW_00_00_func,SAR_NW_00_00_func,SAR_N_00_00_func,SAR_N_00_23_func,indiv_polygon_func)
+    indiv_SAR_below_above_DF=extraction_SAR(below_above_gpd,SAR_SW_00_00_func,SAR_N_00_00_EW_func,SAR_NW_00_00_func,SAR_N_00_00_func,SAR_N_00_23_func,indiv_polygon_func)
         
     if (len(indiv_SAR_below_above_DF)==1):
         print('No intersection with SAR data, continue')
@@ -322,7 +326,7 @@ type_slabs='high' #can be high or low
 desired_year=2019
 
 #Define radius
-radius=250
+radius=500
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -386,6 +390,8 @@ f_20102018 = open(path_df_with_elevation+'df_20102018_with_elevation_for_RT3_mas
 df_2010_2018 = pickle.load(f_20102018)
 f_20102018.close()
 ############# IS THIS THE CORRECT DATASET TO USE????? TBD #############
+#load 2010-2018 ice slabs high end extent from Jullien et al., (2023)
+IceSlabsExtent_20102018_jullienetal2023=gpd.read_file(path_switchdrive+'RT1/final_dataset_2002_2018/shapefiles/iceslabs_jullien_highend_20102018.shp')
 
 #Load 2002-2003 dataset
 df_2002_2003=pd.read_csv(path_2002_2003+'2002_2003_green_excel.csv')
@@ -434,10 +440,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         #Zone excluded form processing, continue
         print(indiv_index,' excluded, continue')
         continue
-    
+    '''
     if (indiv_index <25):
         continue
-    
+    '''
     print(indiv_index)
     
     #Extract individual polygon
@@ -490,6 +496,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
     #Display antecedent ice slabs
     ax_sectors.scatter(within_points_20022003['lon'],within_points_20022003['lat'],color='#bdbdbd',s=1)
     
+    #Display 2010-2018 high end ice slabs jullien et al., 2023
+    IceSlabsExtent_20102018_jullienetal2023.plot(ax=ax_sectors,facecolor='none',edgecolor='#ba2b2b',zorder=10)
+    IceSlabsExtent_20102018_jullienetal2023.plot(ax=ax_SAR,facecolor='none',edgecolor='#ba2b2b',zorder=10)
+
     for indiv_year in list([desired_year]):#,2012,2016,2019]):
         
         #Define empty dataframe
@@ -622,11 +632,11 @@ for indiv_index in Boxes_Tedstone2022.FID:
             #For box 25, need to divide the box into two independant suite of Emax points
             #Sect 1
             Emax_points_sect1=Emax_points[Emax_points.index_Emax>=237]
-            Intersection_slabs_above_out_sect1,Intersection_slabs_InBetween_out_sect1,Intersection_slabs_within_out_sect1,Intersection_slabs_below_out_sect1,indiv_SAR_above_out_sect1,indiv_SAR_inbetween_out_sect1,indiv_SAR_within_out_sect1,indiv_SAR_below_out_sect1=perform_processing(Emax_points_sect1,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+            Intersection_slabs_above_out_sect1,Intersection_slabs_InBetween_out_sect1,Intersection_slabs_within_out_sect1,Intersection_slabs_below_out_sect1,indiv_SAR_above_out_sect1,indiv_SAR_inbetween_out_sect1,indiv_SAR_within_out_sect1,indiv_SAR_below_out_sect1=perform_processing(Emax_points_sect1,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_N_00_00_EW,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
             
             #Sect 2
             Emax_points_sect2=Emax_points[Emax_points.index_Emax<=136]
-            Intersection_slabs_above_out_sect2,Intersection_slabs_InBetween_out_sect2,Intersection_slabs_within_out_sect2,Intersection_slabs_below_out_sect2,indiv_SAR_above_out_sect2,indiv_SAR_inbetween_out_sect2,indiv_SAR_within_out_sect2,indiv_SAR_below_out_sect2=perform_processing(Emax_points_sect2,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+            Intersection_slabs_above_out_sect2,Intersection_slabs_InBetween_out_sect2,Intersection_slabs_within_out_sect2,Intersection_slabs_below_out_sect2,indiv_SAR_above_out_sect2,indiv_SAR_inbetween_out_sect2,indiv_SAR_within_out_sect2,indiv_SAR_below_out_sect2=perform_processing(Emax_points_sect2,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_N_00_00_EW,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
        
             #Reunite data
             Intersection_slabs_above_out=pd.concat([Intersection_slabs_above_out_sect1,Intersection_slabs_above_out_sect2])
@@ -639,7 +649,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             indiv_SAR_below_out=pd.concat([indiv_SAR_below_out_sect1,indiv_SAR_below_out_sect2])
        
         else:
-            Intersection_slabs_above_out,Intersection_slabs_InBetween_out,Intersection_slabs_within_out,Intersection_slabs_below_out,indiv_SAR_above_out,indiv_SAR_inbetween_out,indiv_SAR_within_out,indiv_SAR_below_out=perform_processing(Emax_points,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+            Intersection_slabs_above_out,Intersection_slabs_InBetween_out,Intersection_slabs_within_out,Intersection_slabs_below_out,indiv_SAR_above_out,indiv_SAR_inbetween_out,indiv_SAR_within_out,indiv_SAR_below_out=perform_processing(Emax_points,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_N_00_00_EW,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
         
         ########################## Extract SAR data ##########################
         
@@ -693,7 +703,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V3')
-        
+                
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
