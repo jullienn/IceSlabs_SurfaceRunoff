@@ -15,25 +15,32 @@ def create_buffer_polygon(line_input,radius_around_line,ax_plot):
     return line_buffer_polygon
 
     
-def create_polygon_above(line_input,radius_around_line,distance_start,distance_end,ax_plot,ax_plot_SAR,color_plot):
+def create_polygon_above(line_input,radius_around_line,distance_start,distance_end,distance_iterator,ax_plot,ax_plot_SAR,color_plot):
     #Perform upper line start creation
     line_upper_start = line_input.parallel_offset(radius_around_line+distance_start, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-    #Perform upper line end creation in two steps
-    line_upper_end_a = line_input.parallel_offset(radius_around_line+distance_end/2, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
-    line_upper_end_b = line_upper_end_a.parallel_offset(distance_end/2, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    #Perform upper line end creation step by step
+    line_upper_end_a = line_input.parallel_offset(radius_around_line+distance_iterator, 'right', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py
+    final_dist=radius_around_line+distance_iterator
+    
+    while (final_dist <= (distance_end+radius_around_line)):
+        print('   Building above polygon. Distance:',final_dist)
+        line_upper_end_a = line_upper_end_a.parallel_offset(distance_iterator, 'left', join_style=1) #from https://shapely.readthedocs.io/en/stable/code/parallel_offset.py   
+        final_dist=final_dist+distance_iterator
+    
     #Create a polygon with upper line start and upper line end
-    polygon_upper_start_end=Polygon([*list(line_upper_end_b.coords),*list(line_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+    polygon_upper_start_end=Polygon([*list(line_upper_end_a.coords),*list(line_upper_start.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
     #Convert polygon into a geopandas dataframe
     polygon_upper_start_end_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_upper_start_end]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Display polygon
     polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.1)#'grey'
+    
     #Plot the above upper boundaries
     ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-    ax_plot.plot(line_upper_end_b.xy[0],line_upper_end_b.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot.plot(line_upper_end_a.xy[0],line_upper_end_a.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ax_plot_SAR.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-    ax_plot_SAR.plot(line_upper_end_b.xy[0],line_upper_end_b.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot_SAR.plot(line_upper_end_a.xy[0],line_upper_end_a.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     
-    return polygon_upper_start_end_gpd, line_upper_end_b
+    return polygon_upper_start_end_gpd, line_upper_end_a
 
 def create_polygon_offset(line_input,radius_around_line,distance_end,type_offset,ax_plot,ax_plot_SAR,color_plot):    
     if (type_offset=='upstream'):
@@ -199,7 +206,7 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
         
     ################ Create polygons and extract ice slabs ################
     #Perform polygon above creation and slabs extraction
-    above_polygon,upper_limit=create_polygon_above(lineEmax,radius_func,4000,9000,ax_sectors,ax_SAR,'#045a8d')
+    above_polygon,upper_limit=create_polygon_above(lineEmax,radius_func,4000,9000,1000,ax_sectors,ax_SAR,'#045a8d')
     Intersection_slabs_above = perform_extraction_in_polygon(subset_iceslabs_func,above_polygon,ax_sectors,'blue')
     
     #Perform polygon in-between creation and slabs extraction
@@ -441,7 +448,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     '''
-    if (indiv_index <25):
+    if (indiv_index <13):
         continue
     '''
     print(indiv_index)
