@@ -11,7 +11,7 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
     #Determine extent of raster_clipped
     extent_raster_clipped = [np.min(np.asarray(raster_clipped.x)), np.max(np.asarray(raster_clipped.x)),
                              np.min(np.asarray(raster_clipped.y)), np.max(np.asarray(raster_clipped.y))]#[west limit, east limit., south limit, north limit]
-    
+        
     #Make sure SAR was extracted at the correct place, and that it matches where ice slabs were extracted
     if (fig_display=='TRUE'):
         #Prepare plot
@@ -250,7 +250,7 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_N_00_00_EW
     
     #Define clipping_SAR_ok to perform loop
     clipping_SAR_ok='FALSE'
-    
+        
     while (clipping_SAR_ok=='FALSE'):
         for regional_SAR in (SAR_SW_00_00_in_func,SAR_N_00_00_EW_in_func,SAR_NW_00_00_in_func,SAR_N_00_00_in_func,SAR_N_00_23_in_func):
             
@@ -266,6 +266,7 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_N_00_00_EW
                 '''
                 #If sum of NaNs equals size of dataArray, this means a clip was performed but data held are all NaNs
                 if (SAR_clipped.isnull().values.sum() == SAR_clipped.size):
+                    #No intersection
                     print('      Intersection with empty data, try again ...')
                     SAR_clipped=np.array([-999])
                 else:
@@ -276,7 +277,23 @@ def extraction_SAR(polygon_to_be_intersected,SAR_SW_00_00_in_func,SAR_N_00_00_EW
             except rxr.exceptions.NoDataInBounds:#From https://corteva.github.io/rioxarray/html/_modules/rioxarray/exceptions.html#NoDataInBounds
                 print('   Intersection not found, try again ...')
                 SAR_clipped=np.array([-999])
-
+        
+        '''
+        TO CONTINUE!
+        #Check whether the intersection was partial
+        #If intersection is partial, perform intersection with next raster, and perform merge betwwen the two rasters.
+        
+        #Keep where not NaNs
+        y_noNaN,x_noNaN = np.where(~pd.isna(SAR_clipped.values))
+        
+        SAR_clipping_check(regional_SAR,SAR_clipped[y_noNaN,x_noNaN],polygon_to_be_intersected)
+        
+        fig = plt.figure()
+        gs = gridspec.GridSpec(5, 6)
+        ax_check_clip_SAR = plt.subplot(gs[0:5, 0:6],projection=crs)
+        polygon_to_be_intersected.plot(ax=ax_check_clip_SAR)
+        SAR_clipped.plot(ax=ax_check_clip_SAR)
+        '''
         #If no correct clip was found, exit
         clipping_SAR_ok='TRUE'
     
@@ -361,7 +378,7 @@ from scipy.optimize import curve_fit
 import os.path
 
 generate_data='TRUE' #If true, generate the individual csv files and figures
-fig_display='FALSE' #If TRUE, generate figures
+fig_display='TRUE' #If TRUE, generate figures
 check_oversampling_over='FALSE'
 
 #Which raster extraction is to perform
@@ -423,18 +440,32 @@ master_NE_mean = rxr.open_rasterio(path_local+'data/master_maps/merge_ne/master_
 #Generate the csv files and figures of individual relationship    
 if (generate_data=='TRUE'):
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
+        
+        '''
+        #Partial clipping case
+        if (IceSlabsTransect_name=='20180419_02_123_126'):
+            pdb.set_trace()
+        else:
+            continue
+        '''
         '''
         if (IceSlabsTransect_name not in list_check_clip):
             continue
         '''
+        
         #If transect already processes, continue
         if (os.path.isfile(path_local+'SAR_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
             print(IceSlabsTransect_name,' already generated, continue')    
             continue
         
-        
+        '''
+        #If transect already processes, continue
+        if (os.path.isfile(path_local+'CumHydro_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
+            print(IceSlabsTransect_name,' already generated, continue')    
+            continue
+        '''
         if (IceSlabsTransect_name in list(['20170410_01_086_088','20170422_01_138_139','20170506_01_117_118','20180423_01_056_056'])):
             print('No SAR intersections, do not process ',IceSlabsTransect_name)
             continue

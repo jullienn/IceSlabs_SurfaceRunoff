@@ -85,6 +85,7 @@ import cartopy.crs as ccrs
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 import rioxarray as rxr
+import os
 
 #If saving aquitard raster is desired
 save_aquitard_true='FALSE'
@@ -116,7 +117,7 @@ GrIS_mask=gpd.read_file(path_rignotetal2016_GrIS+'GRE_IceSheet_IMBIE2/GRE_IceShe
 #load 2010-2018 ice slabs high end from Jullien et al., (2023)
 iceslabs_20102018_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefiles/iceslabs_jullien_highend_20102018.shp')
 ### -------------------------- Load shapefiles --------------------------- ###
-
+'''
 ### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
 path_aquifers=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/firn_aquifers_miege/'
 df_firn_aquifer_all=pd.DataFrame()
@@ -132,7 +133,7 @@ points=transformer.transform(np.asarray(df_firn_aquifer_all["LONG"]),np.asarray(
 df_firn_aquifer_all['lon_3413']=points[0]
 df_firn_aquifer_all['lat_3413']=points[1]
 ### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
-
+'''
 #Open Boxes from Tedstone and Machguth (2022)
 Boxes_Tedstone2022=gpd.read_file(path_data+'Boxes_Tedstone2022/boxes.shp')
 
@@ -205,10 +206,10 @@ GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
 
 #Display 2010-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='none',edgecolor='#ba2b2b')
-
+'''
 #Display firn aquifers Miège et al., 2016
 ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=0.01,zorder=2)
-
+'''
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
 gl=ax1.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
@@ -224,25 +225,130 @@ ax1.set_ylim(-3366273, -784280)
 
 pdb.set_trace()
 
+'''
 #Save the figure
 plt.savefig(path_local+'/SAR_and_IceThickness/Logistic_aquitard_map_2019_q0.75_below_and_within.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
+
+############################################################################
+########################### Aquitard properties ###########################
+############################################################################
+
+###################### Load ice slabs with SAR dataset ######################
+#Path to data
+path_SAR_And_IceThickness=path_local+'SAR_and_IceThickness/csv/'
+#List all the files in the folder
+list_composite=os.listdir(path_SAR_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
+#Define empty dataframe
+upsampled_SAR_and_IceSlabs=pd.DataFrame()
+#Loop over all the files
+for indiv_file in list_composite:
+    print(indiv_file)
+    #Open the individual file
+    indiv_csv=pd.read_csv(path_SAR_And_IceThickness+indiv_file)
+    #Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
+    indiv_upsampled_SAR_and_IceSlabs=indiv_csv.groupby('index_right').mean()  
+    #Append the data to each other
+    upsampled_SAR_and_IceSlabs=pd.concat([upsampled_SAR_and_IceSlabs,indiv_upsampled_SAR_and_IceSlabs])    
+###################### Load ice slabs with SAR dataset ######################
+
+pdb.set_trace()
+#Transform upsampled_SAR_and_IceSlabs as a geopandas dataframe to identify region
+upsampled_SAR_and_IceSlabs_gdp = gpd.GeoDataFrame(upsampled_SAR_and_IceSlabs,
+                                                  geometry=gpd.GeoSeries.from_xy(upsampled_SAR_and_IceSlabs['lon_3413'],
+                                                                                 upsampled_SAR_and_IceSlabs['lat_3413'],
+                                                                                 crs='EPSG:3413'))
+
+#Intersection between dataframe and polygon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+upsampled_SAR_and_IceSlabs_gdp_with_regions = gpd.sjoin(upsampled_SAR_and_IceSlabs_gdp, GrIS_drainage_bassins, predicate='within')
+
+#Apply thresholds to differentiate between efficient aquitard VS non-efficient aquitard places - let's choose quantile 0.75 of below
+upsampled_SAR_and_IceSlabs_gdp_with_regions.loc[np.logical_and(upsampled_SAR_and_IceSlabs_gdp_with_regions.SUBREGION1=='SW',
+                                                               upsampled_SAR_and_IceSlabs_gdp_with_regions.raster_values<-9.07748),
+                                                'aquitard']=1
+
+upsampled_SAR_and_IceSlabs_gdp_with_regions.loc[np.logical_and(upsampled_SAR_and_IceSlabs_gdp_with_regions.SUBREGION1=='CW',
+                                                               upsampled_SAR_and_IceSlabs_gdp_with_regions.raster_values<-7.742007),
+                                                'aquitard']=1
+
+upsampled_SAR_and_IceSlabs_gdp_with_regions.loc[np.logical_and(upsampled_SAR_and_IceSlabs_gdp_with_regions.SUBREGION1=='NW',
+                                                               upsampled_SAR_and_IceSlabs_gdp_with_regions.raster_values<-8.926942),
+                                                'aquitard']=1
+
+upsampled_SAR_and_IceSlabs_gdp_with_regions.loc[np.logical_and(upsampled_SAR_and_IceSlabs_gdp_with_regions.SUBREGION1=='NO',
+                                                               upsampled_SAR_and_IceSlabs_gdp_with_regions.raster_values<-7.128138),
+                                                'aquitard']=1
+
+upsampled_SAR_and_IceSlabs_gdp_with_regions.loc[np.logical_and(upsampled_SAR_and_IceSlabs_gdp_with_regions.SUBREGION1=='NE',
+                                                               upsampled_SAR_and_IceSlabs_gdp_with_regions.raster_values<-6.259047),
+                                                'aquitard']=1
+
+#Where upsampled_SAR_and_IceSlabs_gdp_with_regions.aquitard is nan, assign a 0 (=non-efficient aquitard)
+upsampled_SAR_and_IceSlabs_gdp_with_regions.loc[upsampled_SAR_and_IceSlabs_gdp_with_regions.aquitard.isna(),'aquitard']=0
+
+#Display on aquitard map
+ax1.scatter(upsampled_SAR_and_IceSlabs_gdp.lon_3413,upsampled_SAR_and_IceSlabs_gdp.lat_3413,c='magenta',s=1)
+ax1.scatter(upsampled_SAR_and_IceSlabs_gdp_with_regions.lon_3413,upsampled_SAR_and_IceSlabs_gdp_with_regions.lat_3413,c=upsampled_SAR_and_IceSlabs_gdp_with_regions['aquitard'],s=0.5,cmap='Reds_r')
+
+#Display the ice thickness distributions
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_SAR = plt.subplot(gs[0:10, 0:6])
+sns.violinplot(data=pd.DataFrame(upsampled_SAR_and_IceSlabs_gdp_with_regions.to_dict()),
+               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_SAR)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+ax_SAR.set_xlabel('Ice Thickness [m]')
+ax_SAR.set_ylabel('Region')
+ax_SAR.set_title('GrIS-wide - 0m slab is missing here!')
 
 
-### Perform extraction of cumulative hydrology at ice slabs sampling points ###
-#No need to extract aquitard, we can just apply the values per region!
+
+###################### Load ice slabs with Cumulative hydro dataset ######################
+#Path to data
+path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/'
+#List all the files in the folder
+list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
+#Define empty dataframe
+upsampled_CumHydro_and_IceSlabs=pd.DataFrame()
+#Loop over all the files
+for indiv_file in list_composite:
+    print(indiv_file)
+    #Open the individual file
+    indiv_csv=pd.read_csv(path_CumHydro_And_IceThickness+indiv_file)    
+    #Upsample data: where index_right is identical (i.e. for each CumHydro cell), keep a single value of CumHydro and average the ice content
+    indiv_upsampled_CumHydro_and_IceSlabs=indiv_csv.groupby('index_right').mean()  
+    #Append the data to each other
+    upsampled_CumHydro_and_IceSlabs=pd.concat([upsampled_CumHydro_and_IceSlabs,indiv_upsampled_CumHydro_and_IceSlabs])    
+###################### Load ice slabs with Cumulative hydro dataset ######################
+
+import matplotlib as mpl
+
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_CumHydro_Thickness = plt.subplot(gs[0:10, 0:6])
+ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs.raster_values,
+                             upsampled_CumHydro_and_IceSlabs['20m_ice_content_m'],cmap='magma_r',bins=50,norm=mpl.colors.LogNorm())#,cmax=upsampled_CumHydro_and_IceSlabs.raster_values.quantile(0.5))
 
 
-#Load ice slabs dataset
-### ------------------------- Load df_2010_2018 --------------------------- ###
-#Load 2010-2018 clipped to polygons high estimate datatset
-f_20102018_high_cleaned = open(path_jullienetal2023+'final_excel/high_estimate/clipped/df_20102018_with_elevation_high_estimate_rignotetalregions_cleaned', "rb")
-df_20102018_high_cleaned = pickle.load(f_20102018_high_cleaned)
-f_20102018_high_cleaned.close
-### ------------------------- Load df_2010_2018 --------------------------- ###
+#Upsampling is needed! Resolution cumulative raster= 30x30. Resolution SAR and aquitard = 40x40 -> Make it match at 120 m resolution
 
-#Upsampling is needed. Attention! check spatial resolution of cumulative hydrology and SAR
-#Resolution cumulative raster= 30x30. Resolution SAR and aquitard = 40x40 -> Make it match at 120 m resolution
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

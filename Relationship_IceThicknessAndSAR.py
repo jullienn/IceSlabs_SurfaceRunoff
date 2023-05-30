@@ -350,7 +350,7 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle('2019 - 2 years running slabs')
 ######################## Plot with 0m thick ice slabs #########################
 
-pdb.set_trace()
+#pdb.set_trace()
 
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -428,7 +428,7 @@ plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRun
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
-#pdb.set_trace()
+pdb.set_trace()
 
 ###############################################################################
 ###                                   SAR                                   ###
@@ -507,6 +507,7 @@ for indiv_box in range(4,32):
     except FileNotFoundError:
         print('No below')
 
+pdb.set_trace()
 ### For boxes which share different regions, perform intersection with GrIS drainage bassins ###
 #Reunite all the sectors into one single dataframe
 SAR_all_sectors=pd.concat([above_all,in_between_all,within_all,below_all])
@@ -740,6 +741,8 @@ for indiv_file in list_composite:
     ### SECTORS ###
 ########### Load ice slabs with SAR dataset and identify the sector ###########
 
+pdb.set_trace()
+
 ################### Relationship using data in sectors only ###################
 #Prepare plot
 fig = plt.figure()
@@ -776,10 +779,7 @@ FS_pd=pd.DataFrame(data={'Station': ['FS2', 'FS4', 'FS5'], '10m_ice_content_%': 
 display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,FS_pd)
 #Conclusion: I think this is hard to derive a relationship between SAR and ice thickness
 
-
 ################### Relationship using data in sectors only ###################
-
-
 pdb.set_trace()
 
 ############### Relationship using the whole ice slabs dataset ###############
