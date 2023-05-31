@@ -156,6 +156,7 @@ crs_proj4 = crs.proj4_init
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 #Load SAR data
+SAR_N_00_00_EW = rxr.open_rasterio(path_SAR+'ref_EW_HV_2017_2018_32_106_40m_ASCDESC_N_nscenes0_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
 SAR_N_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000000000.tif',masked=True).squeeze()#No need to reproject satelite image
 SAR_N_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_N_manual-0000000000-0000023296.tif',masked=True).squeeze()
 SAR_NW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000000000.tif',masked=True).squeeze()
@@ -173,30 +174,92 @@ ax1 = plt.subplot(projection=crs)
 #Display coastlines
 ax1.coastlines(edgecolor='black',linewidth=0.075)
 
-'''
-#Perform intersection between SAR data and GrIs drainage bassins, and display the aquitard results
-intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-10.201291,-9.077484)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-10.201291,-9.077484)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-10.353483,-7.742007)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-10.353483,-7.742007)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-11.245815,-8.926942)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NW_rignotetal,ax1,-11.245815,-8.926942)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-10.186774,-7.128138)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-10.186774,-7.128138)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-8.31114,-6.259047)
 
 '''
+--- SW ---
+- Above
+0.25   -7.973435
+0.50   -7.243513
+0.75   -6.613111
+- Within
+0.25    -9.74725
+0.50   -9.196233
+0.75   -8.638897
+- Below
+0.25   -10.226363
+0.50    -9.654804
+0.75    -9.110144
+
+--- CW ---
+- Above
+0.25   -6.131196
+0.50   -5.750285
+0.75   -5.419163
+- Within
+0.25   -9.191771
+0.50   -8.053114
+0.75   -7.038067
+- Below
+0.25   -10.469379
+0.50    -9.074578
+0.75     -7.82364
+
+--- NW ---
+- Above
+0.25   -7.991582
+0.50   -6.810143
+0.75   -5.905346
+- Within
+0.25   -10.610457
+0.50    -9.192882
+0.75    -8.266375
+- Below
+0.25   -11.335603
+0.50   -10.204542
+0.75    -8.982688
+
+--- NO ---
+- Above
+0.25   -5.820288
+0.50   -5.166023
+0.75   -4.389923
+- Within
+0.25   -8.500205
+0.50   -7.081633
+0.75   -6.104299
+- Below
+0.25     -9.9055
+0.50   -8.558269
+0.75   -7.194321
+
+--- NE ---
+- Above
+0.25   -5.696267
+0.50   -4.993743
+0.75   -4.297798
+- Within
+0.25   -7.451725
+0.50   -6.661402
+0.75   -5.715943
+- Below
+0.25   -8.455717
+0.50   -7.189671
+0.75   -6.329797
+'''
+
+pdb.set_trace()
 
 #quantile 0.75 of below to quantile 0.75 of within
-intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.077484,-8.653624,'aquitard_SW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.077484,-8.653624,'aquitard_SW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745,'aquitard_CW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-7.742007,-7.060745,'aquitard_CW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-8.926942,-8.22071,'aquitard_NW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NW_rignotetal,ax1,-8.926942,-8.22071,'aquitard_NW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00,NO_rignotetal,ax1,-7.128138,-6.249159,'aquitard_NO_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.128138,-6.249159,'aquitard_NO_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.259047,-5.716195,'aquitard_NE',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.110144,-8.638897,'aquitard_SW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,-9.110144,-8.638897,'aquitard_SW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,-7.82364,-7.038067,'aquitard_CW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,-7.82364,-7.038067,'aquitard_CW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,-8.982688,-8.266375,'aquitard_NW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NW_rignotetal,ax1,-8.982688,-8.266375,'aquitard_NW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NO_rignotetal,ax1,-7.194321,-6.104299,'aquitard_NO_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.194321,-6.104299,'aquitard_NO_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NE_rignotetal,ax1,-6.329797,-5.715943,'aquitard_NE_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.329797,-5.715943,'aquitard_NE_2',save_aquitard_true)
 
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9bc9a',edgecolor='none')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
@@ -223,13 +286,11 @@ ax1.axis('off')
 ax1.set_xlim(-642397, 1105201)
 ax1.set_ylim(-3366273, -784280)
 
-pdb.set_trace()
-
-'''
 #Save the figure
 plt.savefig(path_local+'/SAR_and_IceThickness/Logistic_aquitard_map_2019_q0.75_below_and_within.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
+
+pdb.set_trace()
 
 ############################################################################
 ########################### Aquitard properties ###########################

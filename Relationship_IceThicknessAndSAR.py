@@ -210,7 +210,7 @@ def display_2d_histogram(df_to_display,FS_display,method):
         xdata = np.array(df_to_display_normalised['normalized_raster'])
         ydata = np.array(df_to_display_normalised['20m_ice_content_m'])       
 
-        ax_GrIS.plot(xdata, deg_n(xdata, 1,-2),'r',label='manual fit: y = 1.5*x^(-2.5)')
+        ax_GrIS.plot(xdata, deg_n(xdata, 1.5,-2.5),'b',label='manual fit: y = 1.5*x^(-2.5)')
         '''
         popt, pcov = curve_fit(deg_n, xdata, ydata,p0=[1.5,-2.5])#,bounds=([0,-1,-4],[2,1,2]))
         ax_GrIS.plot(xdata, deg_n(xdata, *popt))#,'b',label='automatic fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
