@@ -20,11 +20,18 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         ax_plot.axvline(x=np.nanquantile(iceslabs_below['20m_ice_content_m'],0.5),linestyle='--',color='green')
         ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_below['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='green')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Display sample size
-        print(region,':\n')
-        print('   Above: ',len(iceslabs_above),'\n')
-        print('   Within: ',len(iceslabs_within),'\n')
-        print('   Below: ',len(iceslabs_below),'\n')
+        print(region)
+        print('-> Sample size:')
+        print('   Above: ',len(iceslabs_above))
+        print('   Within: ',len(iceslabs_within))
+        print('   Below: ',len(iceslabs_below))
+        print('-> Coefficient of variation:')
+        print('   Above: ',np.round(iceslabs_above['20m_ice_content_m'].std()/iceslabs_above['20m_ice_content_m'].mean(),4))
+        print('   Within: ',np.round(iceslabs_within['20m_ice_content_m'].std()/iceslabs_within['20m_ice_content_m'].mean(),4))
+        print('   Below: ',np.round(iceslabs_below['20m_ice_content_m'].std()/iceslabs_below['20m_ice_content_m'].mean(),4))
+        print(str())
         
+        print('\n')        
     else:
         ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
@@ -37,12 +44,31 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='green')
         ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='green')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        
+                
         #Display sample size
-        print(region,':\n')
-        print('   Above: ',len(iceslabs_above[iceslabs_above['key_shp']==region]),'\n')
-        print('   Within: ',len(iceslabs_within[iceslabs_within['key_shp']==region]),'\n')
-        print('   Below: ',len(iceslabs_below[iceslabs_below['key_shp']==region]),'\n')
+        print(region)
+        print('-> Sample size:')
+        print('   Above: ',len(iceslabs_above[iceslabs_above['key_shp']==region]))
+        print('   Within: ',len(iceslabs_within[iceslabs_within['key_shp']==region]))
+        print('   Below: ',len(iceslabs_below[iceslabs_below['key_shp']==region]))
+        print('-> Coefficient of variation:')
+        print('   Above: ',np.round(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].mean(),4))
+        print('   Within: ',np.round(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].mean(),4))
+        print('   Below: ',np.round(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].mean(),4))
+        print('-> Perform Welsch t-test above VS below:')
+                
+        above_to_test=iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].copy()
+        above_to_test=above_to_test[~above_to_test.isna()]
+        
+        below_to_test=iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].copy()
+        below_to_test=below_to_test[~below_to_test.isna()]
+        
+        #Perform a Welsch's t test when we have no normality, no equal variance
+        #Perform a Yuen's t test when we have no normality, no equal variance, and tailed distribution - https://www.youtube.com/watch?v=D_dZyUpgGkI
+        #According to scipy doc, "Trimming is recommended if the underlying distribution is long-tailed or contaminated with outliers"
+        #Should I perform a Yuen's t-test? If yes, ass in the ttest_ind() the arguemtn trim = 0.x, where x represents the percentage of data in the extremetiy of the distribution to be excluded
+        print('  ',stats.ttest_ind(above_to_test,below_to_test,equal_var=False))#, trim=.1))#If negative t statistic return, this means the mean of above is less than the mean of below. If p < alpha (alpha being the significance level), then the difference between the two distributions is significantly different at the alpha level.
+        print('\n')
     
     #Set x lims
     ax_plot.set_xlim(-0.5,20)
@@ -243,6 +269,7 @@ import rioxarray as rxr
 import os
 import matplotlib as mpl
 from scipy.optimize import curve_fit
+from scipy import stats
 
 composite='TRUE'
 radius=500
@@ -772,9 +799,10 @@ ax_distrib.set_xlabel('Signal strength [dB]')
 ax_distrib.set_ylabel('Density')
 ax_distrib.legend()
 ax_distrib.set_title('GrIS-wide')
+'''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_HistoGrIS_SAR_cleanedxytpdV3.png',dpi=500)
-
+'''
 
 #Display figure distribution in different regions
 fig, (ax_distrib_SW,ax_distrib_CW,ax_distrib_NW,ax_distrib_NO,ax_distrib_NE) = plt.subplots(5,1)  
@@ -785,9 +813,10 @@ hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NO'],'NO',ax_distrib_NO)
 hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NE'],'NE',ax_distrib_NE)
 ax_distrib_SW.legend()
 fig.suptitle('Regional separation')
+'''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_HistoRegions_SAR_cleanedxytpdV3.png',dpi=500)
-
+'''
 #Display boxplot
 #GrIS-wide
 fig = plt.figure(figsize=(10,6))
@@ -797,9 +826,10 @@ sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above')
 ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Category')
 ax_SAR.set_title('GrIS-wide')
+'''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_BoxplotGrIS_SAR_cleanedxytpdV3.png',dpi=500)
-
+'''
 
 #Regions
 fig = plt.figure(figsize=(10,6))
@@ -809,9 +839,10 @@ sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above')
 ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Category')
 ax_SAR.set_title('GrIS-wide')
+'''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_BoxplotRegions_SAR_cleanedxytpdV3.png',dpi=500)
-
+'''
 #Violin plot
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
@@ -821,9 +852,10 @@ sns.violinplot(data=pd.DataFrame(SAR_all_sectors[np.logical_or((SAR_all_sectors.
 ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Region')
 ax_SAR.set_title('GrIS-wide')
+'''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_ViolinPlotRegions_SAR_AboveBelow_cleanedxytpdV3.png',dpi=500)
-
+'''
 
 #Display above, within and below violin plot!
 df_except_InBetween=SAR_all_sectors.drop(SAR_all_sectors[SAR_all_sectors.sector=='InBetween'].index.to_numpy()).copy()
@@ -836,8 +868,10 @@ sns.violinplot(data=pd.DataFrame(df_except_InBetween.to_dict()),
 ax_SAR.set_xlabel('Signal strength [dB]')
 ax_SAR.set_ylabel('Region')
 ax_SAR.set_title('GrIS-wide')
+'''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_ViolinPlotRegions_SAR_cleanedxytpdV3.png',dpi=500)
+'''
 ############################# Sectors - 2019 MVRL #############################
 
 #Display SAR sectorial summary statistics
@@ -881,11 +915,6 @@ print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all
 print('- Below')
 print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
 
-'''
-from scipy import stats
-df_for_ttest=SAR_all_sectors[SAR_all_sectors.region=='SW'].copy()
-stats.ttest_ind(df_for_ttest[df_for_ttest.sector=='Above'].SAR, df_for_ttest[df_for_ttest.sector=='Below'].SAR, axis=0, equal_var=True, nan_policy='raise')
-'''
 
 '''
 --- SW ---
