@@ -117,7 +117,7 @@ GrIS_mask=gpd.read_file(path_rignotetal2016_GrIS+'GRE_IceSheet_IMBIE2/GRE_IceShe
 #load 2010-2018 ice slabs high end from Jullien et al., (2023)
 iceslabs_20102018_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefiles/iceslabs_jullien_highend_20102018.shp')
 ### -------------------------- Load shapefiles --------------------------- ###
-'''
+
 ### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
 path_aquifers=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/firn_aquifers_miege/'
 df_firn_aquifer_all=pd.DataFrame()
@@ -133,7 +133,10 @@ points=transformer.transform(np.asarray(df_firn_aquifer_all["LONG"]),np.asarray(
 df_firn_aquifer_all['lon_3413']=points[0]
 df_firn_aquifer_all['lat_3413']=points[1]
 ### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
-'''
+
+#Open dry snow zone mask created on QGIS based on aquitard maps
+DrySnowZoneMask=gpd.read_file(path_data+'aquitard/filter_dry_snow_zone.shp')
+
 #Open Boxes from Tedstone and Machguth (2022)
 Boxes_Tedstone2022=gpd.read_file(path_data+'Boxes_Tedstone2022/boxes.shp')
 
@@ -261,6 +264,9 @@ intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,-7.194321,-6.104299,'
 intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NE_rignotetal,ax1,-6.329797,-5.715943,'aquitard_NE_1',save_aquitard_true)
 intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.329797,-5.715943,'aquitard_NE_2',save_aquitard_true)
 
+#Display dry snow zone mask
+DrySnowZoneMask.plot(ax=ax1,facecolor='#f7fbff',edgecolor='none')
+
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9bc9a',edgecolor='none')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 
@@ -269,10 +275,10 @@ GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
 
 #Display 2010-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='none',edgecolor='#ba2b2b')
-'''
+
 #Display firn aquifers Miège et al., 2016
 ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=0.01,zorder=2)
-'''
+
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
 gl=ax1.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
@@ -286,9 +292,11 @@ ax1.axis('off')
 ax1.set_xlim(-642397, 1105201)
 ax1.set_ylim(-3366273, -784280)
 
+'''
 #Save the figure
 plt.savefig(path_local+'/SAR_and_IceThickness/Logistic_aquitard_map_2019_q0.75_below_and_within.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
 
 pdb.set_trace()
 
