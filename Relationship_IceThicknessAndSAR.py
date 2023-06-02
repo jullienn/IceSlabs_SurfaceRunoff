@@ -131,7 +131,29 @@ def hist_regions(df_to_plot,region_to_plot,ax_region):
     ax_region.set_xlabel('Signal strength [dB]')
     ax_region.set_ylabel('Density')
     ax_region.text(-19.8,0.2,region_to_plot)
-
+    
+    
+    ### Should I test for normality, and if normal then perform student t-test???
+    #Display sample size
+    print(region_to_plot)
+    print('-> Sample size:')
+    print('   Above: ',len(df_to_plot[df_to_plot.sector=='Above']['SAR']))
+    print('   Below: ',len(df_to_plot[df_to_plot.sector=='Below']['SAR']))
+    print('-> Coefficient of variation:')
+    print('   Above: ',np.round(df_to_plot[df_to_plot.sector=='Above']['SAR'].std()/df_to_plot[df_to_plot.sector=='Above']['SAR'].mean(),4))
+    print('   Below: ',np.round(df_to_plot[df_to_plot.sector=='Below']['SAR'].std()/df_to_plot[df_to_plot.sector=='Below']['SAR'].mean(),4))
+    print('-> Perform Welsch t-test above VS below:')
+            
+    above_to_test=df_to_plot[df_to_plot.sector=='Above']['SAR'].copy()
+    above_to_test=above_to_test[~above_to_test.isna()]
+    
+    below_to_test=df_to_plot[df_to_plot.sector=='Below']['SAR'].copy()
+    below_to_test=below_to_test[~below_to_test.isna()]
+    
+    #Perform a Welsch's t test when we have no normality, no equal variance
+    print('  ',stats.ttest_ind(above_to_test,below_to_test,equal_var=False))#If negative t statistic return, this means the mean of above is less than the mean of below. If p < alpha (alpha being the significance level), then the difference between the two distributions is significantly different at the alpha level.
+    print('\n')
+    
     return
 
     
@@ -759,6 +781,9 @@ SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.
 SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.rename(columns={"SUBREGION1":"region"})
 #fill in the SAR_all_sectors dataframe the identified regions
 SAR_all_sectors.loc[index_shared,'region']=SAR_all_sectors_shared_gdp_with_regions.region
+
+pdb.set_trace()
+
 '''
 #Make sure identifcation went well - yes, it performs perfectly! Rechecked on May 31, all good :)
 fig = plt.figure()
@@ -804,6 +829,7 @@ ax_distrib.set_title('GrIS-wide')
 plt.savefig(path_data+'SAR_sectors/Composite2019_HistoGrIS_SAR_cleanedxytpdV3.png',dpi=500)
 '''
 
+print('--- SAR ---')
 #Display figure distribution in different regions
 fig, (ax_distrib_SW,ax_distrib_CW,ax_distrib_NW,ax_distrib_NO,ax_distrib_NE) = plt.subplots(5,1)  
 hist_regions(SAR_all_sectors[SAR_all_sectors.region=='SW'],'SW',ax_distrib_SW)

@@ -53,6 +53,22 @@ poly_2016=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2016.shp')
 poly_2019=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2019.shp')
 ### -------------------------- Load shapefiles --------------------------- ###
 
+### ---------------------------- Load xytpd ------------------------------ ###
+df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd.csv',delimiter=',',decimal='.')
+### ---------------------------- Load xytpd ------------------------------ ###
+
+### -------------------------- Load CumHydro ----------------------------- ###
+#Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+CumHydro = rxr.open_rasterio(path_local+'data/master_maps/'+'master_map_GrIS_mean.vrt',
+                             masked=True).squeeze() #No need to reproject satelite image
+#Extract x and y coordinates of satellite image
+x_coord_CumHydro=np.asarray(CumHydro.x)
+y_coord_CumHydro=np.asarray(CumHydro.y)
+### -------------------------- Load CumHydro ----------------------------- ###
+
 ### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
 path_aquifers=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/firn_aquifers_miege/'
 df_firn_aquifer_all=pd.DataFrame()
@@ -140,13 +156,115 @@ plt.show()
 scale_bar(ax1, (0.7, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, rotation of text
 #by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
 
-pdb.set_trace()
-
+'''
 #Save the figure
 plt.savefig(path_switchdrive+'RT3/figures/fig_IceSlabs_MVRL/fig_IceSlabs_MVRL.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
+pdb.set_trace()
+plt.close()
 
+#Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
+df_xytpd_2012=df_xytpd_all[df_xytpd_all.year==2012].copy()
+df_xytpd_2019=df_xytpd_all[df_xytpd_all.year==2019].copy()
 
+elevation_differences=[]
 
+for indiv_box in df_xytpd_2012.box_id.unique():
+    
+    if (indiv_box in nogo_polygon):
+        print('Ignored polygon, continue')
+        continue
+    
+    print(indiv_box)
+    
+    #Select 2012 and set index as slice_id to match dataframes
+    df_xytpd_2012_indiv_box=df_xytpd_2012[df_xytpd_2012.box_id==indiv_box].copy()
+    df_xytpd_2012_indiv_box=df_xytpd_2012_indiv_box.set_index('slice_id')
+    
+    #Select 2019 and set index as slice_id to match dataframes
+    df_xytpd_2019_indiv_box=df_xytpd_2019[df_xytpd_2019.box_id==indiv_box].copy()
+    df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box.set_index('slice_id')
+    
+    #spatial join
+    joined_df=df_xytpd_2012_indiv_box.join(df_xytpd_2019_indiv_box,lsuffix='_2012',rsuffix='_2019')
+    
+    #Perform the difference in elevation
+    elevation_differences=np.append(elevation_differences,(joined_df.elev_2012-joined_df.elev_2019).to_numpy())
+    #If negative difference, this means elev_2012 < elev_2019
+    
+    #Load cumulative hydrology
+    #Define bounds of Emaxs in this box
+    x_min=df_xytpd_2012_indiv_box.x.min()-5e4
+    x_max=df_xytpd_2012_indiv_box.x.max()+5e4
+    y_min=df_xytpd_2012_indiv_box.y.min()-1e4
+    y_max=df_xytpd_2012_indiv_box.y.max()+1e4
+    #Extract coordinates of cumulative hydrology image within bounds
+    logical_x_coord_within_bounds=np.logical_and(x_coord_CumHydro>=x_min,x_coord_CumHydro<=x_max)
+    x_coord_within_bounds=x_coord_CumHydro[logical_x_coord_within_bounds]
+    logical_y_coord_within_bounds=np.logical_and(y_coord_CumHydro>=y_min,y_coord_CumHydro<=y_max)
+    y_coord_within_bounds=y_coord_CumHydro[logical_y_coord_within_bounds]
+    #Define extents based on the bounds
+    extent_CumHydro = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+    
+    #Display
+    #Prepare plot
+    fig = plt.figure()
+    fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+    gs = gridspec.GridSpec(6, 10)
+    gs.update(wspace=2)
+    axcheck = plt.subplot(gs[0:6, 0:5],projection=crs)
+    fig.suptitle('Box ID '+str(indiv_box))
 
+    #Display cumulative hydrology in the background
+    axcheck.imshow(CumHydro[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_CumHydro, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=50,vmax=250)
+    #Display coastlines
+    axcheck.coastlines(edgecolor='black',linewidth=0.075)
+    #Display boxes not processed
+    Boxes_Tedstone2022.plot(ax=axcheck,color='none',edgecolor='black')
+    #Display current box
+    Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box].plot(ax=axcheck,color='none',edgecolor='red')
+    #Display Rignot and Mouginot regions edges
+    GrIS_drainage_bassins.plot(ax=axcheck,facecolor='none',edgecolor='black')
+    
+    #Display MVRL retrievals
+    axcheck.scatter(df_xytpd_2012_indiv_box.x,df_xytpd_2012_indiv_box.y,c=df_xytpd_2012_indiv_box.index,s=100)
+    axcheck.scatter(df_xytpd_2019_indiv_box.x,df_xytpd_2019_indiv_box.y,c=df_xytpd_2019_indiv_box.index,s=50,edgecolor='black')
+    
+    axcheck.set_xlim(x_min,x_max)
+    axcheck.set_ylim(y_min,y_max)
+        
+    #Custom legend myself - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+    legend_elements = [Line2D([0], [0], color='yellow', marker='o',linestyle='None', label='2012 MVRL'),
+                       Line2D([0], [0], color='yellow', marker='o',linestyle='None', markeredgecolor='black',label='2019 MVRL')]
+    axcheck.legend(handles=legend_elements,loc='lower left')
+    
+    #Display the difference
+    axcheckdiff = plt.subplot(gs[0:6, 5:10])
+    (joined_df.elev_2012-joined_df.elev_2019).plot(ax=axcheckdiff)
+    #Display median and mean as horizontal lines
+    axcheckdiff.axhline(y=(joined_df.elev_2012-joined_df.elev_2019).mean(),linestyle='dashed',color='red')
+    axcheckdiff.axhline(y=(joined_df.elev_2012-joined_df.elev_2019).median(),linestyle='dashed',color='green')
 
+    #Custom legend myself - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+    legend_elements = [Line2D([0], [0], color='red',linestyle='dashed', label='Mean'),
+                       Line2D([0], [0], color='green',linestyle='dashed', label='Median')]
+    axcheckdiff.legend(handles=legend_elements,loc='upper left')
+    
+    axcheckdiff.set_xlabel('Slice id')
+    axcheckdiff.set_ylabel('Elev 2012 - 2019')
+    axcheckdiff.set_title('Elevation difference (2012 - 2019)')
+    
+    #Maximize figure size
+    figManager = plt.get_current_fig_manager()
+    figManager.window.showMaximized()
+    
+    #Save figure
+    plt.savefig(path_local+'MVRL/Difference_elevation_2012_2019_box_'+str(indiv_box)+'.png',dpi=300,bbox_inches='tight')
+    #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    
+    #Possibly filter out outliers?? 300 m difference is probably one
+    plt.close()    
+
+print('--- End of code ---')
