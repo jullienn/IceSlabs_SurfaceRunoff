@@ -208,7 +208,7 @@ scale_bar(ax1, (0.7, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, 
 plt.savefig(path_switchdrive+'RT3/figures/fig_IceSlabs_MVRL/fig_IceSlabs_MVRL.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
-pdb.set_trace()
+#pdb.set_trace()
 plt.close()
 
 #Transform xytpd dataframe into geopandas dataframe for distance calculation
@@ -220,6 +220,7 @@ df_xytpd_2019=df_xytpd_all[df_xytpd_all_gpd.year==2019].copy()
 
 elevation_differences=[]
 distance_differences=[]
+signed_distances=[]
 
 for indiv_box in df_xytpd_2012.box_id.unique():
     
@@ -228,6 +229,9 @@ for indiv_box in df_xytpd_2012.box_id.unique():
         continue
     
     print(indiv_box)
+    
+    #Set an empty pandas dataframe to store results of distance and elevation difference
+    indiv_elev_dist=pd.DataFrame()
     
     #Select 2012 and set index as slice_id to match dataframes
     df_xytpd_2012_indiv_box=df_xytpd_2012[df_xytpd_2012.box_id==indiv_box].copy()
@@ -241,16 +245,25 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     joined_df=df_xytpd_2012_indiv_box.join(df_xytpd_2019_indiv_box,lsuffix='_2012',rsuffix='_2019')
     
     #Perform the difference in elevation
-    elevation_differences=np.append(elevation_differences,(joined_df.elev_2012-joined_df.elev_2019).to_numpy())
+    indiv_elev_diff=(joined_df.elev_2012-joined_df.elev_2019)
+    elevation_differences=np.append(elevation_differences,indiv_elev_diff.to_numpy())
     #If negative difference, this means elev_2012 < elev_2019
         
     #Calculate distance difference between each slice_id point
     df_xytpd_2012_indiv_box_for_dist=gpd.GeoSeries(df_xytpd_2012_indiv_box.geometry)
     df_xytpd_2019_indiv_box_for_dist=gpd.GeoSeries(df_xytpd_2019_indiv_box.geometry)
-    indiv_dist_diff=df_xytpd_2012_indiv_box_for_dist.distance(df_xytpd_2019_indiv_box_for_dist,align=True).to_numpy()
+    indiv_dist_diff=df_xytpd_2012_indiv_box_for_dist.distance(df_xytpd_2019_indiv_box_for_dist,align=True)
     #Store the distance
-    distance_differences=np.append(distance_differences,indiv_dist_diff)
+    distance_differences=np.append(distance_differences,indiv_dist_diff.to_numpy())
     
+    #Assign the sign to the distance calculation. We calculate elev 2012 - elev 2019. If elev 2012 > elev 2019, then distance is positive.
+    indiv_elev_dist['elev_diff']=indiv_elev_diff
+    indiv_elev_dist['dist_diff']=indiv_dist_diff
+    indiv_elev_dist['signed_dist_diff']=indiv_dist_diff*np.sign(indiv_elev_diff)
+    #Store the signed distance
+    signed_distances=np.append(signed_distances,indiv_elev_dist['signed_dist_diff'].to_numpy())
+    #If negative difference, this means elev_2012 < elev_2019
+
     #Load cumulative hydrology
     #Define bounds of Emaxs in this box
     x_min=df_xytpd_2012_indiv_box.x.min()-5e4
@@ -283,7 +296,7 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     #Display boxes not processed
     Boxes_Tedstone2022.plot(ax=axcheck,color='none',edgecolor='black')
     #Display current box
-    Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box].plot(ax=axcheck,color='none',edgecolor='red')
+    Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box].plot(ax=axcheck,color='none',edgecolor='magenta')
     #Display Rignot and Mouginot regions edges
     GrIS_drainage_bassins.plot(ax=axcheck,facecolor='none',edgecolor='black')
     
@@ -293,10 +306,19 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     
     axcheck.set_xlim(x_min,x_max)
     axcheck.set_ylim(y_min,y_max)
-        
+    
+    #Display a red line linking 2012 and 2019 xytpd having the same slice_id
+    for indiv_index in indiv_elev_dist.index:
+        if (np.isnan(indiv_elev_dist.loc[indiv_index].elev_diff)):
+            #Nan, continue
+            continue
+        axcheck.plot([df_xytpd_2012_indiv_box.loc[indiv_index].x,df_xytpd_2019_indiv_box.loc[indiv_index].x],
+                     [df_xytpd_2012_indiv_box.loc[indiv_index].y,df_xytpd_2019_indiv_box.loc[indiv_index].y],color='red')
+    
     #Custom legend myself - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
     legend_elements = [Line2D([0], [0], color='yellow', marker='o',linestyle='None', label='2012 MVRL'),
-                       Line2D([0], [0], color='yellow', marker='o',linestyle='None', markeredgecolor='black',label='2019 MVRL')]
+                       Line2D([0], [0], color='yellow', marker='o',linestyle='None', markeredgecolor='black',label='2019 MVRL'),
+                       Line2D([0], [0], color='red',label='2012-2019 linked slide_id')]
     axcheck.legend(handles=legend_elements,loc='lower left')
     
     #Display the elevation difference
@@ -312,31 +334,32 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     axcheck_elev.set_xlabel('Slice id')
     axcheck_elev.set_ylabel('Elevation 2012 - 2019 [m]')
     axcheck_elev.set_title('Elevation difference (2012 - 2019)')
-    
+        
     #Display the distance difference
     axcheck_dist = plt.subplot(gs[3:6, 5:10])
-    axcheck_dist.plot(indiv_dist_diff)
+    axcheck_dist.plot(indiv_elev_dist['signed_dist_diff'])
     #Display median and mean as horizontal lines
-    axcheck_dist.axhline(y=np.nanmean(indiv_dist_diff),linestyle='dashed',color='red')
-    axcheck_dist.axhline(y=np.nanmedian(indiv_dist_diff),linestyle='dashed',color='green')    
+    axcheck_dist.axhline(y=indiv_elev_dist['signed_dist_diff'].mean(),linestyle='dashed',color='red')
+    axcheck_dist.axhline(y=indiv_elev_dist['signed_dist_diff'].quantile(0.5),linestyle='dashed',color='green')    
     axcheck_dist.set_xlabel('Slice id')
-    axcheck_dist.set_ylabel('Distance 2012 VS 2019 [m]')
+    axcheck_dist.set_ylabel('Signed distance 2012 VS 2019 [m]')
     axcheck_dist.set_title('Distance difference (2012 - 2019)')
     
     #Maximize figure size
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-    '''
+        
     #Save figure
     plt.savefig(path_local+'MVRL/Difference_elevation_2012_2019_box_'+str(indiv_box)+'.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    '''
+    
     #Possibly filter out outliers? (e.g. 300 m difference is very likely one). Do not do it,maybe consider later on
     plt.close()
     
 #Display boxes summary
 display_summary(elevation_differences,'Elevation',10)
 display_summary(distance_differences,'Distance',100)
+display_summary(signed_distances,'Signed distance',100)
 
 
 print('--- End of code ---')
