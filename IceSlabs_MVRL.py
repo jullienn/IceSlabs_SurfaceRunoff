@@ -259,12 +259,56 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     #Maximize figure size
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-    
+    '''
     #Save figure
     plt.savefig(path_local+'MVRL/Difference_elevation_2012_2019_box_'+str(indiv_box)+'.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    '''
+    #Possibly filter out outliers? (e.g. 300 m difference is very likely one). Do not do it,maybe consider later on
+    plt.close()
     
-    #Possibly filter out outliers?? 300 m difference is probably one
-    plt.close()    
+#Display boxes summary
+pdb.set_trace()
+#Prepare plot
+fig = plt.figure()
+fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+gs = gridspec.GridSpec(6, 10)
+axsummary = plt.subplot(gs[0:6, 0:5])
+axsummary_distrib = plt.subplot(gs[0:3, 5:10])
+axsummary_boxplot = plt.subplot(gs[3:6, 5:10])
+gs.update(wspace=2)
+gs.update(hspace=1)
+axsummary.plot(elevation_differences)
+axsummary.set_ylabel('Elevation difference 2012-2019 [m]')
+axsummary.axhline(y=np.nanmean(elevation_differences),linestyle='dashed',color='red')
+axsummary.axhline(y=np.nanmedian(elevation_differences),linestyle='dashed',color='green')
+axsummary_distrib.hist(elevation_differences,density=True,bins=np.arange(np.nanmin(elevation_differences),np.nanmax(elevation_differences),10))#10 m bin width
+axsummary_distrib.set_xlabel('Elevation difference 2012-2019 [m]')
+axsummary_distrib.set_ylabel('Density [-]')
+axsummary_boxplot.boxplot(elevation_differences[~np.isnan(elevation_differences)],vert=False)
+axsummary_boxplot.set_xlabel('Elevation difference 2012-2019 [m]')
+
+#Display the same but with seaborn
+fig = plt.figure()
+fig.set_size_inches(10, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+gs = gridspec.GridSpec(6, 5)
+axsummary_distrib = plt.subplot(gs[0:3, 0:5])
+axsummary_boxplot = plt.subplot(gs[3:6, 0:5])
+gs.update(hspace=1)
+sns.histplot(data=elevation_differences,ax=axsummary_distrib)
+axsummary_distrib.set_xlabel('Elevation difference 2012-2019 [m]')
+axsummary_distrib.set_ylabel('Count [-]')
+
+sns.boxplot(data=elevation_differences,orient="h",ax=axsummary_boxplot)#10 m bin width
+axsummary_boxplot.set_xlabel('Elevation difference 2012-2019 [m]')
+axsummary_boxplot.text(x=-1000,y=-0.3,s='q0.25:'+str(np.round(np.nanquantile(elevation_differences,0.25),1)),color='black',fontsize=20)
+axsummary_boxplot.text(x=-1000,y=-0.2,s='q0.50:'+str(np.round(np.nanquantile(elevation_differences,0.50),1)),color='black',fontsize=20)
+axsummary_boxplot.text(x=-1000,y=-0.1,s='q0.75:'+str(np.round(np.nanquantile(elevation_differences,0.75),1)),color='black',fontsize=20)
+
+#Median of differnece is 0 => identical MVRL locations.
+#Distribution slightly skewed towards negative values -> elev_2019 > elev_2012
 
 print('--- End of code ---')
+
