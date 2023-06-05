@@ -5,6 +5,53 @@ Created on Wed May 17 08:33:47 2023
 @author: jullienn
 """
 
+
+def display_summary(vector_todisplay,type_metric,bin_dist):
+        
+    #Prepare plot
+    fig = plt.figure()
+    fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+    gs = gridspec.GridSpec(6, 10)
+    axsummary = plt.subplot(gs[0:6, 0:5])
+    axsummary_distrib = plt.subplot(gs[0:3, 5:10])
+    axsummary_boxplot = plt.subplot(gs[3:6, 5:10])
+    gs.update(wspace=2)
+    gs.update(hspace=1)
+    axsummary.plot(vector_todisplay)
+    axsummary.set_ylabel(type_metric+' difference 2012-2019 [m]')
+    axsummary.axhline(y=np.nanmean(vector_todisplay),linestyle='dashed',color='red')
+    axsummary.axhline(y=np.nanmedian(vector_todisplay),linestyle='dashed',color='green')
+    axsummary_distrib.hist(vector_todisplay,density=True,bins=np.arange(np.nanmin(vector_todisplay),np.nanmax(vector_todisplay),bin_dist))#10 m bin width
+    axsummary_distrib.set_xlabel(type_metric+' difference 2012-2019 [m]')
+    axsummary_distrib.set_ylabel('Density [-]')
+    axsummary_boxplot.boxplot(vector_todisplay[~np.isnan(vector_todisplay)],vert=False)
+    axsummary_boxplot.set_xlabel(type_metric+' difference 2012-2019 [m]')
+    
+    #Display the same but with seaborn
+    fig = plt.figure()
+    fig.set_size_inches(10, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+    gs = gridspec.GridSpec(6, 5)
+    axsummary_distrib = plt.subplot(gs[0:3, 0:5])
+    axsummary_boxplot = plt.subplot(gs[3:6, 0:5])
+    gs.update(hspace=1)
+    sns.histplot(data=vector_todisplay,ax=axsummary_distrib)
+    axsummary_distrib.set_xlabel(type_metric+' difference 2012-2019 [m]')
+    axsummary_distrib.set_ylabel('Count [-]')
+    
+    sns.boxplot(data=vector_todisplay,orient="h",ax=axsummary_boxplot)#10 m bin width
+    axsummary_boxplot.set_xlabel(type_metric+' difference 2012-2019 [m]')
+    axsummary_boxplot.text(x=-1000,y=-0.3,s='q0.25: '+str(np.round(np.nanquantile(vector_todisplay,0.25),1)),color='black',fontsize=20)
+    axsummary_boxplot.text(x=-1000,y=-0.2,s='q0.50: '+str(np.round(np.nanquantile(vector_todisplay,0.50),1)),color='black',fontsize=20)
+    axsummary_boxplot.text(x=-1000,y=-0.1,s='q0.75: '+str(np.round(np.nanquantile(vector_todisplay,0.75),1)),color='black',fontsize=20)
+    
+    #Elevation:
+    #Median of differnece is 0 => identical MVRL locations.
+    #Distribution slightly skewed towards negative values -> elev_2019 > elev_2012
+
+    return
+
 import pandas as pd
 import numpy as np
 import pdb
@@ -164,11 +211,15 @@ plt.savefig(path_switchdrive+'RT3/figures/fig_IceSlabs_MVRL/fig_IceSlabs_MVRL.pn
 pdb.set_trace()
 plt.close()
 
+#Transform xytpd dataframe into geopandas dataframe for distance calculation
+df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
+
 #Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
-df_xytpd_2012=df_xytpd_all[df_xytpd_all.year==2012].copy()
-df_xytpd_2019=df_xytpd_all[df_xytpd_all.year==2019].copy()
+df_xytpd_2012=df_xytpd_all[df_xytpd_all_gpd.year==2012].copy()
+df_xytpd_2019=df_xytpd_all[df_xytpd_all_gpd.year==2019].copy()
 
 elevation_differences=[]
+distance_differences=[]
 
 for indiv_box in df_xytpd_2012.box_id.unique():
     
@@ -192,6 +243,13 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     #Perform the difference in elevation
     elevation_differences=np.append(elevation_differences,(joined_df.elev_2012-joined_df.elev_2019).to_numpy())
     #If negative difference, this means elev_2012 < elev_2019
+        
+    #Calculate distance difference between each slice_id point
+    df_xytpd_2012_indiv_box_for_dist=gpd.GeoSeries(df_xytpd_2012_indiv_box.geometry)
+    df_xytpd_2019_indiv_box_for_dist=gpd.GeoSeries(df_xytpd_2019_indiv_box.geometry)
+    indiv_dist_diff=df_xytpd_2012_indiv_box_for_dist.distance(df_xytpd_2019_indiv_box_for_dist,align=True).to_numpy()
+    #Store the distance
+    distance_differences=np.append(distance_differences,indiv_dist_diff)
     
     #Load cumulative hydrology
     #Define bounds of Emaxs in this box
@@ -214,6 +272,7 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
     gs = gridspec.GridSpec(6, 10)
     gs.update(wspace=2)
+    gs.update(hspace=1)
     axcheck = plt.subplot(gs[0:6, 0:5],projection=crs)
     fig.suptitle('Box ID '+str(indiv_box))
 
@@ -240,21 +299,29 @@ for indiv_box in df_xytpd_2012.box_id.unique():
                        Line2D([0], [0], color='yellow', marker='o',linestyle='None', markeredgecolor='black',label='2019 MVRL')]
     axcheck.legend(handles=legend_elements,loc='lower left')
     
-    #Display the difference
-    axcheckdiff = plt.subplot(gs[0:6, 5:10])
-    (joined_df.elev_2012-joined_df.elev_2019).plot(ax=axcheckdiff)
+    #Display the elevation difference
+    axcheck_elev = plt.subplot(gs[0:3, 5:10])
+    (joined_df.elev_2012-joined_df.elev_2019).plot(ax=axcheck_elev)
     #Display median and mean as horizontal lines
-    axcheckdiff.axhline(y=(joined_df.elev_2012-joined_df.elev_2019).mean(),linestyle='dashed',color='red')
-    axcheckdiff.axhline(y=(joined_df.elev_2012-joined_df.elev_2019).median(),linestyle='dashed',color='green')
-
+    axcheck_elev.axhline(y=(joined_df.elev_2012-joined_df.elev_2019).mean(),linestyle='dashed',color='red')
+    axcheck_elev.axhline(y=(joined_df.elev_2012-joined_df.elev_2019).median(),linestyle='dashed',color='green')
     #Custom legend myself - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
     legend_elements = [Line2D([0], [0], color='red',linestyle='dashed', label='Mean'),
                        Line2D([0], [0], color='green',linestyle='dashed', label='Median')]
-    axcheckdiff.legend(handles=legend_elements,loc='upper left')
+    axcheck_elev.legend(handles=legend_elements,loc='upper left')
+    axcheck_elev.set_xlabel('Slice id')
+    axcheck_elev.set_ylabel('Elevation 2012 - 2019 [m]')
+    axcheck_elev.set_title('Elevation difference (2012 - 2019)')
     
-    axcheckdiff.set_xlabel('Slice id')
-    axcheckdiff.set_ylabel('Elev 2012 - 2019')
-    axcheckdiff.set_title('Elevation difference (2012 - 2019)')
+    #Display the distance difference
+    axcheck_dist = plt.subplot(gs[3:6, 5:10])
+    axcheck_dist.plot(indiv_dist_diff)
+    #Display median and mean as horizontal lines
+    axcheck_dist.axhline(y=np.nanmean(indiv_dist_diff),linestyle='dashed',color='red')
+    axcheck_dist.axhline(y=np.nanmedian(indiv_dist_diff),linestyle='dashed',color='green')    
+    axcheck_dist.set_xlabel('Slice id')
+    axcheck_dist.set_ylabel('Distance 2012 VS 2019 [m]')
+    axcheck_dist.set_title('Distance difference (2012 - 2019)')
     
     #Maximize figure size
     figManager = plt.get_current_fig_manager()
@@ -268,47 +335,9 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     plt.close()
     
 #Display boxes summary
-pdb.set_trace()
-#Prepare plot
-fig = plt.figure()
-fig.set_size_inches(19, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(6, 10)
-axsummary = plt.subplot(gs[0:6, 0:5])
-axsummary_distrib = plt.subplot(gs[0:3, 5:10])
-axsummary_boxplot = plt.subplot(gs[3:6, 5:10])
-gs.update(wspace=2)
-gs.update(hspace=1)
-axsummary.plot(elevation_differences)
-axsummary.set_ylabel('Elevation difference 2012-2019 [m]')
-axsummary.axhline(y=np.nanmean(elevation_differences),linestyle='dashed',color='red')
-axsummary.axhline(y=np.nanmedian(elevation_differences),linestyle='dashed',color='green')
-axsummary_distrib.hist(elevation_differences,density=True,bins=np.arange(np.nanmin(elevation_differences),np.nanmax(elevation_differences),10))#10 m bin width
-axsummary_distrib.set_xlabel('Elevation difference 2012-2019 [m]')
-axsummary_distrib.set_ylabel('Density [-]')
-axsummary_boxplot.boxplot(elevation_differences[~np.isnan(elevation_differences)],vert=False)
-axsummary_boxplot.set_xlabel('Elevation difference 2012-2019 [m]')
+display_summary(elevation_differences,'Elevation',10)
+display_summary(distance_differences,'Distance',100)
 
-#Display the same but with seaborn
-fig = plt.figure()
-fig.set_size_inches(10, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(6, 5)
-axsummary_distrib = plt.subplot(gs[0:3, 0:5])
-axsummary_boxplot = plt.subplot(gs[3:6, 0:5])
-gs.update(hspace=1)
-sns.histplot(data=elevation_differences,ax=axsummary_distrib)
-axsummary_distrib.set_xlabel('Elevation difference 2012-2019 [m]')
-axsummary_distrib.set_ylabel('Count [-]')
-
-sns.boxplot(data=elevation_differences,orient="h",ax=axsummary_boxplot)#10 m bin width
-axsummary_boxplot.set_xlabel('Elevation difference 2012-2019 [m]')
-axsummary_boxplot.text(x=-1000,y=-0.3,s='q0.25:'+str(np.round(np.nanquantile(elevation_differences,0.25),1)),color='black',fontsize=20)
-axsummary_boxplot.text(x=-1000,y=-0.2,s='q0.50:'+str(np.round(np.nanquantile(elevation_differences,0.50),1)),color='black',fontsize=20)
-axsummary_boxplot.text(x=-1000,y=-0.1,s='q0.75:'+str(np.round(np.nanquantile(elevation_differences,0.75),1)),color='black',fontsize=20)
-
-#Median of differnece is 0 => identical MVRL locations.
-#Distribution slightly skewed towards negative values -> elev_2019 > elev_2012
 
 print('--- End of code ---')
 
