@@ -213,14 +213,19 @@ plt.close()
 
 #Transform xytpd dataframe into geopandas dataframe for distance calculation
 df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
+#Intersection between df_xytpd_all_gpd and GrIS drainage bassins, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+df_xytpd_all_gpd = gpd.sjoin(df_xytpd_all_gpd, GrIS_drainage_bassins, predicate='within')
+#Drop index_right
+df_xytpd_all_gpd=df_xytpd_all_gpd.drop(columns=["index_right"])
 
 #Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
-df_xytpd_2012=df_xytpd_all[df_xytpd_all_gpd.year==2012].copy()
-df_xytpd_2019=df_xytpd_all[df_xytpd_all_gpd.year==2019].copy()
+df_xytpd_2012=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2012].copy()
+df_xytpd_2019=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2019].copy()
 
 elevation_differences=[]
 distance_differences=[]
 signed_distances=[]
+summary_df=pd.DataFrame()
 
 for indiv_box in df_xytpd_2012.box_id.unique():
     
@@ -243,27 +248,34 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     
     #spatial join
     joined_df=df_xytpd_2012_indiv_box.join(df_xytpd_2019_indiv_box,lsuffix='_2012',rsuffix='_2019')
+    #If needed, it could be usefull to have this joined_df outside after the loop
     
     #Perform the difference in elevation
     indiv_elev_diff=(joined_df.elev_2012-joined_df.elev_2019)
     elevation_differences=np.append(elevation_differences,indiv_elev_diff.to_numpy())
     #If negative difference, this means elev_2012 < elev_2019
-        
+    
     #Calculate distance difference between each slice_id point
     df_xytpd_2012_indiv_box_for_dist=gpd.GeoSeries(df_xytpd_2012_indiv_box.geometry)
     df_xytpd_2019_indiv_box_for_dist=gpd.GeoSeries(df_xytpd_2019_indiv_box.geometry)
     indiv_dist_diff=df_xytpd_2012_indiv_box_for_dist.distance(df_xytpd_2019_indiv_box_for_dist,align=True)
     #Store the distance
     distance_differences=np.append(distance_differences,indiv_dist_diff.to_numpy())
-    
+        
     #Assign the sign to the distance calculation. We calculate elev 2012 - elev 2019. If elev 2012 > elev 2019, then distance is positive.
     indiv_elev_dist['elev_diff']=indiv_elev_diff
     indiv_elev_dist['dist_diff']=indiv_dist_diff
     indiv_elev_dist['signed_dist_diff']=indiv_dist_diff*np.sign(indiv_elev_diff)
+    #If region is the same for both 2012 and 2019, store the region name
+    joined_df.loc[joined_df.SUBREGION1_2012==joined_df.SUBREGION1_2019,"common_region"]=joined_df.loc[joined_df.SUBREGION1_2012==joined_df.SUBREGION1_2019,"SUBREGION1_2012"]
+    indiv_elev_dist['SUBREGION1']=joined_df["common_region"]
+    #Store this dataframe
+    summary_df=pd.concat([summary_df,indiv_elev_dist])
+    
     #Store the signed distance
     signed_distances=np.append(signed_distances,indiv_elev_dist['signed_dist_diff'].to_numpy())
     #If negative difference, this means elev_2012 < elev_2019
-
+        
     #Load cumulative hydrology
     #Define bounds of Emaxs in this box
     x_min=df_xytpd_2012_indiv_box.x.min()-5e4
@@ -334,7 +346,7 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     axcheck_elev.set_xlabel('Slice id')
     axcheck_elev.set_ylabel('Elevation 2012 - 2019 [m]')
     axcheck_elev.set_title('Elevation difference (2012 - 2019)')
-        
+    
     #Display the distance difference
     axcheck_dist = plt.subplot(gs[3:6, 5:10])
     axcheck_dist.plot(indiv_elev_dist['signed_dist_diff'])
@@ -348,19 +360,39 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     #Maximize figure size
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-        
+    '''
     #Save figure
     plt.savefig(path_local+'MVRL/Difference_elevation_2012_2019_box_'+str(indiv_box)+'.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    
+    '''
     #Possibly filter out outliers? (e.g. 300 m difference is very likely one). Do not do it,maybe consider later on
     plt.close()
-    
+
+#Reset index of summary_df
+summary_df.reset_index(inplace=True)
+
 #Display boxes summary
 display_summary(elevation_differences,'Elevation',10)
 display_summary(distance_differences,'Distance',100)
 display_summary(signed_distances,'Signed distance',100)
 
+#Display the violin plot of signed distances and elevation difference
+fig = plt.figure()
+fig.set_size_inches(7, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+gs = gridspec.GridSpec(6, 5)
+gs.update(hspace=1)
+axsummary_elev = plt.subplot(gs[0:3, 0:5])
+axsummary_signed_dist = plt.subplot(gs[3:6, 0:5])
+sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="signed_dist_diff",x="SUBREGION1",ax=axsummary_signed_dist,orient='v')
+sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="elev_diff",x="SUBREGION1",ax=axsummary_elev,orient='v')
+
+axsummary_elev.set_ylabel('Elevation difference 2012-2019 [m]')
+axsummary_elev.set_xlabel('Region')
+axsummary_elev.set_ylim(-500,500)
+axsummary_signed_dist.set_ylabel('Distance difference 2012-2019 [m]')
+axsummary_signed_dist.set_xlabel('Region')
+axsummary_signed_dist.set_ylim(-50000,50000)
 
 print('--- End of code ---')
 
