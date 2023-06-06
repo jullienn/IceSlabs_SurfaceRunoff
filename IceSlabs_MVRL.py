@@ -160,9 +160,9 @@ iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='#ba2b2b',edgecolor='#ba
 iceslabs_20102012_jullienetal2023.plot(ax=ax1,facecolor='#6baed6',edgecolor='#6baed6')
 
 #Display MVRL
-poly_2010.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1)
+#poly_2010.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1)
 poly_2012.plot(ax=ax1,facecolor='none',edgecolor='#9e9ac8',linewidth=1)
-poly_2016.plot(ax=ax1,facecolor='none',edgecolor='#756bb1',linewidth=1)
+#poly_2016.plot(ax=ax1,facecolor='none',edgecolor='#756bb1',linewidth=1)
 poly_2019.plot(ax=ax1,facecolor='none',edgecolor='#54278f',linewidth=1)
 
 #Display boxes not processed
@@ -393,6 +393,16 @@ axsummary_elev.set_ylim(-500,500)
 axsummary_signed_dist.set_ylabel('Distance difference 2012-2019 [m]')
 axsummary_signed_dist.set_xlabel('Region')
 axsummary_signed_dist.set_ylim(-50000,50000)
+
+#Display quantiles in the difference regions of signed distances and elevation difference.
+print('signed_dist_diff:')
+print(summary_df.groupby(["SUBREGION1"]).quantile([0.25,0.5,0.75]).signed_dist_diff)
+print(' ')
+print('elev_diff:')
+print(summary_df.groupby(["SUBREGION1"]).quantile([0.25,0.5,0.75]).elev_diff)
+print(' ')
+print('Count:')
+print(summary_df.groupby(["SUBREGION1"]).count())
 
 print('--- End of code ---')
 
