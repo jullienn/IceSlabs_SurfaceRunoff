@@ -74,6 +74,10 @@ path_jullienetal2023=path_switchdrive+'RT1/final_dataset_2002_2018/'
 path_data=path_switchdrive+'RT3/data/'
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
 
+#Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
+#This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
+my_pal = {'SW': "#9e9ac8", 'CW': "#9e9ac8", 'NW': "#9e9ac8", 'NO': "#9e9ac8", 'NE': "#9e9ac8"}
+
 ### -------------------------- Load shapefiles --------------------------- ###
 #Load Rignot et al., 2016 Greenland drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS+'GRE_Basins_IMBIE2_v1.3/GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp',rows=slice(51,57,1)) #the regions are the last rows of the shapefile
@@ -147,35 +151,42 @@ crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
 #Prepare plot
+#Set fontsize plot
+plt.rcParams.update({'font.size': 15})
 fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(12, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-ax1 = plt.subplot(projection=crs)
+gs = gridspec.GridSpec(10, 7)
+gs.update(hspace=0.1)
+gs.update(wspace=0)
+ax1 = plt.subplot(gs[0:10, 0:5],projection=crs)
+axsummary_elev = plt.subplot(gs[0:5, 5:7])
+axsummary_signed_dist = plt.subplot(gs[5:10, 5:7])
+
 #Display coastlines
 ax1.coastlines(edgecolor='black',linewidth=0.075)
-
 #Display 2010-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 #Display 2012-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102012_jullienetal2023.plot(ax=ax1,facecolor='#6baed6',edgecolor='#6baed6')
 
-#Display MVRL
-#poly_2010.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1)
-poly_2012.plot(ax=ax1,facecolor='none',edgecolor='#9e9ac8',linewidth=1)
-#poly_2016.plot(ax=ax1,facecolor='none',edgecolor='#756bb1',linewidth=1)
-poly_2019.plot(ax=ax1,facecolor='none',edgecolor='#54278f',linewidth=1)
-
-#Display boxes not processed
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#f6e8c3',edgecolor='none')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-#Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
-GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
-
 #Display firn aquifers Miège et al., 2016
 ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=2)
 
+#Display MVRL
+#poly_2010.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
+poly_2012.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
+#poly_2016.plot(ax=ax1,facecolor='none',edgecolor='#756bb1',linewidth=1,zorder=3)
+poly_2019.plot(ax=ax1,facecolor='none',edgecolor='#54278f',linewidth=1,zorder=3)
+
+#Display boxes not processed
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#f6e8c3',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+#Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
+GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black',zorder=5)
+
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
-gl=ax1.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+gl=ax1.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=6)
 #Customize lat labels
 gl.right_labels = False
 gl.bottom_labels = False
@@ -190,26 +201,21 @@ ax1.set_ylim(-3366273, -784280)
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor='#6baed6',edgecolor='none',label='2010-2012 ice slabs'),
                    Patch(facecolor='#ba2b2b',edgecolor='none',label='2010-2018 ice slabs'),
-                   Line2D([0], [0], color='#dadaeb', lw=2, label='2010 MVRL'),
-                   Line2D([0], [0], color='#9e9ac8', lw=2, label='2012 MVRL'),
-                   Line2D([0], [0], color='#756bb1', lw=2, label='2016 MVRL'),
-                   Line2D([0], [0], color='#54278f', lw=2, label='2019 MVRL'),
                    Line2D([0], [0], color='#74c476', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
+                   #Line2D([0], [0], color='#dadaeb', lw=2, label='2010 MVRL'),
+                   Line2D([0], [0], color='#dadaeb', lw=2, label='2012 runoff limit'),
+                   #Line2D([0], [0], color='#756bb1', lw=2, label='2016 MVRL'),
+                   Line2D([0], [0], color='#54278f', lw=2, label='2019 runoff limit'),
                    Patch(facecolor='#f6e8c3',edgecolor='none',label='Ignored areas')]
-ax1.legend(handles=legend_elements,loc='lower right')
+ax1.legend(handles=legend_elements,loc='lower right',fontsize=12.5,framealpha=1).set_zorder(7)
 plt.show()
 
 #Display scalebar - from Fig2andS6andS7andS10.py
 scale_bar(ax1, (0.7, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, rotation of text
 #by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
 
-'''
-#Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/fig_IceSlabs_MVRL/fig_IceSlabs_MVRL.png',dpi=1000,bbox_inches='tight')
-#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
-#pdb.set_trace()
-plt.close()
+pdb.set_trace()
+#plt.close()
 
 #Transform xytpd dataframe into geopandas dataframe for distance calculation
 df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
@@ -376,24 +382,6 @@ display_summary(elevation_differences,'Elevation',10)
 display_summary(distance_differences,'Distance',100)
 display_summary(signed_distances,'Signed distance',100)
 
-#Display the violin plot of signed distances and elevation difference
-fig = plt.figure()
-fig.set_size_inches(7, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(6, 5)
-gs.update(hspace=1)
-axsummary_elev = plt.subplot(gs[0:3, 0:5])
-axsummary_signed_dist = plt.subplot(gs[3:6, 0:5])
-sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="signed_dist_diff",x="SUBREGION1",ax=axsummary_signed_dist,orient='v')
-sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="elev_diff",x="SUBREGION1",ax=axsummary_elev,orient='v')
-
-axsummary_elev.set_ylabel('Elevation difference 2012-2019 [m]')
-axsummary_elev.set_xlabel('Region')
-axsummary_elev.set_ylim(-500,500)
-axsummary_signed_dist.set_ylabel('Distance difference 2012-2019 [m]')
-axsummary_signed_dist.set_xlabel('Region')
-axsummary_signed_dist.set_ylim(-50000,50000)
-
 #Display quantiles in the difference regions of signed distances and elevation difference.
 print('signed_dist_diff:')
 print(summary_df.groupby(["SUBREGION1"]).quantile([0.25,0.5,0.75]).signed_dist_diff)
@@ -403,6 +391,47 @@ print(summary_df.groupby(["SUBREGION1"]).quantile([0.25,0.5,0.75]).elev_diff)
 print(' ')
 print('Count:')
 print(summary_df.groupby(["SUBREGION1"]).count())
+
+#Transform signed distances from m to km
+summary_df.signed_dist_diff=summary_df.signed_dist_diff/1000
+
+#Display the violin plot of signed distances and elevation difference
+sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="signed_dist_diff",x="SUBREGION1",ax=axsummary_signed_dist,orient='v',palette=my_pal)
+sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="elev_diff",x="SUBREGION1",ax=axsummary_elev,orient='v',palette=my_pal)
+
+axsummary_elev.set_ylabel('Runoff limit elevation difference [m]')
+axsummary_elev.set_xlabel('Region',labelpad=10)
+axsummary_elev.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False, left=False, labelleft=False, right=True, labelright=True)
+axsummary_elev.xaxis.set_label_position('top')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+axsummary_elev.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+axsummary_elev.set_ylim(-500,500)
+axsummary_elev.grid(linestyle='dashed')
+axsummary_signed_dist.set_ylabel('Runoff limit distance difference [km]',labelpad=12.5)
+axsummary_signed_dist.set_xlabel(' ')
+axsummary_signed_dist.tick_params(top=False, labeltop=False, bottom=False, labelbottom=False, left=False, labelleft=False, right=True, labelright=True)
+axsummary_signed_dist.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+axsummary_signed_dist.set_ylim(-50,50)
+axsummary_signed_dist.grid(linestyle='dashed')
+
+#Add region name on map - this is from Fig. 2 paper Ice Slabs Expansion and Thickening
+ax1.text(NO_rignotetal.centroid.x-50000,NO_rignotetal.centroid.y-100000,np.asarray(NO_rignotetal.SUBREGION1)[0])
+ax1.text(NE_rignotetal.centroid.x-150000,NE_rignotetal.centroid.y-100000,np.asarray(NE_rignotetal.SUBREGION1)[0])
+ax1.text(SE_rignotetal.centroid.x-100000,SE_rignotetal.centroid.y+30000,np.asarray(SE_rignotetal.SUBREGION1)[0])
+ax1.text(SW_rignotetal.centroid.x-35000,SW_rignotetal.centroid.y-100000,np.asarray(SW_rignotetal.SUBREGION1)[0])
+ax1.text(CW_rignotetal.centroid.x-50000,CW_rignotetal.centroid.y-60000,np.asarray(CW_rignotetal.SUBREGION1)[0])
+ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y-50000,np.asarray(NW_rignotetal.SUBREGION1)[0])
+
+#Add label panel
+ax1.text(0.01, 0.9,'a',ha='center', va='center', transform=ax1.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axsummary_elev.text(-0.1, 0.95,'b',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axsummary_signed_dist.text(-0.1, 0.95,'c',ha='center', va='center', transform=axsummary_signed_dist.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+pdb.set_trace()
+
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v2/Fig1.png',dpi=1000,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+
 
 print('--- End of code ---')
 
