@@ -430,6 +430,7 @@ fig.suptitle('2019 - 2 years running slabs')
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
+
 '''
 #Try violin plot
 fig = plt.figure(figsize=(10,6))
@@ -443,6 +444,8 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle('2019 - 2 years running slabs')
 '''
 ######################## Plot with 0m thick ice slabs #########################
+
+pdb.set_trace()
 
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -618,6 +621,7 @@ plt.savefig(path_data+'Sectors2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_r
 #Conclusion: I think this is hard to derive a relationship between SAR and ice thickness
 ################### Relationship using data in sectors only ###################
 
+pdb.set_trace()
 
 ############### Relationship using the whole ice slabs dataset ###############
 #Create a unique index for each line, and set this new vector as the index in dataframe
@@ -899,6 +903,7 @@ ax_SAR.set_title('GrIS-wide')
 plt.savefig(path_data+'SAR_sectors/Composite2019_ViolinPlotRegions_SAR_cleanedxytpdV3.png',dpi=500)
 '''
 ############################# Sectors - 2019 MVRL #############################
+pdb.set_trace()
 
 #Display SAR sectorial summary statistics
 print('--- SW ---')

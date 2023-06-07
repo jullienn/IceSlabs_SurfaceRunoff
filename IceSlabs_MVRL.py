@@ -427,11 +427,11 @@ axsummary_elev.text(-0.1, 0.95,'b',ha='center', va='center', transform=axsummary
 axsummary_signed_dist.text(-0.1, 0.95,'c',ha='center', va='center', transform=axsummary_signed_dist.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 pdb.set_trace()
-
+'''
 #Save the figure
 plt.savefig(path_switchdrive+'RT3/figures/Fig1/v2/Fig1.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-
+'''
 
 print('--- End of code ---')
 

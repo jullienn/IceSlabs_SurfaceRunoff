@@ -34,6 +34,7 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
         
         #Display full Ice Slabs transect (from radargram)
         ax1.scatter(IceSlabsTransect_InFunc['longitude_EPSG_3413'],IceSlabsTransect_InFunc['latitude_EPSG_3413'],color='black')
+        pdb.set_trace()
         plt.close()
 
     if (check_oversampling_over=='TRUE'):
@@ -68,7 +69,6 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
         ax_focus.set_title('Check data are not oversampled anymore')
         ### -------------- Proof that SAR data are not oversampled anymore -------------- ###
         ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
-        pdb.set_trace()
         plt.close()
         
     #4. Vectorise the SAR raster
@@ -213,11 +213,11 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
            
     #Save the figure
     fig_indiv.suptitle(IceSlabsTransect_name_InFunc)
-    plt.savefig(path_local+raster_type_InFunc+'_and_IceThickness/images/'+IceSlabsTransect_name_InFunc+'_Upsampled.png',dpi=300,bbox_inches='tight')
+    plt.savefig(path_local+raster_type_InFunc+'_and_IceThickness/images/NotClipped_With0mSlabs/'+IceSlabsTransect_name_InFunc+'_Upsampled.png',dpi=300,bbox_inches='tight')
     plt.close()
     
     #Export the extracted values as csv
-    pointInPolys.to_csv(path_local+raster_type_InFunc+'_and_IceThickness/csv/'+IceSlabsTransect_name_InFunc+'_NotUpsampled.csv',
+    pointInPolys.to_csv(path_local+raster_type_InFunc+'_and_IceThickness/csv/NotClipped_With0mSlabs/'+IceSlabsTransect_name_InFunc+'_NotUpsampled.csv',
                         columns=['Track_name', 'lat', 'lon','20m_ice_content_m',
                                  'likelihood', 'lat_3413', 'lon_3413', 'key_shp',
                                  'elevation', 'year', 'index_right', 'raster_values'])
@@ -378,7 +378,7 @@ from scipy.optimize import curve_fit
 import os.path
 
 generate_data='TRUE' #If true, generate the individual csv files and figures
-fig_display='TRUE' #If TRUE, generate figures
+fig_display='FALSE' #If TRUE, generate figures
 check_oversampling_over='FALSE'
 
 #Which raster extraction is to perform
@@ -409,11 +409,20 @@ path_SAR=path_local+'data/SAR/HV_2017_2018/'
 
 #Load IMBIE drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
-
+'''
 #1. Load ice slabs data
 ### ------------------------- Load df_2010_2018 --------------------------- ###
 #Load 2010-2018 clipped to polygons high estimate datatset
 f_20102018_high_cleaned = open(path_jullienetal2023+'final_excel/high_estimate/clipped/df_20102018_with_elevation_high_estimate_rignotetalregions_cleaned', "rb")
+df_20102018_high_cleaned = pickle.load(f_20102018_high_cleaned)
+f_20102018_high_cleaned.close
+### ------------------------- Load df_2010_2018 --------------------------- ###
+'''
+
+#1. Load ice slabs data
+### ------------------------- Load df_2010_2018 --------------------------- ###
+#Load 2010-2018 clipped to polygons high estimate datatset
+f_20102018_high_cleaned = open(path_switchdrive+'RT3/data/export_RT1_for_RT3/df_20102018_with_elevation_for_RT3_masked_rignotetalregions', "rb")#Mask means that where exclusions, ice thickness is NaN.
 df_20102018_high_cleaned = pickle.load(f_20102018_high_cleaned)
 f_20102018_high_cleaned.close
 ### ------------------------- Load df_2010_2018 --------------------------- ###
@@ -451,15 +460,11 @@ if (generate_data=='TRUE'):
             continue
         '''
         '''
-        if (IceSlabsTransect_name not in list_check_clip):
-            continue
-        '''
-        
         #If transect already processes, continue
-        if (os.path.isfile(path_local+'SAR_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
+        if (os.path.isfile(path_local+'SAR_and_IceThickness/csv/with_0mslab/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
             print(IceSlabsTransect_name,' already generated, continue')    
             continue
-        
+        '''
         '''
         #If transect already processes, continue
         if (os.path.isfile(path_local+'CumHydro_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
