@@ -100,6 +100,7 @@ def keep_sectorial(df_input,indiv_trackname_tokeep):
     return df_output
 
 def sector_association(indiv_df_SAR_IceThickness,indiv_df_sectors,sector):
+        
     #Perform match between indiv_df_SAR_IceThickness and indiv_IceThickness_sectors 
     indiv_df_SAR_IceThickness_sector = indiv_df_SAR_IceThickness.merge(indiv_df_sectors, how="left",on=['lat','lon'],suffixes=('','_droite'))
         
@@ -136,12 +137,18 @@ def hist_regions(df_to_plot,region_to_plot,ax_region):
     ### Should I test for normality, and if normal then perform student t-test???
     #Display sample size
     print(region_to_plot)
-    print('-> Sample size:')
-    print('   Above: ',len(df_to_plot[df_to_plot.sector=='Above']['SAR']))
-    print('   Below: ',len(df_to_plot[df_to_plot.sector=='Below']['SAR']))
+    print('-> Median:')
+    print('   Above: ',np.round(df_to_plot[df_to_plot.sector=='Above']['SAR'].median(),2))
+    print('   Within: ',np.round(df_to_plot[df_to_plot.sector=='Within']['SAR'].median(),2))
+    print('   Below: ',np.round(df_to_plot[df_to_plot.sector=='Below']['SAR'].median(),2))
     print('-> Coefficient of variation:')
     print('   Above: ',np.round(df_to_plot[df_to_plot.sector=='Above']['SAR'].std()/df_to_plot[df_to_plot.sector=='Above']['SAR'].mean(),4))
+    print('   Within: ',np.round(df_to_plot[df_to_plot.sector=='Within']['SAR'].std()/df_to_plot[df_to_plot.sector=='Within']['SAR'].mean(),4))
     print('   Below: ',np.round(df_to_plot[df_to_plot.sector=='Below']['SAR'].std()/df_to_plot[df_to_plot.sector=='Below']['SAR'].mean(),4))
+    print('-> Sample size:')
+    print('   Above: ',len(df_to_plot[df_to_plot.sector=='Above']['SAR']))
+    print('   Within: ',len(df_to_plot[df_to_plot.sector=='Within']['SAR']))
+    print('   Below: ',len(df_to_plot[df_to_plot.sector=='Below']['SAR']))
     print('-> Perform Welsch t-test above VS below:')
             
     above_to_test=df_to_plot[df_to_plot.sector=='Above']['SAR'].copy()
@@ -236,7 +243,7 @@ def display_2d_histogram(df_to_display,FS_display,method):
     
     #Display 2d histogram
     cbar_GrIS=ax_GrIS.hist2d(df_to_display_normalised['normalized_raster'],
-                             df_to_display_normalised['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
+                             df_to_display_normalised['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)#,norm=mpl.colors.LogNorm())# log norm is from https://stackoverflow.com/questions/23309272/matplotlib-log-transform-counts-in-hist2d
     ax_GrIS.axhline(y=10,linestyle='dashed',color='red')
     ax_GrIS.set_ylim(0,16)
     ax_GrIS.set_xlim(0,1)
@@ -265,6 +272,49 @@ def display_2d_histogram(df_to_display,FS_display,method):
         '''
         ax_GrIS.legend()
     return
+
+def aquitard_identification(df_for_aquitard,region,LowCutoff,HighCutoff):
+        
+    #Select region
+    df_for_aquitard_region=df_for_aquitard[df_for_aquitard.SUBREGION1==region].copy()
+    #below low cutoff = aquitard
+    df_for_aquitard_region.loc[df_for_aquitard_region.raster_values<LowCutoff,'aquitard']='1'
+    #above high cutoff = non aquitard
+    df_for_aquitard_region.loc[df_for_aquitard_region.raster_values>HighCutoff,'aquitard']='0'
+    #in betwwen the two cutoss, half aquitard
+    df_for_aquitard_region.loc[df_for_aquitard_region.aquitard.isna(),'aquitard']='0.5'
+    
+    #Display sample size, coeff of variation, and if the difference between below and above is statistically different
+    print(region)
+    print('-> Sample size:')
+    print('   ',region,': ',len(df_for_aquitard_region))
+    print('      0: ',len(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']))
+    #print('      0.5: ',len(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0.5']))
+    print('      1: ',len(df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']))
+    
+    print('-> Median:')
+    print('      0:',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=="0"]['20m_ice_content_m'].median(),1))
+    print('      1:',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=="1"]['20m_ice_content_m'].median(),1))
+    
+    print('-> Coefficient of variation:')
+    print('      0: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'].mean(),4))
+    #print('      0.5: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0.5']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='0.5']['20m_ice_content_m'].mean(),4))
+    print('      1: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].mean(),4))
+    
+    print('-> Perform Welsch t-test Aquitard VS Non_aquitard:')     
+    aquitard_to_test=df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].copy()
+    aquitard_to_test=aquitard_to_test[~aquitard_to_test.isna()]
+    NonAquitard_to_test=df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'].copy()
+    NonAquitard_to_test=NonAquitard_to_test[~NonAquitard_to_test.isna()]
+    
+    #Perform a Welsch's t test when we have no normality, no equal variance
+    #Perform a Yuen's t test when we have no normality, no equal variance, and tailed distribution - https://www.youtube.com/watch?v=D_dZyUpgGkI
+    #According to scipy doc, "Trimming is recommended if the underlying distribution is long-tailed or contaminated with outliers"
+    #Should I perform a Yuen's t-test? If yes, ass in the ttest_ind() the arguemtn trim = 0.x, where x represents the percentage of data in the extremetiy of the distribution to be excluded
+    print('  ',stats.ttest_ind(aquitard_to_test,NonAquitard_to_test,equal_var=False))#, trim=.1))#If negative t statistic return, this means the mean of above is less than the mean of below. If p < alpha (alpha being the significance level), then the difference between the two distributions is significantly different at the alpha level.
+    print('\n')
+    
+    return df_for_aquitard_region.copy()
 
 
 import pandas as pd
@@ -368,8 +418,6 @@ for indiv_box in range(4,32):
 ###         Load Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
-
-
 ###############################################################################
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
@@ -444,8 +492,6 @@ ax_regions_GrIS.legend(loc='lower right')
 fig.suptitle('2019 - 2 years running slabs')
 '''
 ######################## Plot with 0m thick ice slabs #########################
-
-pdb.set_trace()
 
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -529,7 +575,7 @@ pdb.set_trace()
 
 ########### Load ice slabs with SAR dataset and identify the sector ###########
 #Path to data
-path_SAR_And_IceThickness=path_data+'csv/'
+path_SAR_And_IceThickness=path_data+'csv/NotClipped_With0mSlabs/'
 #List all the files in the folder
 list_composite=os.listdir(path_SAR_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
 
@@ -543,8 +589,10 @@ upsampled_SAR_and_IceSlabs_in_between=pd.DataFrame()
 upsampled_SAR_and_IceSlabs_within=pd.DataFrame()
 upsampled_SAR_and_IceSlabs_below=pd.DataFrame()
 
+#The join betwwen the ice slabs and SAR dataset with the ice slabs with sector dataset is now performed using both datasets having as native ice slabs data the one containing 0 m thick slabs!
+
 #Loop over all the files
-for indiv_file in list_composite:
+for indiv_file in list_composite[0:-1]:
     print(indiv_file)
     
     #Open the individual file
@@ -574,7 +622,9 @@ for indiv_file in list_composite:
     ax_check_csv_sectors.scatter(indiv_IceThickness_within.lon_3413,indiv_IceThickness_within.lat_3413,s=1,color='red')
     ax_check_csv_sectors.scatter(indiv_IceThickness_below.lon_3413,indiv_IceThickness_below.lat_3413,s=1,color='green')
     
-    #Associate the sector to the dataframe where ice thickness and SAR data are present
+    #Associate the sector to the dataframe where ice thickness and SAR data are present by joining the two following dataframes
+    #indiv_csv is the dataframe holding ice content and SAR signal NOT upsampled, but no info on the sector
+    #indiv_IceThickness_above/in_between/within/below are the dataframe holding the ice content in the sector NOT upsampled, but no info on SAR.
     indiv_upsampled_SAR_and_IceSlabs_above=sector_association(indiv_csv,indiv_IceThickness_above,'above')
     indiv_upsampled_SAR_and_IceSlabs_in_between=sector_association(indiv_csv,indiv_IceThickness_in_between,'InBetween')
     indiv_upsampled_SAR_and_IceSlabs_within=sector_association(indiv_csv,indiv_IceThickness_within,'within')
@@ -592,16 +642,18 @@ for indiv_file in list_composite:
         
     if (len(indiv_upsampled_SAR_and_IceSlabs_below)>0):
         upsampled_SAR_and_IceSlabs_below=pd.concat([upsampled_SAR_and_IceSlabs_below,indiv_upsampled_SAR_and_IceSlabs_below])
+    #pdb.set_trace()
+    
     plt.close()
     ### SECTORS ###
 ########### Load ice slabs with SAR dataset and identify the sector ###########
-
 
 ################### Relationship using data in sectors only ###################
 #Append data to each other
 upsampled_SAR_and_IceSlabs_allsectors=pd.concat([upsampled_SAR_and_IceSlabs_above,upsampled_SAR_and_IceSlabs_in_between,upsampled_SAR_and_IceSlabs_within,upsampled_SAR_and_IceSlabs_below])
 #Get rid of NaNs
 upsampled_SAR_and_IceSlabs_allsectors_NoNaN=upsampled_SAR_and_IceSlabs_allsectors[~upsampled_SAR_and_IceSlabs_allsectors.raster_values.isna()].copy()
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN=upsampled_SAR_and_IceSlabs_allsectors_NoNaN[~upsampled_SAR_and_IceSlabs_allsectors_NoNaN["20m_ice_content_m"].isna()].copy()
 
 #Transform upsampled_SAR_and_IceSlabs_allsectors_NoNaN as a geopandas dataframe
 upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp = gpd.GeoDataFrame(upsampled_SAR_and_IceSlabs_allsectors_NoNaN,
@@ -613,24 +665,116 @@ upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp = gpd.GeoDataFrame(upsampled_SAR
 upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions = gpd.sjoin(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp, GrIS_drainage_bassins, predicate='within')
 #Display histograms
 display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,FS_pd,'sectors')
+#Conclusion: I think this is hard to derive a relationship between SAR and ice thickness using data in sectors
 
 '''
 #Save the figure
 plt.savefig(path_data+'Sectors2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3.png',dpi=500)
 '''
-#Conclusion: I think this is hard to derive a relationship between SAR and ice thickness
+
+pdb.set_trace()
+
+#Perform the comparison aquitard VS non-aquitard in all the sectors
+#Apply thresholds to differentiate between efficient aquitard VS non-efficient aquitard places - let's choose quantile 0.75 of below as low cutoff, quantile 0.75 of within for high cutoff
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_SW=aquitard_identification(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'SW',-9.110144,-8.638897)
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_CW=aquitard_identification(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'CW',-7.82364,-7.038067)
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_NW=aquitard_identification(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NW',-8.982688,-8.266375)
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_NO=aquitard_identification(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NO',-7.194321,-6.104299)
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_NE=aquitard_identification(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,'NE',-6.329797,-5.715943)
+#Aggregate regional dataframes
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_GrIS=pd.concat([upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_SW,
+                                                               upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_CW,
+                                                               upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_NW,
+                                                               upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_NO,
+                                                               upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_NE])
+
+#Get rid of 0.5 aquitard and reindex
+final_df_SAR_IceThickness=upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_GrIS[~(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_GrIS.aquitard=='0.5')].copy()
+final_df_SAR_IceThickness['new_index']=np.arange(0,len(final_df_SAR_IceThickness))
+final_df_SAR_IceThickness=final_df_SAR_IceThickness.set_index('new_index')
+
+
+fig = plt.figure(figsize=(5,5))
+gs = gridspec.GridSpec(5, 5)
+ax_filtered_regions = plt.subplot(gs[0:5, 0:5])
+#ax_filtered_GrIS = plt.subplot(gs[0:5, 5:10])
+sns.violinplot(data=final_df_SAR_IceThickness,
+               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_filtered_regions,scale="width")#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+#sns.violinplot(data=final_df_SAR_IceThickness,
+#               y="aquitard", x="20m_ice_content_m",ax=ax_filtered_GrIS,scale="width")#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+ax_filtered_regions.set_xlabel('Ice Thickness [m]')
+ax_filtered_regions.set_ylabel('Region')
+ax_filtered_regions.legend([])
+
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor='#3274a1',edgecolor='none',label='Lateral runoff'),
+                   Patch(facecolor='#e1802c',edgecolor='none',label='Retention')]
+ax_filtered_regions.legend(handles=legend_elements,loc='lower right',fontsize=12.5,framealpha=1).set_zorder(7)
+plt.show()
+
+'''
+#Save the figure
+plt.savefig(path_data+'Sectors2019_ViolinPlot_IceSlabsThickness_Aquitard_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3.png',dpi=500)
+'''
+
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(5, 5)
+ax_hist = plt.subplot(gs[0:5, 0:5])
+sns.histplot(final_df_SAR_IceThickness, x="20m_ice_content_m",hue="aquitard",stat='density',kde=True,ax=ax_hist)
+
+
+#Display the ice thickness distributions
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 10)
+ax_aquitard_above = plt.subplot(gs[0:5, 0:5])
+ax_aquitard_InBetween = plt.subplot(gs[0:5, 5:10])
+ax_aquitard_within = plt.subplot(gs[5:10, 0:5])
+ax_aquitard_below = plt.subplot(gs[5:10, 5:10])
+gs.update(wspace=1)
+gs.update(hspace=1)
+sns.violinplot(data=final_df_SAR_IceThickness[final_df_SAR_IceThickness.sector=='above'],
+               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_aquitard_above)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+sns.violinplot(data=final_df_SAR_IceThickness[final_df_SAR_IceThickness.sector=='InBetween'],
+               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_aquitard_InBetween)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+sns.violinplot(data=final_df_SAR_IceThickness[final_df_SAR_IceThickness.sector=='within'],
+               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_aquitard_within)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+sns.violinplot(data=final_df_SAR_IceThickness[final_df_SAR_IceThickness.sector=='below'],
+               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_aquitard_below)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+
+ax_aquitard_above.set_title('Above')
+ax_aquitard_InBetween.set_title('InBetween')
+ax_aquitard_within.set_title('Within')
+ax_aquitard_below.set_title('Below')
+
+ax_aquitard_within.set_xlabel('Ice Thickness [m]')
+ax_aquitard_within.set_ylabel('Region')
+
+ax_aquitard_above.set_xlabel('')
+ax_aquitard_InBetween.set_xlabel('')
+ax_aquitard_below.set_xlabel('')
+ax_aquitard_above.set_ylabel('')
+ax_aquitard_InBetween.set_ylabel('')
+ax_aquitard_below.set_ylabel('')
+
+
 ################### Relationship using data in sectors only ###################
 
 pdb.set_trace()
+
+#CONTINUE WORKING HERE ON THE RELATIONSHIP FOR THE WHOLE DATASET!
 
 ############### Relationship using the whole ice slabs dataset ###############
 #Create a unique index for each line, and set this new vector as the index in dataframe
 upsampled_SAR_and_IceSlabs['index_unique']=np.arange(0,len(upsampled_SAR_and_IceSlabs))
 upsampled_SAR_and_IceSlabs=upsampled_SAR_and_IceSlabs.set_index('index_unique')
 
+#Get rid of NaNs
+upsampled_SAR_and_IceSlabs_temp=upsampled_SAR_and_IceSlabs[~upsampled_SAR_and_IceSlabs.raster_values.isna()].copy()
+upsampled_SAR_and_IceSlabs_NoNaN=upsampled_SAR_and_IceSlabs_temp[~(upsampled_SAR_and_IceSlabs_temp["20m_ice_content_m"].isna())].copy()
+
 #Display some descriptive statistics
-upsampled_SAR_and_IceSlabs.describe()['raster_values']
-upsampled_SAR_and_IceSlabs.describe()['20m_ice_content_m']
+upsampled_SAR_and_IceSlabs_NoNaN.describe()['raster_values']
+upsampled_SAR_and_IceSlabs_NoNaN.describe()['20m_ice_content_m']
 
 #7. Display the composite relationship using all the files
 #Prepare plot
@@ -644,36 +788,36 @@ ax_scatter = plt.subplot(gs[2:10, 0:8])
 ax_IceContent = plt.subplot(gs[2:10, 8:10])
 
 #Display
-upsampled_SAR_and_IceSlabs.plot.scatter(x='raster_values',y='20m_ice_content_m',ax=ax_scatter)
+upsampled_SAR_and_IceSlabs_NoNaN.plot.scatter(x='raster_values',y='20m_ice_content_m',ax=ax_scatter)
 ax_scatter.set_xlim(-18,1)
 ax_scatter.set_ylim(-0.5,20.5)
 ax_scatter.set_xlabel('SAR [dB]')
 ax_scatter.set_ylabel('Ice content [m]')
 
-ax_IceContent.hist(upsampled_SAR_and_IceSlabs['20m_ice_content_m'],
-                   bins=np.arange(np.min(upsampled_SAR_and_IceSlabs['20m_ice_content_m']),np.max(upsampled_SAR_and_IceSlabs['20m_ice_content_m'])),
+ax_IceContent.hist(upsampled_SAR_and_IceSlabs_NoNaN['20m_ice_content_m'],
+                   bins=np.arange(np.min(upsampled_SAR_and_IceSlabs_NoNaN['20m_ice_content_m']),np.max(upsampled_SAR_and_IceSlabs_NoNaN['20m_ice_content_m'])),
                    density=True,orientation='horizontal')
 ax_IceContent.set_xlabel('Density [ ]')
 ax_IceContent.set_ylim(-0.5,20.5)
 
-ax_SAR.hist(upsampled_SAR_and_IceSlabs['raster_values'],
-            bins=np.arange(np.min(upsampled_SAR_and_IceSlabs['raster_values']),np.max(upsampled_SAR_and_IceSlabs['raster_values'])),
+ax_SAR.hist(upsampled_SAR_and_IceSlabs_NoNaN['raster_values'],
+            bins=np.arange(np.min(upsampled_SAR_and_IceSlabs_NoNaN['raster_values']),np.max(upsampled_SAR_and_IceSlabs_NoNaN['raster_values'])),
             density=True)
 ax_SAR.set_xlim(-18,1)
 ax_SAR.set_ylabel('Density [ ]')
 fig.suptitle('Ice content and SAR')
 
 #Transform upsampled_SAR_and_IceSlabs as a geopandas dataframe
-upsampled_SAR_and_IceSlabs_gdp = gpd.GeoDataFrame(upsampled_SAR_and_IceSlabs,
-                                                  geometry=gpd.GeoSeries.from_xy(upsampled_SAR_and_IceSlabs['lon_3413'],
-                                                                                 upsampled_SAR_and_IceSlabs['lat_3413'],
+upsampled_SAR_and_IceSlabs_NoNaN_gdp = gpd.GeoDataFrame(upsampled_SAR_and_IceSlabs_NoNaN,
+                                                  geometry=gpd.GeoSeries.from_xy(upsampled_SAR_and_IceSlabs_NoNaN['lon_3413'],
+                                                                                 upsampled_SAR_and_IceSlabs_NoNaN['lat_3413'],
                                                                                  crs='EPSG:3413'))
 
 #Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
-upsampled_SAR_and_IceSlabs_gdp_with_regions = gpd.sjoin(upsampled_SAR_and_IceSlabs_gdp, GrIS_drainage_bassins, predicate='within')
+upsampled_SAR_and_IceSlabs_NoNaN_gdp_with_regions = gpd.sjoin(upsampled_SAR_and_IceSlabs_NoNaN_gdp, GrIS_drainage_bassins, predicate='within')
 
 #Display histograms
-display_2d_histogram(upsampled_SAR_and_IceSlabs_gdp_with_regions,FS_pd,'complete_dataset')
+display_2d_histogram(upsampled_SAR_and_IceSlabs_NoNaN_gdp_with_regions,FS_pd,'complete_dataset')
 '''
 #Save the figure
 plt.savefig(path_data+'Composite2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3.png',dpi=500)

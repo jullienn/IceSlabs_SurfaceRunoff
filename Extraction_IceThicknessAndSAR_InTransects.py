@@ -449,7 +449,7 @@ master_NE_mean = rxr.open_rasterio(path_local+'data/master_maps/merge_ne/master_
 #Generate the csv files and figures of individual relationship    
 if (generate_data=='TRUE'):
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
         
         '''

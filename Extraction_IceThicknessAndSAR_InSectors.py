@@ -390,13 +390,11 @@ crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
 ### ---------------------------- Load dataset ---------------------------- ###
-############# IS THIS THE CORRECT DATASET TO USE????? TBD #############
 #Dictionnaries have already been created, load them
 #Load 2010-2018
 f_20102018 = open(path_df_with_elevation+'df_20102018_with_elevation_for_RT3_masked_rignotetalregions', "rb")
 df_2010_2018 = pickle.load(f_20102018)
 f_20102018.close()
-############# IS THIS THE CORRECT DATASET TO USE????? TBD #############
 #load 2010-2018 ice slabs high end extent from Jullien et al., (2023)
 IceSlabsExtent_20102018_jullienetal2023=gpd.read_file(path_switchdrive+'RT1/final_dataset_2002_2018/shapefiles/iceslabs_jullien_highend_20102018.shp')
 
