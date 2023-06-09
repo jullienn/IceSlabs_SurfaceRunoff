@@ -592,7 +592,7 @@ upsampled_SAR_and_IceSlabs_below=pd.DataFrame()
 #The join betwwen the ice slabs and SAR dataset with the ice slabs with sector dataset is now performed using both datasets having as native ice slabs data the one containing 0 m thick slabs!
 
 #Loop over all the files
-for indiv_file in list_composite[0:-1]:
+for indiv_file in list_composite:
     print(indiv_file)
     
     #Open the individual file
@@ -652,8 +652,8 @@ for indiv_file in list_composite[0:-1]:
 #Append data to each other
 upsampled_SAR_and_IceSlabs_allsectors=pd.concat([upsampled_SAR_and_IceSlabs_above,upsampled_SAR_and_IceSlabs_in_between,upsampled_SAR_and_IceSlabs_within,upsampled_SAR_and_IceSlabs_below])
 #Get rid of NaNs
-upsampled_SAR_and_IceSlabs_allsectors_NoNaN=upsampled_SAR_and_IceSlabs_allsectors[~upsampled_SAR_and_IceSlabs_allsectors.raster_values.isna()].copy()
-upsampled_SAR_and_IceSlabs_allsectors_NoNaN=upsampled_SAR_and_IceSlabs_allsectors_NoNaN[~upsampled_SAR_and_IceSlabs_allsectors_NoNaN["20m_ice_content_m"].isna()].copy()
+upsampled_SAR_and_IceSlabs_allsectors_temp=upsampled_SAR_and_IceSlabs_allsectors[~upsampled_SAR_and_IceSlabs_allsectors.raster_values.isna()].copy()
+upsampled_SAR_and_IceSlabs_allsectors_NoNaN=upsampled_SAR_and_IceSlabs_allsectors_temp[~upsampled_SAR_and_IceSlabs_allsectors_temp["20m_ice_content_m"].isna()].copy()
 
 #Transform upsampled_SAR_and_IceSlabs_allsectors_NoNaN as a geopandas dataframe
 upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp = gpd.GeoDataFrame(upsampled_SAR_and_IceSlabs_allsectors_NoNaN,
@@ -669,7 +669,7 @@ display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_region
 
 '''
 #Save the figure
-plt.savefig(path_data+'Sectors2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3.png',dpi=500)
+plt.savefig(path_data+'Sectors2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
 
 pdb.set_trace()
@@ -820,7 +820,7 @@ upsampled_SAR_and_IceSlabs_NoNaN_gdp_with_regions = gpd.sjoin(upsampled_SAR_and_
 display_2d_histogram(upsampled_SAR_and_IceSlabs_NoNaN_gdp_with_regions,FS_pd,'complete_dataset')
 '''
 #Save the figure
-plt.savefig(path_data+'Composite2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3.png',dpi=500)
+plt.savefig(path_data+'Composite2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
 ############### Relationship using the whole ice slabs dataset ###############
 
