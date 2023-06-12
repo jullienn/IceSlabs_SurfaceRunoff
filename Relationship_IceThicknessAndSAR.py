@@ -175,14 +175,15 @@ def regional_normalisation(df_to_normalize,region):
 
 
 def display_2d_histogram(df_to_display,FS_display,method):
-    
+        
     #Display 2D histogram
     fig_heatmap, ((ax_SW, ax_CW, ax_NW), (ax_NO, ax_NE, ax_GrIS)) = plt.subplots(2, 3)
     fig_heatmap.set_size_inches(14, 7) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
-
     cbar_SW=ax_SW.hist2d(df_to_display[df_to_display.SUBREGION1=='SW']['raster_values'],
                          df_to_display[df_to_display.SUBREGION1=='SW']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
+    #Set a maximum to the colorbar   
+    cbar_SW[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_SW[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
     #Display firn cores ice content and SAR
     ax_SW.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='blue')
     ax_SW.axhline(y=10,linestyle='dashed',color='red')
@@ -194,6 +195,8 @@ def display_2d_histogram(df_to_display,FS_display,method):
     
     cbar_CW=ax_CW.hist2d(df_to_display[df_to_display.SUBREGION1=='CW']['raster_values'],
                          df_to_display[df_to_display.SUBREGION1=='CW']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
+    #Set a maximum to the colorbar   
+    cbar_CW[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_CW[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
     ax_CW.axhline(y=10,linestyle='dashed',color='red')
 
     ax_CW.set_ylim(0,16)
@@ -204,6 +207,8 @@ def display_2d_histogram(df_to_display,FS_display,method):
 
     cbar_NW=ax_NW.hist2d(df_to_display[df_to_display.SUBREGION1=='NW']['raster_values'],
                          df_to_display[df_to_display.SUBREGION1=='NW']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
+    #Set a maximum to the colorbar   
+    cbar_NW[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_NW[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
     ax_NW.axhline(y=10,linestyle='dashed',color='red')
 
     ax_NW.set_ylim(0,16)
@@ -214,6 +219,8 @@ def display_2d_histogram(df_to_display,FS_display,method):
 
     cbar_NO=ax_NO.hist2d(df_to_display[df_to_display.SUBREGION1=='NO']['raster_values'],
                          df_to_display[df_to_display.SUBREGION1=='NO']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
+    #Set a maximum to the colorbar   
+    cbar_NO[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_NO[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
     ax_NO.axhline(y=10,linestyle='dashed',color='red')
 
     ax_NO.set_ylim(0,16)
@@ -224,6 +231,8 @@ def display_2d_histogram(df_to_display,FS_display,method):
 
     cbar_NE=ax_NE.hist2d(df_to_display[df_to_display.SUBREGION1=='NE']['raster_values'],
                          df_to_display[df_to_display.SUBREGION1=='NE']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
+    #Set a maximum to the colorbar   
+    cbar_NE[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_NE[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
     ax_NE.axhline(y=10,linestyle='dashed',color='red')
 
     ax_NE.set_ylim(0,16)
@@ -244,6 +253,8 @@ def display_2d_histogram(df_to_display,FS_display,method):
     #Display 2d histogram
     cbar_GrIS=ax_GrIS.hist2d(df_to_display_normalised['normalized_raster'],
                              df_to_display_normalised['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)#,norm=mpl.colors.LogNorm())# log norm is from https://stackoverflow.com/questions/23309272/matplotlib-log-transform-counts-in-hist2d
+    #Set a maximum to the colorbar   
+    cbar_GrIS[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_GrIS[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
     ax_GrIS.axhline(y=10,linestyle='dashed',color='red')
     ax_GrIS.set_ylim(0,16)
     ax_GrIS.set_xlim(0,1)
