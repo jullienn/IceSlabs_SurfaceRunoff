@@ -312,6 +312,11 @@ def aquitard_identification(df_for_aquitard,region,LowCutoff,HighCutoff):
     #print('      0.5: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0.5']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='0.5']['20m_ice_content_m'].mean(),4))
     print('      1: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].mean(),4))
     
+    print('-> Test to distritution normality:')
+    print('   - null hypothesis: x comes from a normal distribution')
+    print('      0: ',stats.normaltest(df_for_aquitard_region[df_for_aquitard_region.aquitard=="0"]['20m_ice_content_m']))
+    print('      1: ',stats.normaltest(df_for_aquitard_region[df_for_aquitard_region.aquitard=="1"]['20m_ice_content_m']))
+
     print('-> Perform Welsch t-test Aquitard VS Non_aquitard:')     
     aquitard_to_test=df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].copy()
     aquitard_to_test=aquitard_to_test[~aquitard_to_test.isna()]
