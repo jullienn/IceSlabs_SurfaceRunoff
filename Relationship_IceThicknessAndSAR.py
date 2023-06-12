@@ -710,27 +710,64 @@ final_df_SAR_IceThickness['new_index']=np.arange(0,len(final_df_SAR_IceThickness
 final_df_SAR_IceThickness=final_df_SAR_IceThickness.set_index('new_index')
 
 
-fig = plt.figure(figsize=(5,5))
-gs = gridspec.GridSpec(5, 5)
-ax_filtered_regions = plt.subplot(gs[0:5, 0:5])
-#ax_filtered_GrIS = plt.subplot(gs[0:5, 5:10])
+# Display SAR violin plot for lateral runoff and retention zones
+plt.rcParams.update({'font.size': 15})
+fig = plt.figure(figsize=(6,10))
+gs = gridspec.GridSpec(10, 5)
+gs.update(hspace=0.1)
+gs.update(wspace=0)
+ax_filtered_regions_SAR = plt.subplot(gs[0:5, 0:4])
 sns.violinplot(data=final_df_SAR_IceThickness,
-               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_filtered_regions,scale="width")#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
-#sns.violinplot(data=final_df_SAR_IceThickness,
-#               y="aquitard", x="20m_ice_content_m",ax=ax_filtered_GrIS,scale="width")#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
-ax_filtered_regions.set_xlabel('Ice Thickness [m]')
-ax_filtered_regions.set_ylabel('Region')
-ax_filtered_regions.legend([])
+               x="SUBREGION1", y="raster_values",hue="aquitard",ax=ax_filtered_regions_SAR,scale="width")#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+
+#Display lower and upper cutoffs as red lines
+ax_filtered_regions_SAR.axhline(y=-9.110144,xmin=0.02, xmax=0.10,color='#ba2b2b',linewidth=2)
+ax_filtered_regions_SAR.axhline(y=-8.638897,xmin=0.10, xmax=0.18,color='#ba2b2b',linewidth=2)
+
+ax_filtered_regions_SAR.axhline(y=-7.82364,xmin=0.22, xmax=0.30,color='#ba2b2b',linewidth=2)
+ax_filtered_regions_SAR.axhline(y=-7.038067,xmin=0.30, xmax=0.38,color='#ba2b2b',linewidth=2)
+
+ax_filtered_regions_SAR.axhline(y=-8.982688,xmin=0.42, xmax=0.50,color='#ba2b2b',linewidth=2)
+ax_filtered_regions_SAR.axhline(y=-8.266375,xmin=0.50, xmax=0.58,color='#ba2b2b',linewidth=2)
+
+ax_filtered_regions_SAR.axhline(y=-7.194321,xmin=0.62, xmax=0.70,color='#ba2b2b',linewidth=2)
+ax_filtered_regions_SAR.axhline(y=-6.104299,xmin=0.70, xmax=0.78,color='#ba2b2b',linewidth=2)
+
+ax_filtered_regions_SAR.axhline(y=-6.329797,xmin=0.82, xmax=0.90,color='#ba2b2b',linewidth=2)
+ax_filtered_regions_SAR.axhline(y=-5.715943,xmin=0.90, xmax=0.98,color='#ba2b2b',linewidth=2)
+
+ax_filtered_regions_SAR.set_ylabel('Signal strenght [dB]',labelpad=10)
+ax_filtered_regions_SAR.set_xlabel('Region',labelpad=10)
+ax_filtered_regions_SAR.grid(linestyle='dashed')
+ax_filtered_regions_SAR.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False, left=False, labelleft=False, right=True, labelright=True)
+ax_filtered_regions_SAR.xaxis.set_label_position('top')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+ax_filtered_regions_SAR.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor='#3274a1',edgecolor='none',label='Lateral runoff'),
-                   Patch(facecolor='#e1802c',edgecolor='none',label='Retention')]
-ax_filtered_regions.legend(handles=legend_elements,loc='lower right',fontsize=12.5,framealpha=1).set_zorder(7)
-plt.show()
+                   Patch(facecolor='#e1802c',edgecolor='none',label='Retention'),
+                   Line2D([0], [0], color='#ba2b2b', lw=2, label='Cutoff')]
+ax_filtered_regions_SAR.legend(handles=legend_elements,loc='lower right',fontsize=15,framealpha=1).set_zorder(7)
+ax_filtered_regions_SAR.text(-0.05, 0.95,'b',ha='center', va='center', transform=ax_filtered_regions_SAR.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+
+# Display ice thickness violin plot for lateral runoff and retention zones
+ax_filtered_regions_IceThickness = plt.subplot(gs[5:10,0:4])
+sns.violinplot(data=final_df_SAR_IceThickness,
+               x="SUBREGION1", y="20m_ice_content_m",hue="aquitard",ax=ax_filtered_regions_IceThickness,scale="width")#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+ax_filtered_regions_IceThickness.set_ylabel('Ice Thickness [m]',labelpad=20)
+ax_filtered_regions_IceThickness.set_xlabel('')
+ax_filtered_regions_IceThickness.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+ax_filtered_regions_IceThickness.grid(linestyle='dashed')
+ax_filtered_regions_IceThickness.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
+ax_filtered_regions_IceThickness.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+ax_filtered_regions_IceThickness.text(-0.05, 0.95,'c',ha='center', va='center', transform=ax_filtered_regions_IceThickness.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_data+'Sectors2019_ViolinPlot_IceSlabsThickness_Aquitard_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3.png',dpi=500)
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v1/Fig2_bc.png',dpi=1000)
 '''
 
 fig = plt.figure(figsize=(10,6))
@@ -771,8 +808,6 @@ ax_aquitard_below.set_xlabel('')
 ax_aquitard_above.set_ylabel('')
 ax_aquitard_InBetween.set_ylabel('')
 ax_aquitard_below.set_ylabel('')
-
-
 ################### Relationship using data in sectors only ###################
 
 pdb.set_trace()

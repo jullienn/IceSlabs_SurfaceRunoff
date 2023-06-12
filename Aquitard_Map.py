@@ -86,6 +86,9 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 import rioxarray as rxr
 import os
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
+from scalebar import scale_bar
 
 #If saving aquitard raster is desired
 save_aquitard_true='FALSE'
@@ -140,6 +143,9 @@ DrySnowZoneMask=gpd.read_file(path_data+'aquitard/filter_dry_snow_zone.shp')
 #Open Boxes from Tedstone and Machguth (2022)
 Boxes_Tedstone2022=gpd.read_file(path_data+'Boxes_Tedstone2022/boxes.shp')
 
+#Load 2013-2020 runoff limit
+poly_2013_2020_median=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2013_2020_median.shp')
+
 # Consider ice slabs and SAR, we do not go through polygon where
 # firn aquifer are no prominent, i.e. all boxes except 1-3, 20, 42, 44-53.
 # Considering also complex topography, the final list of polygon we do not go tghrough is: 1-3, 20, 32-53
@@ -170,13 +176,15 @@ SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 
 
 #Prepare plot
+plt.rcParams.update({'font.size': 15})
 fig = plt.figure()
-fig.set_size_inches(8, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(12, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
 ax1 = plt.subplot(projection=crs)
 #Display coastlines
 ax1.coastlines(edgecolor='black',linewidth=0.075)
-
+#Display ice sheet background
+GrIS_drainage_bassins.plot(ax=ax1,facecolor='#f7fbff',edgecolor='none')
 
 '''
 --- SW ---
@@ -250,7 +258,7 @@ ax1.coastlines(edgecolor='black',linewidth=0.075)
 0.75   -6.329797
 '''
 
-pdb.set_trace()
+#pdb.set_trace()
 
 #quantile 0.75 of below to quantile 0.75 of within
 intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,-9.110144,-8.638897,'aquitard_SW_1',save_aquitard_true)
@@ -267,8 +275,11 @@ intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,-6.329797,-5.715943,'
 #Display dry snow zone mask
 DrySnowZoneMask.plot(ax=ax1,facecolor='#f7fbff',edgecolor='none')
 
+#Display 2013-2020 runoff limit
+poly_2013_2020_median.plot(ax=ax1,facecolor='none',edgecolor='#fed976',linewidth=1)
+
 #Display boxes not processed
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9bc9a',edgecolor='none')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 
 #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
 GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
@@ -277,13 +288,16 @@ GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
 iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='none',edgecolor='#ba2b2b')
 
 #Display firn aquifers Miège et al., 2016
-ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=0.01,zorder=2)
+ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=2)
+
+#Display panel label
+ax1.text(0.01, 0.9,'a',ha='center', va='center', transform=ax1.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
 gl=ax1.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
 #Customize lat labels
-#gl.ylabels_right = False
+gl.right_labels = False
 gl.xlabels_bottom = False
 ax1.axis('off')
 #ax8map.legend(loc='upper right')
@@ -292,13 +306,32 @@ ax1.axis('off')
 ax1.set_xlim(-642397, 1105201)
 ax1.set_ylim(-3366273, -784280)
 
-'''
-#Save the figure
-plt.savefig(path_local+'/SAR_and_IceThickness/Logistic_aquitard_map_2019_q0.75_below_and_within.png',dpi=1000,bbox_inches='tight')
-#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Lateral runoff areas'),
+                   Patch(facecolor='none',edgecolor='#ba2b2b',label='2010-2018 ice slabs'),
+                   Line2D([0], [0], color='#fed976', lw=2, label='2013-2020 runoff limit'),
+                   Line2D([0], [0], color='#74c476', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
+                   Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
+ax1.legend(handles=legend_elements,loc='lower right',fontsize=12.5,framealpha=1).set_zorder(7)
+plt.show()
+
+#Display scalebar - from Fig2andS6andS7andS10.py
+scale_bar(ax1, (0.7, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, rotation of text
+#by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
+
+#Add region name on map - this is from Fig. 2 paper Ice Slabs Expansion and Thickening
+ax1.text(NO_rignotetal.centroid.x-50000,NO_rignotetal.centroid.y-100000,np.asarray(NO_rignotetal.SUBREGION1)[0])
+ax1.text(NE_rignotetal.centroid.x-150000,NE_rignotetal.centroid.y-100000,np.asarray(NE_rignotetal.SUBREGION1)[0])
+ax1.text(SE_rignotetal.centroid.x-100000,SE_rignotetal.centroid.y+30000,np.asarray(SE_rignotetal.SUBREGION1)[0])
+ax1.text(SW_rignotetal.centroid.x-35000,SW_rignotetal.centroid.y-100000,np.asarray(SW_rignotetal.SUBREGION1)[0])
+ax1.text(CW_rignotetal.centroid.x-50000,CW_rignotetal.centroid.y-60000,np.asarray(CW_rignotetal.SUBREGION1)[0])
+ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y-50000,np.asarray(NW_rignotetal.SUBREGION1)[0])
 
 pdb.set_trace()
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v1/Fig2_a.png',dpi=1000)
+'''
 
 ############################################################################
 ########################### Aquitard properties ###########################
