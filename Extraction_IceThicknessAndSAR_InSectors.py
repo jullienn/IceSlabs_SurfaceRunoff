@@ -321,6 +321,8 @@ from shapely.geometry import Polygon
 from descartes import PolygonPatch
 from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
+from pyproj import Transformer
+transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
 
 #Define palette for areas of interest , this if From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
@@ -433,6 +435,21 @@ SAR_NW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
 SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
 ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
+'''
+#Load ice thickness and SAR at FS
+FS_pd=pd.DataFrame(data={'Station': ['FS2', 'FS4', 'FS5'], 'lat': [66.98605,67.01054,67.01022],'lon': [-47.23809,-46.81676,-46.46523],
+                         '10m_ice_content_%': [95.06, 56.50, 38.44], 'SAR': [-11.37, -6.58, -5.42]})
+
+#Convert FS coordinates into EPSG:3413
+points=transformer.transform(np.asarray(FS_pd["lon"]),np.asarray(FS_pd["lat"]))
+FS_pd['lon_3413']=points[0]
+FS_pd['lat_3413']=points[1]
+
+#Display FS location, to identify the sector
+ax_sectors.scatter(FS_pd['lon_3413'],FS_pd['lat_3413'],c='red',s=10,zorder=10)
+from scalebar import scale_bar
+scale_bar(ax_sectors, (0.5, 0.37), 15, 3,0)# axis, location (x,y), length, linewidth, rotation of text
+'''
 
 #Define empty vectors for SAR storing
 SAR_within=[]
@@ -446,7 +463,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         print(indiv_index,' excluded, continue')
         continue
     '''
-    if (indiv_index <13):
+    if (indiv_index <8):
         continue
     '''
     print(indiv_index)
@@ -526,7 +543,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         x_max=np.max(Emax_points['x'])+5e4
         y_min=np.min(Emax_points['y'])-5e4
         y_max=np.max(Emax_points['y'])+5e4
-
+        
         #Extract coordinates of NDWI image within Emaxs bounds
         logical_x_coord_within_bounds=np.logical_and(x_coord_NDWI>=x_min,x_coord_NDWI<=x_max)
         x_coord_within_bounds=x_coord_NDWI[logical_x_coord_within_bounds]
@@ -708,7 +725,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V3')
-                
+        
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen

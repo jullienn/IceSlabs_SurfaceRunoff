@@ -105,7 +105,10 @@ poly_2019=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2019.shp')
 ### -------------------------- Load shapefiles --------------------------- ###
 
 ### ---------------------------- Load xytpd ------------------------------ ###
+'''
 df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd.csv',delimiter=',',decimal='.')
+'''
+df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd_NDWI_cleaned_2019_v3.csv',delimiter=',',decimal='.')
 ### ---------------------------- Load xytpd ------------------------------ ###
 
 ### -------------------------- Load CumHydro ----------------------------- ###
@@ -366,11 +369,11 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     #Maximize figure size
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-    '''
+    
     #Save figure
-    plt.savefig(path_local+'MVRL/Difference_elevation_2012_2019_box_'+str(indiv_box)+'.png',dpi=300,bbox_inches='tight')
+    plt.savefig(path_local+'MVRL/Difference_elevation_2012_2019_box_'+str(indiv_box)+'_cleanedV3.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    '''
+    
     #Possibly filter out outliers? (e.g. 300 m difference is very likely one). Do not do it,maybe consider later on
     plt.close()
 
@@ -429,7 +432,7 @@ axsummary_signed_dist.text(-0.1, 0.95,'c',ha='center', va='center', transform=ax
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v2/Fig1.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v2/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
