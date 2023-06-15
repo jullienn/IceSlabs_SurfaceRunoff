@@ -29,8 +29,10 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         print('   Above: ',np.round(iceslabs_above['20m_ice_content_m'].std()/iceslabs_above['20m_ice_content_m'].mean(),4))
         print('   Within: ',np.round(iceslabs_within['20m_ice_content_m'].std()/iceslabs_within['20m_ice_content_m'].mean(),4))
         print('   Below: ',np.round(iceslabs_below['20m_ice_content_m'].std()/iceslabs_below['20m_ice_content_m'].mean(),4))
-        print(str())
-        
+        print('-> MAD/median:')
+        print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above['20m_ice_content_m'],nan_policy='omit')/iceslabs_above['20m_ice_content_m'].median(),2))
+        print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within['20m_ice_content_m'],nan_policy='omit')/iceslabs_within['20m_ice_content_m'].median(),2))
+        print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below['20m_ice_content_m'],nan_policy='omit')/iceslabs_below['20m_ice_content_m'].median(),2))        
         print('\n')        
     else:
         ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
@@ -55,6 +57,10 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         print('   Above: ',np.round(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].mean(),4))
         print('   Within: ',np.round(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].mean(),4))
         print('   Below: ',np.round(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].mean(),4))
+        print('-> MAD/median:')
+        print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].median(),2))
+        print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].median(),2))
+        print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].median(),2))
         print('-> Perform Welsch t-test above VS below:')
                 
         above_to_test=iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].copy()
@@ -145,12 +151,16 @@ def hist_regions(df_to_plot,region_to_plot,ax_region):
     print('   Above: ',np.round(df_to_plot[df_to_plot.sector=='Above']['SAR'].std()/df_to_plot[df_to_plot.sector=='Above']['SAR'].mean(),4))
     print('   Within: ',np.round(df_to_plot[df_to_plot.sector=='Within']['SAR'].std()/df_to_plot[df_to_plot.sector=='Within']['SAR'].mean(),4))
     print('   Below: ',np.round(df_to_plot[df_to_plot.sector=='Below']['SAR'].std()/df_to_plot[df_to_plot.sector=='Below']['SAR'].mean(),4))
+    print('-> MAD/median:')
+    print('   Above: ',np.round(stats.median_abs_deviation(df_to_plot[df_to_plot.sector=='Above']['SAR'],nan_policy='omit')/df_to_plot[df_to_plot.sector=='Above']['SAR'].median(),2))
+    print('   Within: ',np.round(stats.median_abs_deviation(df_to_plot[df_to_plot.sector=='Within']['SAR'],nan_policy='omit')/df_to_plot[df_to_plot.sector=='Within']['SAR'].median(),2))
+    print('   Below: ',np.round(stats.median_abs_deviation(df_to_plot[df_to_plot.sector=='Below']['SAR'],nan_policy='omit')/df_to_plot[df_to_plot.sector=='Below']['SAR'].median(),2))
     print('-> Sample size:')
     print('   Above: ',len(df_to_plot[df_to_plot.sector=='Above']['SAR']))
     print('   Within: ',len(df_to_plot[df_to_plot.sector=='Within']['SAR']))
     print('   Below: ',len(df_to_plot[df_to_plot.sector=='Below']['SAR']))
     print('-> Perform Welsch t-test above VS below:')
-            
+    
     above_to_test=df_to_plot[df_to_plot.sector=='Above']['SAR'].copy()
     above_to_test=above_to_test[~above_to_test.isna()]
     
@@ -307,11 +317,20 @@ def aquitard_identification(df_for_aquitard,region,LowCutoff,HighCutoff):
     print('      0:',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=="0"]['20m_ice_content_m'].median(),1))
     print('      1:',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=="1"]['20m_ice_content_m'].median(),1))
     
+    print('-> MAD:')
+    print('      0: ',np.round(stats.median_abs_deviation(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'],nan_policy='omit'),2))
+    print('      1: ',np.round(stats.median_abs_deviation(df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'],nan_policy='omit'),2))
+
+    
     print('-> Coefficient of variation:')
     print('      0: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'].mean(),4))
     #print('      0.5: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0.5']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='0.5']['20m_ice_content_m'].mean(),4))
     print('      1: ',np.round(df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].std()/df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].mean(),4))
     
+    print('-> MAD/median:')
+    print('      0: ',np.round(stats.median_abs_deviation(df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'],nan_policy='omit')/df_for_aquitard_region[df_for_aquitard_region.aquitard=='0']['20m_ice_content_m'].median(),2))
+    print('      1: ',np.round(stats.median_abs_deviation(df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'],nan_policy='omit')/df_for_aquitard_region[df_for_aquitard_region.aquitard=='1']['20m_ice_content_m'].median(),2))
+
     print('-> Test to distritution normality:')
     print('   - null hypothesis: x comes from a normal distribution')
     print('      0: ',stats.normaltest(df_for_aquitard_region[df_for_aquitard_region.aquitard=="0"]['20m_ice_content_m']))
@@ -509,6 +528,8 @@ fig.suptitle('2019 - 2 years running slabs')
 '''
 ######################## Plot with 0m thick ice slabs #########################
 
+pdb.set_trace()
+
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
 #Prepare plot
@@ -688,7 +709,7 @@ display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_region
 plt.savefig(path_data+'Sectors2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
 
-pdb.set_trace()
+#pdb.set_trace()
 
 #Perform the comparison aquitard VS non-aquitard in all the sectors
 #Apply thresholds to differentiate between efficient aquitard VS non-efficient aquitard places - let's choose quantile 0.75 of below as low cutoff, quantile 0.75 of within for high cutoff
