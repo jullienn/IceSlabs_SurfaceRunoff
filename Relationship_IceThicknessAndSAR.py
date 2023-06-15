@@ -513,19 +513,6 @@ fig.suptitle('2019 - 2 years running slabs')
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
-
-'''
-#Try violin plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.violinplot(data=IceThickness_all_sectors_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
-ax_regions_GrIS.set_xlabel('')
-ax_regions_GrIS.set_ylabel('Ice Thickness [m]')
-ax_regions_GrIS.set_xlim(-0.5,20)
-ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2019 - 2 years running slabs')
-'''
 ######################## Plot with 0m thick ice slabs #########################
 
 pdb.set_trace()
@@ -976,7 +963,7 @@ for indiv_box in range(4,32):
     except FileNotFoundError:
         print('No below')
 
-pdb.set_trace()
+#pdb.set_trace()
 ### For boxes which share different regions, perform intersection with GrIS drainage bassins ###
 #Reunite all the sectors into one single dataframe
 SAR_all_sectors=pd.concat([above_all,in_between_all,within_all,below_all])
@@ -1159,6 +1146,41 @@ print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all
 print('- Below')
 print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
 
+
+#Display ice thickness and SAR for each regions for each sector as violin plot aside each other
+plt.rcParams.update({'font.size': 15})
+fig = plt.figure(figsize=(12,10))
+gs = gridspec.GridSpec(5, 10)
+gs.update(hspace=0)
+gs.update(wspace=0.1)
+ax_SAR = plt.subplot(gs[0:5,0:5])
+sns.violinplot(data=pd.DataFrame(df_except_InBetween.to_dict()), x="SAR", y="region",hue="sector",orient="h",scale="width",ax=ax_SAR,palette=my_pal)#, kde=True)
+ax_SAR.set_xlabel('Signal strength [dB]',labelpad=10)
+ax_SAR.set_ylabel('Region',labelpad=10)
+ax_SAR.grid(linestyle='dashed')
+ax_SAR.text(0.03, 0.97,'a',ha='center', va='center', transform=ax_SAR.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+ax_ice_thickness = plt.subplot(gs[0:5, 5:10])
+sns.violinplot(data=IceThickness_all_sectors, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",scale="width",ax=ax_ice_thickness,palette=my_pal)#, kde=True)
+ax_ice_thickness.set_xlabel('Ice thickness [m]',labelpad=10)
+ax_ice_thickness.set_ylabel('Region',labelpad=10)
+ax_ice_thickness.grid(linestyle='dashed')
+ax_ice_thickness.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
+ax_ice_thickness.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+ax_ice_thickness.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+ax_ice_thickness.text(0.03, 0.97,'b',ha='center', va='center', transform=ax_ice_thickness.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Above'),
+                   Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
+                   Patch(facecolor=my_pal['Below'],edgecolor='black',label='Below')]
+ax_SAR.legend(handles=legend_elements,loc='lower left',fontsize=15,framealpha=0.8).set_zorder(7)
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/FigS1/v1/FigS1.png',dpi=500,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
 
 '''
 --- SW ---
