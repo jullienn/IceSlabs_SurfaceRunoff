@@ -65,6 +65,7 @@ import rioxarray as rxr
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 from scalebar import scale_bar
+from shapely.geometry import Point, LineString, Polygon
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -220,6 +221,78 @@ scale_bar(ax1, (0.7, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, 
 pdb.set_trace()
 #plt.close()
 
+########### SCALE BAR GEOPANDAS?????? #############
+############## Transform ice slabs shapefile into line to calculate distances ##########
+
+'''
+iceslabs_20102018_jullienetal2023_lines=iceslabs_20102018_jullienetal2023.boundary
+
+iceslabs_20102018_jullienetal2023_lines.plot(ax=ax1,facecolor='none',edgecolor='yellow',linewidth=2,zorder=10)
+
+ax1.scatter(iceslabs_20102018_jullienetal2023_lines.iloc[0].coords.xy[0],
+            iceslabs_20102018_jullienetal2023_lines.iloc[0].coords.xy[1])
+
+xcoords=iceslabs_20102018_jullienetal2023_lines.iloc[0].coords.xy[0]
+ycoords=iceslabs_20102018_jullienetal2023_lines.iloc[0].coords.xy[1]
+'''
+#1. Create slices (perpendicular to elevation gradient?)
+#Helper from this: https://gis.stackexchange.com/questions/269243/creating-polygon-grid-using-geopandas
+
+#Size of box
+add_x=80000
+add_y=1000
+
+#Offset for next box
+offset_y=0
+
+#Bounds of the current ice slab polygon
+iceslabs_polygon_bound=iceslabs_20102018_jullienetal2023.iloc[0].geometry.bounds
+
+pdb.set_trace()
+#Loop over each slice
+while ((iceslabs_polygon_bound[1]+offset_y)<iceslabs_polygon_bound[3]):
+    
+    #1. Create 1 km wide slice
+    polygon_for_intersection = gpd.GeoSeries(Polygon([(iceslabs_polygon_bound[0],iceslabs_polygon_bound[1]+offset_y),
+                                                      (iceslabs_polygon_bound[0]+add_x,iceslabs_polygon_bound[1]+offset_y),
+                                                      (iceslabs_polygon_bound[0]+add_x,iceslabs_polygon_bound[1]+offset_y+add_y),
+                                                      (iceslabs_polygon_bound[0],iceslabs_polygon_bound[1]+offset_y+add_y)]),crs="EPSG:3413")
+    #Display polygon_for_intersection
+    polygon_for_intersection.plot(ax=ax1,color='yellow')
+    
+    #2. In each slice, extract RL line and ice slabs dataset
+    #Intersect with ice slabs shapefile
+    intersection_slice_iceslabs_boundary=polygon_for_intersection.intersection(iceslabs_20102018_jullienetal2023.boundary)
+    intersection_slice_iceslabs_boundary.plot(ax=ax1,color='magenta',zorder=15)
+    
+    #If two intersections with ice slabs dataset, perform elevation clip, and keep the one at the highest elevation!
+    
+    #Intersect with runoff limit line
+    intersection_slice_2012_RL=polygon_for_intersection.intersection(poly_2012.boundary)
+    intersection_slice_2012_RL.plot(ax=ax1,color='green',zorder=20)
+    
+    intersection_slice_2019_RL=polygon_for_intersection.intersection(poly_2019.boundary)
+    intersection_slice_2019_RL.plot(ax=ax1,color='cyan',zorder=20)
+    
+    #3. Extract cendroid coordinates of each line
+    intersection_slice_iceslabs_boundary.centroid.plot(ax=ax1)
+    intersection_slice_2012_RL.centroid.plot(ax=ax1)
+    intersection_slice_2019_RL.centroid.plot(ax=ax1)
+    
+    #Extract elevation of these centroids!
+    
+    #4. Perform comparison
+    ### When two intersection (low and high end, extract the one at the highest elevation!)
+    intersection_slice_iceslabs_boundary.distance(intersection_slice_2012_RL)
+    intersection_slice_iceslabs_boundary.distance(intersection_slice_2019_RL)
+
+    #Add offset - for when inside the loop!!
+    offset_y=offset_y+add_y
+    pdb.set_trace()
+
+
+############## Transform ice slabs shapefile into line to calculate distances ##########
+
 #Transform xytpd dataframe into geopandas dataframe for distance calculation
 df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
 #Intersection between df_xytpd_all_gpd and GrIS drainage bassins, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
@@ -369,11 +442,11 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     #Maximize figure size
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
-    
+    '''
     #Save figure
     plt.savefig(path_local+'MVRL/Difference_elevation_2012_2019_box_'+str(indiv_box)+'_cleanedV3.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    
+    '''
     #Possibly filter out outliers? (e.g. 300 m difference is very likely one). Do not do it,maybe consider later on
     plt.close()
 
