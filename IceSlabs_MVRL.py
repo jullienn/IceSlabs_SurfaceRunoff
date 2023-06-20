@@ -5,6 +5,267 @@ Created on Wed May 17 08:33:47 2023
 @author: jullienn
 """
 
+def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_func,iceslabs_20102018_jullienetal2023_in_func,GrIS_DEM_in_func,box_nb):
+        
+    #Create an overall summary dataframe for this box
+    RL_IceSlabs_box = pd.DataFrame({'box_id' : [],
+                                    'Point_2012_RL' : [],
+                                    'Point_2019_RL' : [],
+                                    'Point_IceSlabsBoundary' : [],
+                                    'Elevation_2012_RL' : [],
+                                    'Elevation_2019_RL' : [],
+                                    'Elevation_IceSlabsBoundary' : [],
+                                    'Distance_IceSlabsBoundary_2012_RL' : [],
+                                    'Distance_IceSlabsBoundary_2019_RL' : [],
+                                    'Distance_2012_2019_RL' : []})
+
+    #Create map for display
+    plt.rcParams.update({'font.size': 15})
+    fig = plt.figure()
+    fig.set_size_inches(12, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+    gs = gridspec.GridSpec(5, 5)
+    ax_box = plt.subplot(gs[0:5, 0:5],projection=crs)
+    
+    #Display coastlines
+    ax_box.coastlines(edgecolor='black',linewidth=0.075)
+    #Display 2010-2018 high end ice slabs jullien et al., 2023
+    iceslabs_20102018_jullienetal2023_in_func.plot(ax=ax_box,facecolor='#ba2b2b',edgecolor='#ba2b2b')
+    #Display firn aquifers Miège et al., 2016
+    ax_box.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=2)
+    
+    #Display MVRL
+    poly_2012_in_func.plot(ax=ax_box,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
+    poly_2019_in_func.plot(ax=ax_box,facecolor='none',edgecolor='#54278f',linewidth=1,zorder=3)
+    
+    #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
+    GrIS_drainage_bassins.plot(ax=ax_box,facecolor='none',edgecolor='black',zorder=5)
+    
+    #Set x and y limits
+    ax_box.set_xlim(indiv_Boxes_Tedstone2022.bounds.minx.values[0], indiv_Boxes_Tedstone2022.bounds.maxx.values[0])
+    ax_box.set_ylim(indiv_Boxes_Tedstone2022.bounds.miny.values[0], indiv_Boxes_Tedstone2022.bounds.maxy.values[0])
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_box.gridlines(draw_labels=True, xlocs=[-20,-25,-30,-35,-40,-45,-50,-55,-60,-65,-70,-75], ylocs=[60,62,64,66,68,70,72,74,76,78,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=6)
+    #Customize lat labels
+    gl.right_labels = False
+    gl.bottom_labels = False
+    ax_box.axis('off')
+    ###################### From Tedstone et al., 2022 #####################
+    ax_box.add_artist(ScaleBar(1))
+
+    #Display box on map
+    indiv_Boxes_Tedstone2022.plot(ax=ax_box,color='none',edgecolor='red',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+    
+    
+    #Extract coordinates of vertice
+    xcoords=indiv_Boxes_Tedstone2022.boundary.iloc[0].coords.xy[0]
+    ycoords=indiv_Boxes_Tedstone2022.boundary.iloc[0].coords.xy[1]
+    
+    #Prepare creation of 1-km wide slice
+    #Offset for next box
+    offset_y_right=0
+    offset_y_left=0
+    offset_x_right=0
+    offset_x_left=0
+    
+    if (box_nb in list (['27'])):
+        #Extract corner coordinates of box
+        lower_right=(xcoords[3],ycoords[3])
+        lower_left=(xcoords[0],ycoords[0])
+        upper_left=(xcoords[1],ycoords[1])
+        upper_right=(xcoords[2],ycoords[2])
+
+    else:
+        #Extract corner coordinates of box
+        lower_right=(xcoords[0],ycoords[0])
+        lower_left=(xcoords[1],ycoords[1])
+        upper_left=(xcoords[2],ycoords[2])
+        upper_right=(xcoords[3],ycoords[3])
+    
+    #Display to make sure correct
+    ax_box.scatter(lower_right[0],lower_right[1])
+    ax_box.scatter(lower_left[0],lower_left[1])
+    ax_box.scatter(upper_left[0],upper_left[1])
+    ax_box.scatter(upper_right[0],upper_right[1])
+    
+    #Define y spacing
+    nb_boxes_right=np.round(np.abs((lower_right[1]-upper_right[1]))/1000).astype(int)#approximately 1-km wide boxes
+    spacing_y_right=np.mean(np.diff(np.linspace(lower_right[1],upper_right[1],nb_boxes_right)))
+    spacing_y_left=np.mean(np.diff(np.linspace(lower_left[1],upper_left[1],nb_boxes_right)))
+    
+    #Define x spacing
+    spacing_x_right=(upper_right[0]-lower_right[0])/nb_boxes_right
+    spacing_x_left=(upper_left[0]-lower_left[0])/nb_boxes_right
+    
+    #Set slice id to 0
+    slice_id=0
+    
+    #Define conditions for while
+    if (box_nb in list (['26','27','29','30','31'])):
+        condition_while=(((lower_right[0]+offset_x_right)<upper_right[0])&((lower_left[0]+offset_x_left)<upper_left[0]))
+    else:
+        condition_while=(((lower_right[1]+offset_y_right)<upper_right[1])&((lower_left[1]+offset_y_left)<upper_left[1]))
+    
+    #Loop over each slice
+    while condition_while:
+
+        #Create a temporary summary dataframe
+        RL_IceSlabs= pd.DataFrame({'box_id' : [],
+                                   'Point_2012_RL' : [],
+                                   'Point_2019_RL' : [],
+                                   'Point_IceSlabsBoundary' : [],
+                                   'Elevation_2012_RL' : [],
+                                   'Elevation_2019_RL' : [],
+                                   'Elevation_IceSlabsBoundary' : [],
+                                   'Distance_IceSlabsBoundary_2012_RL' : [],
+                                   'Distance_IceSlabsBoundary_2019_RL' : [],
+                                   'Distance_2012_2019_RL' : []})
+        
+        #1. Create slices using boxes from Tedstone and Machguth (2022)
+        #Helper from this: https://gis.stackexchange.com/questions/269243/creating-polygon-grid-using-geopandas
+        
+        #Create 1-km wide at high elevations polygon. With this method, there is an offset of ~10m the upper left corner, and ~200m on the upper right corner
+        polygon_for_intersection = gpd.GeoSeries(Polygon([(lower_right[0]+offset_x_right,lower_right[1]+offset_y_right),
+                                                          (lower_left[0]+offset_x_left,lower_left[1]+offset_y_left),
+                                                          (lower_left[0]+offset_x_left+spacing_x_left,lower_left[1]+offset_y_left+spacing_y_left),
+                                                          (lower_right[0]+offset_x_right+spacing_x_right,lower_right[1]+offset_y_right+spacing_y_right)]),crs="EPSG:3413")
+        
+        #Make polygon_for_intersection as a gpd
+        polygon_for_intersection_gpd = gpd.GeoDataFrame(pd.DataFrame({"slide_id": [slice_id]}), geometry=polygon_for_intersection, crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+        
+        #Display polygon_for_intersection
+        polygon_for_intersection_gpd.plot(ax=ax_box,color='yellow',edgecolor='black')
+                
+        #2. In each slice, extract RL line and ice slabs
+        #Intersect with runoff limit line
+        intersection_slice_2012_RL=polygon_for_intersection_gpd.intersection(poly_2012_in_func.boundary)
+        intersection_slice_2012_RL.plot(ax=ax_box,color='green',zorder=20)
+        intersection_slice_2019_RL=polygon_for_intersection_gpd.intersection(poly_2019_in_func.boundary)
+        intersection_slice_2019_RL.plot(ax=ax_box,color='cyan',zorder=20)
+        
+        #3. In each slice, extract cendroid coordinates of each line
+        intersection_slice_2012_RL.centroid.plot(ax=ax_box)
+        intersection_slice_2019_RL.centroid.plot(ax=ax_box)
+        
+        #Store RL data into RL_IceSlabs dataframe
+        RL_IceSlabs['Point_2012_RL']=intersection_slice_2012_RL.centroid
+        RL_IceSlabs['Point_2019_RL']=intersection_slice_2019_RL.centroid
+        #Extract elevation of RL centroids
+        RL_IceSlabs['Elevation_2012_RL']=GrIS_DEM_in_func.value_at_coords(intersection_slice_2012_RL.centroid[0].x, intersection_slice_2012_RL.centroid[0].y)
+        RL_IceSlabs['Elevation_2019_RL']=GrIS_DEM_in_func.value_at_coords(intersection_slice_2019_RL.centroid[0].x, intersection_slice_2019_RL.centroid[0].y)
+        #Calculate distance betwwen 2012 adn 2019 runoff limit
+        RL_IceSlabs['Distance_2012_2019_RL'] = intersection_slice_2012_RL.centroid[0].distance(intersection_slice_2019_RL.centroid[0])
+        
+        
+        #Make iceslabs_20102018_jullienetal2023_in_func.boundary as a gpd
+        iceslabs_20102018_jullienetal2023_boundary_gpd = gpd.GeoDataFrame(geometry=iceslabs_20102018_jullienetal2023_in_func.boundary,
+                                                                          crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+        
+        #Intersect slice with ice slabs boundaries
+        intersection_slice_iceslabs_boundary=gpd.clip(iceslabs_20102018_jullienetal2023_boundary_gpd, polygon_for_intersection_gpd)#inspred thanks to https://gis.stackexchange.com/questions/246782/geopandas-line-polygon-intersection
+        
+        #If ~(no intersection), display
+        if ((~intersection_slice_iceslabs_boundary[~(intersection_slice_iceslabs_boundary==None)].is_empty).astype(int).sum()>0):
+            intersection_slice_iceslabs_boundary.plot(ax=ax_box,color='magenta',zorder=15)
+            '''
+            intersection_slice_iceslabs_boundary.centroid.plot(ax=ax_box,color='black')
+            '''
+            #Keep only shapefile where there is intersection, and explode the multistring into individual line strings
+            lines_centroids = intersection_slice_iceslabs_boundary[~(intersection_slice_iceslabs_boundary==None)].explode(index_parts=True).centroid# explode from https://stackoverflow.com/questions/72525894/convert-each-multilinestring-to-one-linestring-only
+            #Reset index to get rid of double index from join operation
+            lines_centroids.reset_index(drop=True, inplace=True)#This is from https://stackoverflow.com/questions/20107570/removing-index-column-in-pandas-when-reading-a-csv
+            
+            #Create a pandas datafarme
+            lines_centroids_df = pd.DataFrame({"geometry":lines_centroids,
+                                               "elevation":[np.nan]*len(lines_centroids)})
+            
+            #Loop over the centroids of each line intersection, and keep the line whose centroid is the highest
+            for i, row in lines_centroids_df.iterrows(): #iterrows from https://stackoverflow.com/questions/36864690/iterate-through-a-dataframe-by-index
+                #Display centroid of each line
+                ax_box.scatter(row[0].x, row[0].y,color='blue',s=100)
+                #Extract elevation
+                lines_centroids_df.loc[int(i),'elevation']=GrIS_DEM.value_at_coords(row[0].x, row[0].y)
+            
+            if ((lines_centroids_df.elevation==-9999).astype(int).sum()>0):
+                #pdb.set_trace()
+                #If one elevation is -9999, ignore maximum ice slabs retrieval in this slice!
+                print('Ice slabs distance and elevation calculations not possible, continue')
+            else:
+                #Select the point at the highest elevation
+                lines_centroids_df_highest=lines_centroids_df.where(lines_centroids_df.elevation==lines_centroids_df.elevation.max()).copy()
+                lines_centroids_df_highest=lines_centroids_df_highest[~(lines_centroids_df_highest.elevation.isna())].copy()
+                
+                #Store and display the kept centroid of intersection betwwen ice slabs and slice
+                RL_IceSlabs['Point_IceSlabsBoundary']=lines_centroids_df_highest.geometry.iloc[0]
+                ax_box.scatter(lines_centroids_df_highest.geometry.iloc[0].x,lines_centroids_df_highest.geometry.iloc[0].y,color='red',s=50)
+            
+                #Extract elevation
+                RL_IceSlabs['Elevation_IceSlabsBoundary']=lines_centroids_df_highest.elevation.iloc[0]
+                
+                #4.Calculate distances between centroids
+                RL_IceSlabs['Distance_IceSlabsBoundary_2012_RL'] = lines_centroids_df_highest.geometry.iloc[0].distance(intersection_slice_2012_RL.centroid[0])
+                RL_IceSlabs['Distance_IceSlabsBoundary_2019_RL'] = lines_centroids_df_highest.geometry.iloc[0].distance(intersection_slice_2019_RL.centroid[0])
+            
+        ### Where ice slabs extent regional transition (CW VS SW), might need to include some filtering to get rid of falsely too high ice slabs extent at the low end? It should not be the case, but check that!
+        
+        #Concat to have a summary dataframe
+        RL_IceSlabs_box=pd.concat([RL_IceSlabs_box,RL_IceSlabs])
+        
+        #Add offsets
+        offset_x_right=offset_x_right+spacing_x_right
+        offset_x_left=offset_x_left+spacing_x_left
+        offset_y_left=offset_y_left+spacing_y_left
+        offset_y_right=offset_y_right+spacing_y_right
+        
+        pdb.set_trace()
+               
+        #Update condition for while
+        if (box_nb in list (['26','27','29','30','31'])):
+            condition_while=((np.round((lower_right[0]+offset_x_right),4)<np.round(upper_right[0],4))&(np.round((lower_left[0]+offset_x_left),4)<np.round(upper_left[0],4)))
+        else:
+            condition_while=((np.round((lower_right[1]+offset_y_right),4)<np.round(upper_right[1],4))&(np.round((lower_left[1]+offset_y_left),4)<np.round(upper_left[1],4)))
+        
+        #Update slice id
+        slice_id=slice_id+1
+        
+    pdb.set_trace()
+    #Store the box id
+    RL_IceSlabs_box['box_id'] = [int(box_nb)]*len(RL_IceSlabs_box)
+        
+    #Save figure
+    plt.savefig(path_switchdrive+'RT3/figures/Fig1/IceSlabs_and_RL_extraction/ExtractionSlabs_and_RL_box_'+box_nb+'.png',dpi=500,bbox_inches='tight')
+    #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    
+    plt.close()
+    
+    #Reindex RL_IceSlabs_summary
+    RL_IceSlabs_box=RL_IceSlabs_box.reset_index(drop=True)
+
+    #Extract region in RL_IceSlabs_summary at 2012 RL and 2019 RL
+    RL_IceSlabs_box_2012RL=RL_IceSlabs_box.copy()
+    RL_IceSlabs_box_2019RL=RL_IceSlabs_box.copy()
+
+    #Transform RL_IceSlabs_summary_2012/9RL into geopandas dataframe, and intersection with GrIS_drainage_bassins which is from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon  
+    RL_IceSlabs_box_2012RL_gpd = gpd.GeoDataFrame(RL_IceSlabs_box_2012RL, geometry=RL_IceSlabs_box_2012RL.Point_2012_RL, crs="EPSG:3413")
+    RL_IceSlabs_box_2019RL_gpd = gpd.GeoDataFrame(RL_IceSlabs_box_2019RL, geometry=RL_IceSlabs_box_2019RL.Point_2019_RL, crs="EPSG:3413")
+
+    #Perform join to identify the region
+    RL_IceSlabs_box_2012RL_gpd = gpd.sjoin(RL_IceSlabs_box_2012RL_gpd, GrIS_drainage_bassins, predicate='within')
+    RL_IceSlabs_box_2019RL_gpd = gpd.sjoin(RL_IceSlabs_box_2019RL_gpd, GrIS_drainage_bassins, predicate='within')
+
+    #Drop index_right
+    RL_IceSlabs_box_2012RL_gpd.drop(columns=["index_right"],inplace=True)
+    RL_IceSlabs_box_2019RL_gpd.drop(columns=["index_right"],inplace=True)
+
+    #Export RL_IceSlabs_box, RL_IceSlabs_box_2012RL_gpd and RL_IceSlabs_box_2019RL_gpd into csv files
+    RL_IceSlabs_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/whole/RL_IceSlabs_box_'+box_nb+'.csv')
+    RL_IceSlabs_box_2012RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_IceSlabs_2012RL_box_'+box_nb+'.csv')
+    RL_IceSlabs_box_2019RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_IceSlabs_2019RL_box_'+box_nb+'.csv')
+    
+    return RL_IceSlabs_box
+
 
 def display_summary(vector_todisplay,type_metric,bin_dist):
         
@@ -67,7 +328,10 @@ from matplotlib.lines import Line2D
 from scalebar import scale_bar
 from shapely.geometry import Point, LineString, Polygon
 import geoutils as gu
-    
+from matplotlib_scalebar.scalebar import ScaleBar
+
+extract_data_in_boxes='TRUE'
+
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
 path_rignotetal2016_GrIS=path_switchdrive+'backup_Aglaja/working_environment/greenland_topo_data/'
@@ -223,168 +487,43 @@ scale_bar(ax1, (0.7, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, 
 #by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
 
 ########### SCALE BAR GEOPANDAS #############
-from matplotlib_scalebar.scalebar import ScaleBar
 ax1.add_artist(ScaleBar(1))
 ########### SCALE BAR GEOPANDAS #############
 
 #pdb.set_trace()
-#plt.close()
-
-############## Transform ice slabs shapefile into line to calculate distances ##########
-
-#1. Create slices using boxes from Tedstone and Machguth (2022)
-#Helper from this: https://gis.stackexchange.com/questions/269243/creating-polygon-grid-using-geopandas
-
-#Bounds of the current ice slab polygon - Acuatlly use boxes from tedstone and machguth and divide them as 1 km slices!
-#Select indiv box 6
-indiv_Boxes_Tedstone2022=Boxes_Tedstone2022[Boxes_Tedstone2022.FID==7]
-indiv_Boxes_Tedstone2022.plot(ax=ax1,color='none',edgecolor='red',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-
-#Extract coordinates of vertice
-xcoords=indiv_Boxes_Tedstone2022.boundary.iloc[0].coords.xy[0]
-ycoords=indiv_Boxes_Tedstone2022.boundary.iloc[0].coords.xy[1]
-
-#Prepare creation of 1-km wide slice
-#Offset for next box
-offset_y_right=0
-offset_y_left=0
-offset_x_right=0
-offset_x_left=0
-
-#Extract corner coordinates of box
-lower_right=(xcoords[0],ycoords[0])
-lower_left=(xcoords[1],ycoords[1])
-upper_left=(xcoords[2],ycoords[2])
-upper_right=(xcoords[3],ycoords[3])
-
-#Display to make sure correct
-ax1.scatter(lower_right[0],lower_right[1])
-ax1.scatter(lower_left[0],lower_left[1])
-ax1.scatter(upper_left[0],upper_left[1])
-ax1.scatter(upper_right[0],upper_right[1])
-
-#Define y spacing
-nb_boxes_right=np.round(np.abs((lower_right[1]-upper_right[1]))/1000).astype(int)#approximately 1-km wide boxes
-spacing_y_right=np.mean(np.diff(np.linspace(lower_right[1],upper_right[1],nb_boxes_right)))
-spacing_y_left=np.mean(np.diff(np.linspace(lower_left[1],upper_left[1],nb_boxes_right)))
-
-#Define x spacing
-spacing_x_right=(np.abs(lower_right[0])-np.abs(upper_right[0]))/nb_boxes_right
-spacing_x_left=(np.abs(lower_left[0])-np.abs(upper_left[0]))/nb_boxes_right
-
-#Create an overall summary dataframe
-RL_IceSlabs_summary= pd.DataFrame({'slice_id_1km' : [],
-                                   'Point_2012_RL' : [],
-                                   'Point_2019_RL' : [],
-                                   'Point_IceSlabsBoundary' : [],
-                                   'Elevation_2012_RL' : [],
-                                   'Elevation_2019_RL' : [],
-                                   'Elevation_IceSlabsBoundary' : [],
-                                   'Distance_IceSlabsBoundary_2012_RL' : [],
-                                   'Distance_IceSlabsBoundary_2019_RL' : [],
-                                   'Distance_2012_2019_RL' : []})
+plt.close()
 
 
-#Loop over each slice
-while (((lower_right[1]+offset_y_right)<upper_right[1])&((lower_left[1]+offset_y_left)<upper_left[1])):
-    
-    #Create a temporary summary dataframe
-    RL_IceSlabs= pd.DataFrame({'slice_id_1km' : [],
-                               'Point_2012_RL' : [],
-                               'Point_2019_RL' : [],
-                               'Point_IceSlabsBoundary' : [],
-                               'Elevation_2012_RL' : [],
-                               'Elevation_2019_RL' : [],
-                               'Elevation_IceSlabsBoundary' : [],
-                               'Distance_IceSlabsBoundary_2012_RL' : [],
-                               'Distance_IceSlabsBoundary_2019_RL' : [],
-                               'Distance_2012_2019_RL' : []})
-    
-    #Create 1-km wide at high elevations polygon. With this method, there is an offset of ~10m the upper left corner, and ~200m on the upper right corner
-    polygon_for_intersection = gpd.GeoSeries(Polygon([(lower_right[0]+offset_x_right,lower_right[1]+offset_y_right),
-                                                      (lower_left[0]+offset_x_left,lower_left[1]+offset_y_left),
-                                                      (lower_left[0]+offset_x_left+spacing_x_left,lower_left[1]+offset_y_left+spacing_y_left),
-                                                      (lower_right[0]+offset_x_right+spacing_x_right,lower_right[1]+offset_y_right+spacing_y_right)]),crs="EPSG:3413")
-    
-    #Display polygon_for_intersection
-    polygon_for_intersection.plot(ax=ax1,color='yellow',edgecolor='black')
-        
-    #2 In each slice, extract RL line and ice slabs
-    #Intersect with runoff limit line
-    intersection_slice_2012_RL=polygon_for_intersection.intersection(poly_2012.boundary)
-    intersection_slice_2012_RL.plot(ax=ax1,color='green',zorder=20)
-    intersection_slice_2019_RL=polygon_for_intersection.intersection(poly_2019.boundary)
-    intersection_slice_2019_RL.plot(ax=ax1,color='cyan',zorder=20)
-    
-    #3. In each slice, extract cendroid coordinates of each line
-    intersection_slice_2012_RL.centroid.plot(ax=ax1)
-    intersection_slice_2019_RL.centroid.plot(ax=ax1)
-    
-    #Store RL data into RL_IceSlabs dataframe
-    RL_IceSlabs['Point_2012_RL']=intersection_slice_2012_RL.centroid
-    RL_IceSlabs['Point_2019_RL']=intersection_slice_2019_RL.centroid
-    #Extract elevation of RL centroids
-    RL_IceSlabs['Elevation_2012_RL']=GrIS_DEM.value_at_coords(intersection_slice_2012_RL.centroid[0].x, intersection_slice_2012_RL.centroid[0].y)
-    RL_IceSlabs['Elevation_2019_RL']=GrIS_DEM.value_at_coords(intersection_slice_2019_RL.centroid[0].x, intersection_slice_2019_RL.centroid[0].y)
-    #Calculate distance betwwen 2012 adn 2019 runoff limit
-    RL_IceSlabs['Distance_2012_2019_RL'] = intersection_slice_2012_RL.centroid[0].distance(intersection_slice_2019_RL.centroid[0])
+if (extract_data_in_boxes == 'TRUE'):
+    #Generate dataset
+    RL_IceSlabs_summary=pd.DataFrame()
 
-    #Intersect with ice slabs shapefile
-    intersection_slice_iceslabs_boundary=polygon_for_intersection.intersection(iceslabs_20102018_jullienetal2023.boundary)
-    
-    #If ~(no intersection), display
-    if ((~intersection_slice_iceslabs_boundary[~(intersection_slice_iceslabs_boundary==None)].is_empty).astype(int).sum()>0):
-        intersection_slice_iceslabs_boundary.plot(ax=ax1,color='magenta',zorder=15)
-        intersection_slice_iceslabs_boundary.centroid.plot(ax=ax1,color='black')
-        
-        #Keep only shapefile where there is intersection, and explode the multistring into individual line strings
-        lines_centroids = intersection_slice_iceslabs_boundary[~(intersection_slice_iceslabs_boundary==None)].explode(index_parts=True)[0].centroid# explode from https://stackoverflow.com/questions/72525894/convert-each-multilinestring-to-one-linestring-only
-        #Create a pandas datafarme
-        lines_centroids_df = pd.DataFrame({"geometry":lines_centroids,
-                                           "elevation":[np.nan]*len(lines_centroids)})
-        
-        #Loop over the centroids of each line intersection, and keep the line whose centroid is the highest
-        for i, row in lines_centroids_df.iterrows(): #iterrows from https://stackoverflow.com/questions/36864690/iterate-through-a-dataframe-by-index
-            #Display centroid of each line
-            ax1.scatter(row[0].x, row[0].y,color='blue',s=100)
-            #Extract elevation
-            lines_centroids_df.loc[int(i),'elevation']=GrIS_DEM.value_at_coords(row[0].x, row[0].y)
-        
-        if ((lines_centroids_df.elevation==-9999).astype(int).sum()>0):
+    for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:
+        print(indiv_box_nb)    
+        if (indiv_box_nb==27):
             pdb.set_trace()
-            #If one elevation is -9999, ignore maximum ice slabs retrieval in this slice!
-            print('Ice slabs distance and elevation calculations not possible, continue')
         else:
-            #Select the point at the highest elevation
-            lines_centroids_df_highest=lines_centroids_df.where(lines_centroids_df.elevation==lines_centroids_df.elevation.max()).copy()
-            lines_centroids_df_highest=lines_centroids_df_highest[~(lines_centroids_df_highest.elevation.isna())].copy()
-            
-            #Store and display the kept centroid of intersection betwwen ice slabs and slice
-            RL_IceSlabs['Point_IceSlabsBoundary']=lines_centroids_df_highest.geometry.iloc[0]
-            ax1.scatter(lines_centroids_df_highest.geometry.iloc[0].x,lines_centroids_df_highest.geometry.iloc[0].y,color='red',s=50)
+            continue
         
-            #Extract elevation
-            RL_IceSlabs['Elevation_IceSlabsBoundary']=lines_centroids_df_highest.elevation.iloc[0]
-            
-            #4.Calculate distances between centroids
-            RL_IceSlabs['Distance_IceSlabsBoundary_2012_RL'] = lines_centroids_df_highest.geometry.iloc[0].distance(intersection_slice_2012_RL.centroid[0])
-            RL_IceSlabs['Distance_IceSlabsBoundary_2019_RL'] = lines_centroids_df_highest.geometry.iloc[0].distance(intersection_slice_2019_RL.centroid[0])
-        
-    ### Where ice slabs extent regional transition (CW VS SW), might need to include some filtering to get rid of falsely too high ice slabs extent at the low end? It should not be the case, but check that!
-    
-    #Concat to have a summary dataframe
-    RL_IceSlabs_summary=pd.concat([RL_IceSlabs_summary,RL_IceSlabs])
-    
-    #Add offsets
-    offset_x_right=offset_x_right+spacing_x_right
-    offset_x_left=offset_x_left+spacing_x_left
-    offset_y_left=offset_y_left+spacing_y_left
-    offset_y_right=offset_y_right+spacing_y_right
-    
+        RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],poly_2012,poly_2019,iceslabs_20102018_jullienetal2023,GrIS_DEM,str(indiv_box_nb))
+        #Concatenate data
+        RL_IceSlabs_summary=pd.concat([RL_IceSlabs_summary,RL_IceSlabs_summary_single_box])
+
+else:
+    print('Dataset already generated, load data and display on figure')
+    #Data already generated, open and display plot
+
 
 pdb.set_trace()
 
-############## Transform ice slabs shapefile into line to calculate distances ##########
+
+
+
+
+
+
+
+
 
 #Transform xytpd dataframe into geopandas dataframe for distance calculation
 df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
