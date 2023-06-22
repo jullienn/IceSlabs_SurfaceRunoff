@@ -4,7 +4,124 @@ Created on Wed May 17 08:33:47 2023
 
 @author: jullienn
 """
+
+def extract_RL_line_from_xytpd(df_xytpd_2012_in_func,df_xytpd_2019_in_func):
+    
+    display_RL_selection='FALSE'
+    
+    #Select 2012 xytpd inside the indiv box
+    df_xytpd_2012_indiv_box=df_xytpd_2012_in_func[df_xytpd_2012_in_func.box_id==indiv_box_nb].copy()
+    #Select 2019 xytpd inside the indiv box
+    df_xytpd_2019_indiv_box=df_xytpd_2019_in_func[df_xytpd_2019_in_func.box_id==indiv_box_nb].copy()
+    
+    #Transform 2012 into a line - this is from Extraction_IceThicknessAndSAR_InTransects.py
+    RL_tuple_2012=[tuple(row[['x','y']]) for index, row in df_xytpd_2012_indiv_box.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+    RL_line_2012=LineString(RL_tuple_2012)
+    RL_line_2012_gdp=gpd.GeoDataFrame(geometry=[RL_line_2012],crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+    
+    #Modify line for some specific case in 2019 - this is heritated from Extract_IceThicknessAndSAR_InSectors.py
+    if (indiv_box_nb==7):
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==902,'index_Emax']=948
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==924,'index_Emax']=949
+        #sort
+        df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box.sort_values('index_Emax')
         
+    if (indiv_box_nb==15):
+        #We do not go down to Emax point 829 because the above category will include lower elevation places due to decreasing elevations towards the south
+        df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box[df_xytpd_2019_indiv_box.index_Emax<=388]
+    
+    if (indiv_box_nb==16):
+        #sort
+        df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box.sort_values('index_Emax')
+        
+    if (indiv_box_nb==19):
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==715,'index_Emax']=550
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==681,'index_Emax']=549
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==748,'index_Emax']=548
+        #sort
+        df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box.sort_values('index_Emax',ascending=False)
+        
+    if (indiv_box_nb==27):
+        #Do not consider points in the north east sector of this polygon
+        df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box[df_xytpd_2019_indiv_box.index_Emax<=772]
+        #Modify position for box 27 in 2019, from https://stackoverflow.com/questions/40427943/how-do-i-change-a-single-index-value-in-pandas-dataframe
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==637,'index_Emax']=579
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==698,'index_Emax']=580
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==668,'index_Emax']=581
+        df_xytpd_2019_indiv_box.loc[df_xytpd_2019_indiv_box.index_Emax==607,'index_Emax']=582
+        #sort
+        df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box.sort_values('index_Emax')
+    
+    if (indiv_box_nb==32):
+        #Do not consider points in the north east sector of this polygon
+        df_xytpd_2019_indiv_box=df_xytpd_2019_indiv_box[df_xytpd_2019_indiv_box.index_Emax<=2064]
+    
+    
+    #Transform 2019 into a line - this is from Extraction_IceThicknessAndSAR_InTransects.py
+    if (indiv_box_nb==25):
+        #For box 25, need to divide the box into two independant suite of Emax points
+        #Sect 1
+        df_xytpd_2019_indiv_box_sect1=df_xytpd_2019_indiv_box[df_xytpd_2019_indiv_box.index_Emax>=237]
+        RL_tuple_2019_sect1=[[row['x'],row['y']] for index, row in df_xytpd_2019_indiv_box_sect1.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        #Sect 2
+        df_xytpd_2019_indiv_box_sect2=df_xytpd_2019_indiv_box[df_xytpd_2019_indiv_box.index_Emax<=136]
+        RL_tuple_2019_sect2=[[row['x'],row['y']] for index, row in df_xytpd_2019_indiv_box_sect2.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        
+        #Create a MultiLineString - Depreciation warning with Shapely 2.0, but ok as it works
+        RL_line_2019= MultiLineString([RL_tuple_2019_sect1,RL_tuple_2019_sect2])
+        
+        #Create gpd as an aggregation of the two independant lines
+        RL_line_2019_gdp=gpd.GeoDataFrame(geometry=[RL_line_2019],crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+    
+    else:
+        RL_tuple_2019=[tuple(row[['x','y']]) for index, row in df_xytpd_2019_indiv_box.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        RL_line_2019=LineString(RL_tuple_2019)
+        RL_line_2019_gdp=gpd.GeoDataFrame(geometry=[RL_line_2019],crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+        
+    
+    if (display_RL_selection=='TRUE'):
+        #Create map for display
+        fig = plt.figure()
+        fig.set_size_inches(12, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+        #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+        gs = gridspec.GridSpec(5, 5)
+        ax_box = plt.subplot(gs[0:5, 0:5],projection=crs)
+        
+        #Display coastlines
+        ax_box.coastlines(edgecolor='black',linewidth=0.075)
+        #Display 2010-2018 high end ice slabs jullien et al., 2023
+        iceslabs_20102018_jullienetal2023.plot(ax=ax_box,facecolor='#ba2b2b',edgecolor='#ba2b2b')
+
+        #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
+        GrIS_drainage_bassins.plot(ax=ax_box,facecolor='none',edgecolor='black',zorder=5)
+        
+        #Set x and y limits
+        ax_box.set_xlim(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb].bounds.minx.values[0], Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb].bounds.maxx.values[0])
+        ax_box.set_ylim(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb].bounds.miny.values[0], Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb].bounds.maxy.values[0])
+        
+        ###################### From Tedstone et al., 2022 #####################
+        #from plot_map_decadal_change.py
+        gl=ax_box.gridlines(draw_labels=True, xlocs=[-20,-25,-30,-35,-40,-45,-50,-55,-60,-65,-70,-75], ylocs=[60,62,64,66,68,70,72,74,76,78,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=6)
+        #Customize lat labels
+        gl.right_labels = False
+        gl.bottom_labels = False
+        ax_box.axis('off')
+        ###################### From Tedstone et al., 2022 #####################
+        ax_box.add_artist(ScaleBar(1))
+        
+        #Display box on map
+        Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb].plot(ax=ax_box,color='none',edgecolor='red',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+        
+        #Display 2012 and 2019 RL on map
+        RL_line_2012_gdp.plot(ax=ax_box,color='red')
+        RL_line_2019_gdp.plot(ax=ax_box,color='green')
+        
+        pdb.set_trace()
+        plt.close()
+
+    return RL_line_2012_gdp,RL_line_2019_gdp
+
+     
 def create_east_west_polygons(indiv_Boxes_Tedstone2022_in_func,ax_plot):
     #Duplicate box and separate it in two due to different topographic orientations!
     #Extract coords of box 22
@@ -42,8 +159,65 @@ def create_east_west_polygons(indiv_Boxes_Tedstone2022_in_func,ax_plot):
     return box_22_west_in_func,box_22_east_in_func
 
 
+def create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022_in_func,ax_plot):
+    #Get rid of ice slabs to the east and south due to prominence with firn aquifers and due to different topographic orientations!
+    #Extract coords of box 21
+    box_21_coords=indiv_Boxes_Tedstone2022_in_func.boundary.iloc[0].coords.xy
+    #Define points where intersections (see methodology below)
+    point_boundary_SouthOffset_EastBoundary=(-579206.322,-1357775.425)#Intersection between eastern boundary and the line parallel to southern boundary with a certain offset
+    point_boundary_SouthOffset_EastOffset=(-418061.140,-1335093.338)#Intersection between the line parallel to southern boundary with a certain offset and the line parallel to eastern boundary with a certain offset
+    
+    #Construct exclusion polygon
+    box_22_inclusion_polygon = gpd.GeoDataFrame(geometry=[Polygon([(box_21_coords[0][0],box_21_coords[1][0]),
+                                                                   point_boundary_SouthOffset_EastOffset,
+                                                                   point_boundary_SouthOffset_EastBoundary,
+                                                                   (box_21_coords[0][3],box_21_coords[1][3])])],crs="EPSG:3413")
+    #Display exclusion polygon
+    box_22_inclusion_polygon.plot(ax=ax_plot,color='none',edgecolor='blue',zorder=4)
+    
+    
+    #Construct exclusion polygon
+    box_22_exclusion_polygon = gpd.GeoDataFrame(geometry=[Polygon([(box_21_coords[0][1],box_21_coords[1][1]),
+                                                                   (box_21_coords[0][2],box_21_coords[1][2]),
+                                                                   point_boundary_SouthOffset_EastBoundary,
+                                                                   point_boundary_SouthOffset_EastOffset,
+                                                                   (box_21_coords[0][0],box_21_coords[1][0])])],crs="EPSG:3413")
+    #Display exclusion polygon
+    box_22_exclusion_polygon.plot(ax=ax_plot,color='grey',edgecolor='grey')
+    
+    #Kept methodoly if similar prodecure is needed later on
+    '''
+    #Display one polygon edge
+    ax_plot.scatter(box_21_coords[0][0],box_21_coords[1][0])
+    
+    #Reproduce southern boundary
+    southern_boundary = gpd.GeoDataFrame(geometry=[LineString([[box_21_coords[0][1],box_21_coords[1][1]], [box_21_coords[0][2],box_21_coords[1][2]]])],crs="EPSG:3413")
+    southern_boundary.plot(ax=ax_plot,color='magenta')
+    
+    #Create parallel offset to sounterhn boundary
+    parallel_offset_southB= southern_boundary.translate(xoff=0,yoff=82500)
+    parallel_offset_southB.plot(ax=ax_plot,color='magenta')
+    
+    #Reproduce easter boundary
+    eastern_boundary = gpd.GeoDataFrame(geometry=[LineString([[box_21_coords[0][2],box_21_coords[1][2]], [box_21_coords[0][3],box_21_coords[1][3]]])],crs="EPSG:3413")
+    eastern_boundary.plot(ax=ax_plot,color='magenta')
+    
+    #Create parallel offset to easter boundary
+    parallel_offset_easternB= eastern_boundary.translate(xoff=160000,yoff=0)
+    parallel_offset_easternB.plot(ax=ax_plot,color='magenta')
+    
+    #Extract intersection between eastern boundary and parallel_offset_southB
+    point_boundary_SouthOffset_EastBoundary=eastern_boundary.intersection(parallel_offset_southB)
+    ax_plot.scatter(point_boundary_SouthOffset_EastBoundary[0],point_boundary_SouthOffset_EastBoundary[1])
+    
+    #Extract intersection between parallel_offset_southB and parallel_offset_easternB
+    point_boundary_SouthOffset_EastOffset=parallel_offset_easternB.intersection(parallel_offset_southB)
+    ax_plot.scatter(point_boundary_SouthOffset_EastOffset[0],point_boundary_SouthOffset_EastOffset[1])
+    '''
+    return box_22_inclusion_polygon
+
 def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_func,iceslabs_20102018_jullienetal2023_in_func,GrIS_DEM_in_func,box_nb):
-        
+            
     #Create an overall summary dataframe for this box
     RL_IceSlabs_box = pd.DataFrame({'box_id' : [],
                                     'Point_2012_RL' : [],
@@ -156,6 +330,10 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     #Define x spacing
     spacing_x_right=(upper_right[0]-lower_right[0])/nb_boxes_right
     spacing_x_left=(upper_left[0]-lower_left[0])/nb_boxes_right
+        
+    #Box 21 is a particular case!
+    if (box_nb == '21'):
+        box_21_inclusion = create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022,ax_box)
     
     #Box 22 is a particular case!
     if (box_nb in list (['22_west','22_east'])):
@@ -207,6 +385,27 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         #Display polygon_for_intersection
         polygon_for_intersection_gpd.plot(ax=ax_box,color='green',edgecolor='black',alpha=0.5)
         
+        #For box 21, clip slice with inclusion polygon to keep inside inclusion
+        if (box_nb == '21'):
+            #Perform clip
+            polygon_for_intersection_gpd=gpd.overlay(polygon_for_intersection_gpd,box_21_inclusion,how='intersection')
+            if (polygon_for_intersection_gpd.empty == True):
+                #No intersection, go to next slice
+                
+                #Add offsets
+                offset_x_right=offset_x_right+spacing_x_right
+                offset_x_left=offset_x_left+spacing_x_left
+                offset_y_left=offset_y_left+spacing_y_left
+                offset_y_right=offset_y_right+spacing_y_right
+                               
+                #Update condition for while
+                condition_while=((np.round((lower_right[1]+offset_y_right),6)<np.round(upper_right[1],6))&(np.round((lower_left[1]+offset_y_left),6)<np.round(upper_left[1],6)))
+                
+                #Update slice id
+                slice_id=slice_id+1
+                
+                continue
+        
         #For box 22, clip slice with west or east
         if (box_nb == '22_west'):
             polygon_for_intersection_gpd=gpd.clip(polygon_for_intersection_gpd,box_22_west)
@@ -218,8 +417,8 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
                 
         #2. In each slice, extract RL line and ice slabs
         #Intersect with runoff limit line
-        intersection_slice_2012_RL=polygon_for_intersection_gpd.intersection(poly_2012_in_func.boundary)
-        intersection_slice_2019_RL=polygon_for_intersection_gpd.intersection(poly_2019_in_func.boundary)
+        intersection_slice_2012_RL=polygon_for_intersection_gpd.intersection(poly_2012_in_func)
+        intersection_slice_2019_RL=polygon_for_intersection_gpd.intersection(poly_2019_in_func)
         
         #3. In each slice, extract cendroid coordinates of each line
         #If there is 2012 RL in this slice
@@ -294,7 +493,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
                 #Extract elevation
                 lines_centroids_df.loc[int(i),'elevation']=GrIS_DEM.value_at_coords(row[0].x, row[0].y)
             
-            print(lines_centroids_df.elevation)
+            #print(lines_centroids_df.elevation)
             
             if ((lines_centroids_df.elevation==-9999).astype(int).sum()>0):
                 #pdb.set_trace()
@@ -339,10 +538,10 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         #Update slice id
         slice_id=slice_id+1
         
-    pdb.set_trace()
+    #pdb.set_trace()
     
     #Save figure
-    plt.savefig(path_switchdrive+'RT3/figures/Fig1/IceSlabs_and_RL_extraction/ExtractionSlabs_and_RL_box_'+box_nb+'.png',dpi=500,bbox_inches='tight')
+    plt.savefig(path_switchdrive+'RT3/figures/Fig1/IceSlabs_and_RL_extraction/ExtractionSlabs_and_RL_box_'+box_nb+'_cleanedxytpdV3.png',dpi=500,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
     plt.close()
     
@@ -382,10 +581,9 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     RL_IceSlabs_box_2019RL_gpd.drop(columns=["index_right"],inplace=True)
 
     #Export RL_IceSlabs_box, RL_IceSlabs_box_2012RL_gpd and RL_IceSlabs_box_2019RL_gpd into csv files
-    RL_IceSlabs_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/whole/RL_IceSlabs_box_'+box_save+'.csv')
-    RL_IceSlabs_box_2012RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_IceSlabs_2012RL_box_'+box_save+'.csv')
-    RL_IceSlabs_box_2019RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_IceSlabs_2019RL_box_'+box_save+'.csv')
-    
+    RL_IceSlabs_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/whole/RL_IceSlabs_box_'+box_save+'_cleanedxytpdV3.csv')
+    RL_IceSlabs_box_2012RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_IceSlabs_2012RL_box_'+box_save+'_cleanedxytpdV3.csv')
+    RL_IceSlabs_box_2019RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_IceSlabs_2019RL_box_'+box_save+'_cleanedxytpdV3.csv')
     ### Save data as csv files ###
 
     return RL_IceSlabs_box
@@ -450,7 +648,7 @@ import rioxarray as rxr
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 from scalebar import scale_bar
-from shapely.geometry import Point, LineString, Polygon
+from shapely.geometry import Point, LineString, MultiLineString, Polygon
 import geoutils as gu
 from matplotlib_scalebar.scalebar import ScaleBar
 
@@ -536,7 +734,7 @@ df_firn_aquifer_all['lat_3413']=points[1]
 Boxes_Tedstone2022=gpd.read_file(path_data+'Boxes_Tedstone2022/boxes.shp')
 
 # Consider exept firn aquifer are prominent, i.e. all boxes except 1-3, 32-53.
-nogo_polygon=np.concatenate((np.arange(1,3+1),np.arange(32,53+1)))
+nogo_polygon=np.concatenate((np.arange(1,3+1),np.arange(20,20+1),np.arange(32,53+1)))
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
@@ -617,34 +815,52 @@ ax1.add_artist(ScaleBar(1))
 #pdb.set_trace()
 plt.close()
 
+###### This part of the code should be places before displaying Fig. 1 ######
+
+#Transform xytpd dataframe into geopandas dataframe for distance calculation
+df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
+#Intersection between df_xytpd_all_gpd and GrIS drainage bassins, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+df_xytpd_all_gpd = gpd.sjoin(df_xytpd_all_gpd, GrIS_drainage_bassins, predicate='within')
+#Drop index_right
+df_xytpd_all_gpd=df_xytpd_all_gpd.drop(columns=["index_right"])
+#Rename index to index_Emax (this is heritated from Extract_IceThicknessAndSAR_InSectors.py)
+df_xytpd_all_gpd=df_xytpd_all_gpd.rename(columns={"index":"index_Emax"})
+
+#Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
+df_xytpd_2012=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2012].copy()
+df_xytpd_2019=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2019].copy()
 
 if (extract_data_in_boxes == 'TRUE'):
     #Generate dataset
     RL_IceSlabs_summary=pd.DataFrame()
 
     for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:
-        print(indiv_box_nb)    
+        print(indiv_box_nb)
+        #Extract the RL lines
+        RL_line_2012_indiv_box,RL_line_2019_indiv_box = extract_RL_line_from_xytpd(df_xytpd_2012,df_xytpd_2019)
+
+        #Save the RL lines
+        RL_line_2012_indiv_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_line_2012_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
+        RL_line_2019_indiv_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
         
-        if (indiv_box_nb==21):
-            print('Do not process box 21, continue')
-            #We ignore box 21, because not possible to extract reliable runoll limits
         if (indiv_box_nb==22):            
             #Perform analysis in the west side of the box
-            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],poly_2012,poly_2019,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_west')
+            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_west')
             #Perform analysis in the east side of the box
-            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],poly_2012,poly_2019,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_east')
-        if (indiv_box ==15):
-            #box 15 to fix!
-            pdb.set_trace()
+            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_east')
         else:
-            continue
-        RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],poly_2012,poly_2019,iceslabs_20102018_jullienetal2023,GrIS_DEM,str(indiv_box_nb))
+            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,str(indiv_box_nb))
+        
         #Concatenate data
         RL_IceSlabs_summary=pd.concat([RL_IceSlabs_summary,RL_IceSlabs_summary_single_box])
 else:
     print('Dataset already generated, load data and display on figure')
     #Data already generated, open and display plot
-
+    
+    #Do not load data from box 15 because cannot reliably assess to which drainage area the runoff limit retrievals are from
+    
+    
+###### This part of the code should be places before displaying Fig. 1 ######
 
 pdb.set_trace()
 
