@@ -159,7 +159,7 @@ def create_east_west_polygons(indiv_Boxes_Tedstone2022_in_func,ax_plot):
     return box_22_west_in_func,box_22_east_in_func
 
 
-def create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022_in_func,ax_plot):
+def create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022_in_func):#,ax_plot):
     #Get rid of ice slabs to the east and south due to prominence with firn aquifers and due to different topographic orientations!
     #Extract coords of box 21
     box_21_coords=indiv_Boxes_Tedstone2022_in_func.boundary.iloc[0].coords.xy
@@ -168,23 +168,18 @@ def create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022_in_func,ax_plot):
     point_boundary_SouthOffset_EastOffset=(-418061.140,-1335093.338)#Intersection between the line parallel to southern boundary with a certain offset and the line parallel to eastern boundary with a certain offset
     
     #Construct exclusion polygon
-    box_22_inclusion_polygon = gpd.GeoDataFrame(geometry=[Polygon([(box_21_coords[0][0],box_21_coords[1][0]),
+    box_21_inclusion_polygon = gpd.GeoDataFrame(geometry=[Polygon([(box_21_coords[0][0],box_21_coords[1][0]),
                                                                    point_boundary_SouthOffset_EastOffset,
                                                                    point_boundary_SouthOffset_EastBoundary,
                                                                    (box_21_coords[0][3],box_21_coords[1][3])])],crs="EPSG:3413")
-    #Display exclusion polygon
-    box_22_inclusion_polygon.plot(ax=ax_plot,color='none',edgecolor='blue',zorder=4)
-    
     
     #Construct exclusion polygon
-    box_22_exclusion_polygon = gpd.GeoDataFrame(geometry=[Polygon([(box_21_coords[0][1],box_21_coords[1][1]),
+    box_21_exclusion_polygon = gpd.GeoDataFrame(geometry=[Polygon([(box_21_coords[0][1],box_21_coords[1][1]),
                                                                    (box_21_coords[0][2],box_21_coords[1][2]),
                                                                    point_boundary_SouthOffset_EastBoundary,
                                                                    point_boundary_SouthOffset_EastOffset,
                                                                    (box_21_coords[0][0],box_21_coords[1][0])])],crs="EPSG:3413")
-    #Display exclusion polygon
-    box_22_exclusion_polygon.plot(ax=ax_plot,color='grey',edgecolor='grey')
-    
+        
     #Kept methodoly if similar prodecure is needed later on
     '''
     #Display one polygon edge
@@ -214,7 +209,7 @@ def create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022_in_func,ax_plot):
     point_boundary_SouthOffset_EastOffset=parallel_offset_easternB.intersection(parallel_offset_southB)
     ax_plot.scatter(point_boundary_SouthOffset_EastOffset[0],point_boundary_SouthOffset_EastOffset[1])
     '''
-    return box_22_inclusion_polygon
+    return box_21_inclusion_polygon,box_21_exclusion_polygon
 
 def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_func,iceslabs_20102018_jullienetal2023_in_func,GrIS_DEM_in_func,box_nb):
             
@@ -333,7 +328,11 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         
     #Box 21 is a particular case!
     if (box_nb == '21'):
-        box_21_inclusion = create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022,ax_box)
+        box_21_inclusion,box_21_exclusion = create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022)
+        #Display exclusion polygon
+        box_21_exclusion.plot(ax=ax_plot,color='grey',edgecolor='grey')
+        #Display inclusion polygon
+        box_21_inclusion.plot(ax=ax_plot,color='none',edgecolor='blue',zorder=4)
     
     #Box 22 is a particular case!
     if (box_nb in list (['22_west','22_east'])):
@@ -652,7 +651,7 @@ from shapely.geometry import Point, LineString, MultiLineString, Polygon
 import geoutils as gu
 from matplotlib_scalebar.scalebar import ScaleBar
 
-extract_data_in_boxes='TRUE'
+extract_data_in_boxes='FALSE'
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -744,6 +743,175 @@ crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
 crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
 
+
+### ----------- Ice slabs upper end and RL 2012/2019 extraction ----------- ###
+#Transform xytpd dataframe into geopandas dataframe for distance calculation
+df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
+#Intersection between df_xytpd_all_gpd and GrIS drainage bassins, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+df_xytpd_all_gpd = gpd.sjoin(df_xytpd_all_gpd, GrIS_drainage_bassins, predicate='within')
+#Drop index_right
+df_xytpd_all_gpd=df_xytpd_all_gpd.drop(columns=["index_right"])
+#Rename index to index_Emax (this is heritated from Extract_IceThicknessAndSAR_InSectors.py)
+df_xytpd_all_gpd=df_xytpd_all_gpd.rename(columns={"index":"index_Emax"})
+
+#Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
+df_xytpd_2012=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2012].copy()
+df_xytpd_2019=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2019].copy()
+
+pdb.set_trace()
+
+if (extract_data_in_boxes == 'TRUE'):
+    #Generate dataset
+    RL_IceSlabs_summary=pd.DataFrame()
+
+    for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:
+        print(indiv_box_nb)
+        
+        #Extract the RL lines
+        RL_line_2012_indiv_box,RL_line_2019_indiv_box = extract_RL_line_from_xytpd(df_xytpd_2012,df_xytpd_2019)
+                
+        #Store 2012 data as points coordinates rather than line to save
+        RL2012_coordinates=pd.DataFrame()
+        RL2012_coordinates['x']=np.array(RL_line_2012_indiv_box.geometry.iloc[0].coords.xy[0])
+        RL2012_coordinates['y']=np.array(RL_line_2012_indiv_box.geometry.iloc[0].coords.xy[1])
+        #Save the 2012 RL line
+        RL2012_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_line_2012_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
+        
+        #Store 2019 data as points coordinates rather than line to save
+        if (indiv_box_nb==25):
+            #Box 25 in 2019 has a multistring, explode multistring into line strings and save
+            RL_line_2019_indiv_box_exploded = RL_line_2019_indiv_box.explode(index_parts=False)
+            
+            #Initialise count for data save
+            count=0
+            for indiv_line in RL_line_2019_indiv_box_exploded.geometry:            
+                #Store data as points coordinates rather than line to save
+                RL2019_coordinates=pd.DataFrame()
+                RL2019_coordinates['x']=np.array(indiv_line.coords.xy[0])
+                RL2019_coordinates['y']=np.array(indiv_line.coords.xy[1])
+                
+                #Save the RL lines
+                RL2019_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_'+str(count)+'_cleanedxytpdV3.csv')
+                #update count
+                count=count+1
+        else:
+            RL2019_coordinates=pd.DataFrame()
+            RL2019_coordinates['x']=np.array(RL_line_2019_indiv_box.geometry.iloc[0].coords.xy[0])
+            RL2019_coordinates['y']=np.array(RL_line_2019_indiv_box.geometry.iloc[0].coords.xy[1])
+            #Save the RL lines
+            RL2019_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
+        
+        #Perform extraction: generate figure and datasets
+        if (indiv_box_nb==22):            
+            #Perform analysis in the west side of the box
+            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_west')
+            #Perform analysis in the east side of the box
+            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_east')
+        else:
+            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,str(indiv_box_nb))
+        
+        #Concatenate data
+        RL_IceSlabs_summary=pd.concat([RL_IceSlabs_summary,RL_IceSlabs_summary_single_box])
+else:
+    #Data already generated, open and display plot
+    print('Dataset already generated, load data and display on figure')
+        
+    #Create empty dataframe
+    RL_2012=pd.DataFrame()
+    RL_2019=pd.DataFrame()
+    RL_lines_2012_gdp=pd.DataFrame()
+    RL_lines_2019_gdp=pd.DataFrame()
+    RL_IceSlabs_2012_gdp=pd.DataFrame()
+    RL_IceSlabs_2019_gdp=pd.DataFrame()
+    
+    for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:        
+        if (indiv_box_nb==15):
+            #Do not load data from box 15 because cannot reliably assess to which drainage area the runoff limit retrievals are from
+            print('Do not consider data in box 15, continue')
+            continue
+        
+        print(indiv_box_nb)
+        #Load RL and IceSlabs distance and elevations extraction datasets
+        if (indiv_box_nb==22):
+            #2 files to load
+            indiv_2012_RL_IceSlabs_2201 = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_IceSlabs_2012RL_box_'+str(indiv_box_nb)+'01_cleanedxytpdV3.csv')
+            indiv_2019_RL_IceSlabs_2201 = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_IceSlabs_2019RL_box_'+str(indiv_box_nb)+'01_cleanedxytpdV3.csv')
+            indiv_2012_RL_IceSlabs_2202 = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_IceSlabs_2012RL_box_'+str(indiv_box_nb)+'02_cleanedxytpdV3.csv')
+            indiv_2019_RL_IceSlabs_2202 = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_IceSlabs_2019RL_box_'+str(indiv_box_nb)+'02_cleanedxytpdV3.csv')
+            
+            #Concatenate data
+            RL_IceSlabs_2012_gdp=pd.concat([RL_IceSlabs_2012_gdp,indiv_2012_RL_IceSlabs_2201,indiv_2012_RL_IceSlabs_2202])
+            RL_IceSlabs_2019_gdp=pd.concat([RL_IceSlabs_2019_gdp,indiv_2019_RL_IceSlabs_2201,indiv_2019_RL_IceSlabs_2202])
+            
+        else:
+            indiv_2012_RL_IceSlabs = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_IceSlabs_2012RL_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
+            indiv_2019_RL_IceSlabs = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_IceSlabs_2019RL_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
+            #Concatenate data
+            RL_IceSlabs_2012_gdp=pd.concat([RL_IceSlabs_2012_gdp,indiv_2012_RL_IceSlabs])
+            RL_IceSlabs_2019_gdp=pd.concat([RL_IceSlabs_2019_gdp,indiv_2019_RL_IceSlabs])
+        
+        #Load 2012 runoff limit lines
+        indiv_2012_RL = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_line_2012_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
+        #Add box number to the 2012 dataframe
+        indiv_2012_RL['box_nb']=indiv_box_nb
+        #Concatenate 2012 data
+        RL_2012=pd.concat([RL_2012,indiv_2012_RL])
+        
+        #Load 2019 runoff limit lines
+        if (indiv_box_nb == 25):            
+            indiv_2019_RL=pd.DataFrame()
+            #There are two lines to load in this box
+            for i in range(0,2):
+                #Load runoff limit lines
+                indiv_2019_RL_temp = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_'+str(i)+'_cleanedxytpdV3.csv')
+                #Add box number to the dataframe
+                indiv_2019_RL_temp['box_nb']=int(str(indiv_box_nb)+str(i))
+                #Concatenate
+                indiv_2019_RL=pd.concat([indiv_2019_RL,indiv_2019_RL_temp])
+        else:
+            #Load 2019 runoff limit lines
+            indiv_2019_RL = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
+            #Add box number to the 2019 dataframe
+            indiv_2019_RL['box_nb']=indiv_box_nb
+
+        #Concatenate 2019 data
+        RL_2019=pd.concat([RL_2019,indiv_2019_RL])
+                
+        #Create LineStrings        
+        #Transform 2012 into a line - this is from Extraction_IceThicknessAndSAR_InTransects.py
+        RL_tuple_2012=[tuple(row[['x','y']]) for index, row in indiv_2012_RL.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        RL_line_2012=LineString(RL_tuple_2012)
+        RL_line_2012_gdp=gpd.GeoDataFrame(pd.DataFrame({'box_nb':[indiv_box_nb]}),geometry=[RL_line_2012],crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+        RL_lines_2012_gdp=pd.concat([RL_lines_2012_gdp,RL_line_2012_gdp])
+        #Transform 2019 into a line - this is from Extraction_IceThicknessAndSAR_InTransects.py
+        RL_tuple_2019=[tuple(row[['x','y']]) for index, row in indiv_2019_RL.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        RL_line_2019=LineString(RL_tuple_2019)
+        RL_line_2019_gdp=gpd.GeoDataFrame(pd.DataFrame({'box_nb':[indiv_box_nb]}),geometry=[RL_line_2019],crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+        RL_lines_2019_gdp=pd.concat([RL_lines_2019_gdp,RL_line_2019_gdp])
+    
+    #Set index in the geopandas dataframes as being the box number
+    RL_lines_2012_gdp.set_index("box_nb",inplace=True)
+    RL_lines_2019_gdp.set_index("box_nb",inplace=True)
+
+    #Reset index in the dataframes
+    RL_2012.reset_index(inplace=True)
+    RL_2019.reset_index(inplace=True)
+    
+    #Drop index and Unnamed colums
+    RL_2012.drop(columns=['index','Unnamed: 0'],inplace=True)
+    RL_2019.drop(columns=['index','Unnamed: 0'],inplace=True)
+### ----------- Ice slabs upper end and RL 2012/2019 extraction ----------- ###
+
+pdb.set_trace()
+
+#+1h jeudi soir
+#vendredi: 8h20
+
+
+#Load ice slabs and RL elevations and distance csv files to display in Fig. 1.b
+
+
+
 #Prepare plot
 #Set fontsize plot
 plt.rcParams.update({'font.size': 15})
@@ -764,19 +932,26 @@ iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='#ba2b2b',edgecolor='#ba
 #Display 2012-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102012_jullienetal2023.plot(ax=ax1,facecolor='#6baed6',edgecolor='#6baed6')
 
-#Display firn aquifers Miège et al., 2016
-ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=2)
-
 #Display MVRL
+'''
 #poly_2010.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
 poly_2012.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
 #poly_2016.plot(ax=ax1,facecolor='none',edgecolor='#756bb1',linewidth=1,zorder=3)
 poly_2019.plot(ax=ax1,facecolor='none',edgecolor='#54278f',linewidth=1,zorder=3)
+'''
+#Cleaned xytpd_V3
+RL_lines_2012_gdp.plot(ax=ax1,color='#fdcdac',linewidth=2,zorder=3)#'#c994c7'
+RL_lines_2019_gdp.plot(ax=ax1,color='#54278f',linewidth=1,zorder=3)
 
 #Display boxes not processed
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#f6e8c3',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+#Display exclusion box in box 21
+box_21_inclusion,box_21_exclusion = create_polygon_inclusion_box21(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==21])
+box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
 GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black',zorder=5)
+#Display firn aquifers Miège et al., 2016
+ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=4)
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
@@ -797,75 +972,18 @@ legend_elements = [Patch(facecolor='#6baed6',edgecolor='none',label='2010-2012 i
                    Patch(facecolor='#ba2b2b',edgecolor='none',label='2010-2018 ice slabs'),
                    Line2D([0], [0], color='#74c476', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
                    #Line2D([0], [0], color='#dadaeb', lw=2, label='2010 MVRL'),
-                   Line2D([0], [0], color='#dadaeb', lw=2, label='2012 runoff limit'),
+                   Line2D([0], [0], color='#fdcdac', lw=2, label='2012 runoff limit'),
                    #Line2D([0], [0], color='#756bb1', lw=2, label='2016 MVRL'),
                    Line2D([0], [0], color='#54278f', lw=2, label='2019 runoff limit'),
-                   Patch(facecolor='#f6e8c3',edgecolor='none',label='Ignored areas')]
+                   Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
 ax1.legend(handles=legend_elements,loc='lower right',fontsize=12.5,framealpha=1).set_zorder(7)
 plt.show()
 
-#Display scalebar - from Fig2andS6andS7andS10.py
-scale_bar(ax1, (0.7, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, rotation of text
-#by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
-
-########### SCALE BAR GEOPANDAS #############
-ax1.add_artist(ScaleBar(1))
-########### SCALE BAR GEOPANDAS #############
-
-#pdb.set_trace()
-plt.close()
-
-###### This part of the code should be places before displaying Fig. 1 ######
-
-#Transform xytpd dataframe into geopandas dataframe for distance calculation
-df_xytpd_all_gpd = gpd.GeoDataFrame(df_xytpd_all, geometry=gpd.GeoSeries.from_xy(df_xytpd_all['x'], df_xytpd_all['y'], crs="EPSG:3413"))
-#Intersection between df_xytpd_all_gpd and GrIS drainage bassins, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
-df_xytpd_all_gpd = gpd.sjoin(df_xytpd_all_gpd, GrIS_drainage_bassins, predicate='within')
-#Drop index_right
-df_xytpd_all_gpd=df_xytpd_all_gpd.drop(columns=["index_right"])
-#Rename index to index_Emax (this is heritated from Extract_IceThicknessAndSAR_InSectors.py)
-df_xytpd_all_gpd=df_xytpd_all_gpd.rename(columns={"index":"index_Emax"})
-
-#Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
-df_xytpd_2012=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2012].copy()
-df_xytpd_2019=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2019].copy()
-
-if (extract_data_in_boxes == 'TRUE'):
-    #Generate dataset
-    RL_IceSlabs_summary=pd.DataFrame()
-
-    for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:
-        print(indiv_box_nb)
-        #Extract the RL lines
-        RL_line_2012_indiv_box,RL_line_2019_indiv_box = extract_RL_line_from_xytpd(df_xytpd_2012,df_xytpd_2019)
-
-        #Save the RL lines
-        RL_line_2012_indiv_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_line_2012_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
-        RL_line_2019_indiv_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
-        
-        if (indiv_box_nb==22):            
-            #Perform analysis in the west side of the box
-            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_west')
-            #Perform analysis in the east side of the box
-            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,'22_east')
-        else:
-            RL_IceSlabs_summary_single_box=extract_in_boxes(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==indiv_box_nb],RL_line_2012_indiv_box,RL_line_2019_indiv_box,iceslabs_20102018_jullienetal2023,GrIS_DEM,str(indiv_box_nb))
-        
-        #Concatenate data
-        RL_IceSlabs_summary=pd.concat([RL_IceSlabs_summary,RL_IceSlabs_summary_single_box])
-else:
-    print('Dataset already generated, load data and display on figure')
-    #Data already generated, open and display plot
-    
-    #Do not load data from box 15 because cannot reliably assess to which drainage area the runoff limit retrievals are from
-    
-    
-###### This part of the code should be places before displaying Fig. 1 ######
+# Display scalebar with GeoPandas
+ax1.add_artist(ScaleBar(1,location='upper right'))
 
 pdb.set_trace()
-
-
-
+plt.close()
 
 
 
