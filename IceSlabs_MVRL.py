@@ -221,6 +221,9 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
                                     'Elevation_2012_RL' : [],
                                     'Elevation_2019_RL' : [],
                                     'Elevation_IceSlabsBoundary' : [],
+                                    'IceSlabsRegion' : [],
+                                    'RL2012Region' : [],
+                                    'RL2019Region' : [],
                                     'Distance_IceSlabsBoundary_2012_RL' : [],
                                     'Distance_IceSlabsBoundary_2019_RL' : [],
                                     'Distance_2012_2019_RL' : []})
@@ -330,9 +333,9 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     if (box_nb == '21'):
         box_21_inclusion,box_21_exclusion = create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022)
         #Display exclusion polygon
-        box_21_exclusion.plot(ax=ax_plot,color='grey',edgecolor='grey')
+        box_21_exclusion.plot(ax=ax_box,color='grey',edgecolor='grey')
         #Display inclusion polygon
-        box_21_inclusion.plot(ax=ax_plot,color='none',edgecolor='blue',zorder=4)
+        box_21_inclusion.plot(ax=ax_box,color='none',edgecolor='blue',zorder=4)
     
     #Box 22 is a particular case!
     if (box_nb in list (['22_west','22_east'])):
@@ -361,6 +364,9 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
                                    'Elevation_2012_RL' : [np.nan],
                                    'Elevation_2019_RL' : [np.nan],
                                    'Elevation_IceSlabsBoundary' : [np.nan],
+                                   'IceSlabsRegion' : [np.nan],
+                                   'RL2012Region' : [np.nan],
+                                   'RL2019Region' : [np.nan],
                                    'Distance_IceSlabsBoundary_2012_RL' : [np.nan],
                                    'Distance_IceSlabsBoundary_2019_RL' : [np.nan],
                                    'Distance_2012_2019_RL' : [np.nan]},
@@ -413,7 +419,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         
         #Display polygon_for_intersection
         polygon_for_intersection_gpd.plot(ax=ax_box,color='yellow',edgecolor='black',alpha=0.5)
-                
+        
         #2. In each slice, extract RL line and ice slabs
         #Intersect with runoff limit line
         intersection_slice_2012_RL=polygon_for_intersection_gpd.intersection(poly_2012_in_func)
@@ -558,33 +564,54 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     else:
         box_save=box_nb
     
+    #Save box_id
     RL_IceSlabs_box['box_id'] = [int(box_save)]*len(RL_IceSlabs_box)
-
     #Reindex RL_IceSlabs_summary
+    RL_IceSlabs_box.slice_id=RL_IceSlabs_box.slice_id.astype(int)
     RL_IceSlabs_box=RL_IceSlabs_box.set_index("slice_id",drop=True)
+        
+    ### --- Extract region for ice slabs and RL independantly from each other --- ###
+    #1. Extract ice slabs region  
+    if (box_nb[0:2]=='22'):
+        #Special case for box 22
+        if (box_nb=='22_west'):
+            region_to_store='NW'
+        elif (box_nb=='22_east'):
+            region_to_store='NO'
+        else:
+            print('Region not recognized, STOP')
+            pdb.set_trace()
+
+        #Store index
+        index_to_fill=RL_IceSlabs_box[~(RL_IceSlabs_box['Elevation_IceSlabsBoundary'].isna())].index.to_numpy()
+        #Create df
+        temp_region=pd.DataFrame(data={'SUBREGION1':[region_to_store]*len(index_to_fill)}, index=index_to_fill)
+        #Store into main df
+        RL_IceSlabs_box['IceSlabsRegion']=temp_region.SUBREGION1
+    else:
+        #Identify ice slabs region
+        RL_IceSlabs_box_IceSlabsPoints=RL_IceSlabs_box.copy()
+        RL_IceSlabs_box_IceSlabsPoints=gpd.GeoDataFrame(RL_IceSlabs_box_IceSlabsPoints, geometry=RL_IceSlabs_box_IceSlabsPoints.Point_IceSlabsBoundary, crs="EPSG:3413")#Transform into geopandas dataframe, and intersection with GrIS_drainage_bassins which is from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
+        RL_IceSlabs_box_IceSlabsPoints_Regions = gpd.sjoin(RL_IceSlabs_box_IceSlabsPoints, GrIS_drainage_bassins, predicate='within')   
+        RL_IceSlabs_box['IceSlabsRegion']=RL_IceSlabs_box_IceSlabsPoints_Regions.SUBREGION1
+        
+    #2. Extract 2012 RL region
+    RL_IceSlabs_box_2012RLPoints=RL_IceSlabs_box.copy()
+    RL_IceSlabs_box_2012RLPoints=gpd.GeoDataFrame(RL_IceSlabs_box_2012RLPoints, geometry=RL_IceSlabs_box_2012RLPoints.Point_2012_RL, crs="EPSG:3413")
+    RL_IceSlabs_box_2012RLPoints_Regions = gpd.sjoin(RL_IceSlabs_box_2012RLPoints, GrIS_drainage_bassins, predicate='within')   
+    RL_IceSlabs_box['RL2012Region']=RL_IceSlabs_box_2012RLPoints_Regions.SUBREGION1
     
-    #Extract region in RL_IceSlabs_summary at 2012 RL and 2019 RL
-    RL_IceSlabs_box_2012RL=RL_IceSlabs_box.copy()
-    RL_IceSlabs_box_2019RL=RL_IceSlabs_box.copy()
-
-    #Transform RL_IceSlabs_summary_2012/9RL into geopandas dataframe, and intersection with GrIS_drainage_bassins which is from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon  
-    RL_IceSlabs_box_2012RL_gpd = gpd.GeoDataFrame(RL_IceSlabs_box_2012RL, geometry=RL_IceSlabs_box_2012RL.Point_2012_RL, crs="EPSG:3413")
-    RL_IceSlabs_box_2019RL_gpd = gpd.GeoDataFrame(RL_IceSlabs_box_2019RL, geometry=RL_IceSlabs_box_2019RL.Point_2019_RL, crs="EPSG:3413")
-
-    #Perform join to identify the region
-    RL_IceSlabs_box_2012RL_gpd = gpd.sjoin(RL_IceSlabs_box_2012RL_gpd, GrIS_drainage_bassins, predicate='within')
-    RL_IceSlabs_box_2019RL_gpd = gpd.sjoin(RL_IceSlabs_box_2019RL_gpd, GrIS_drainage_bassins, predicate='within')
-
-    #Drop index_right
-    RL_IceSlabs_box_2012RL_gpd.drop(columns=["index_right"],inplace=True)
-    RL_IceSlabs_box_2019RL_gpd.drop(columns=["index_right"],inplace=True)
-
-    #Export RL_IceSlabs_box, RL_IceSlabs_box_2012RL_gpd and RL_IceSlabs_box_2019RL_gpd into csv files
+    #3. Extract 2019 RL region
+    RL_IceSlabs_box_2019RLPoints=RL_IceSlabs_box.copy()
+    RL_IceSlabs_box_2019RLPoints=gpd.GeoDataFrame(RL_IceSlabs_box_2019RLPoints, geometry=RL_IceSlabs_box_2019RLPoints.Point_2019_RL, crs="EPSG:3413")
+    RL_IceSlabs_box_2019RLPoints_Regions = gpd.sjoin(RL_IceSlabs_box_2019RLPoints, GrIS_drainage_bassins, predicate='within')   
+    RL_IceSlabs_box['RL2019Region']=RL_IceSlabs_box_2019RLPoints_Regions.SUBREGION1    
+    ### --- Extract region for ice slabs and RL independantly from each other --- ###
+    
+    #Export RL_IceSlabs_box into a single csv file
     RL_IceSlabs_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/whole/RL_IceSlabs_box_'+box_save+'_cleanedxytpdV3.csv')
-    RL_IceSlabs_box_2012RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_IceSlabs_2012RL_box_'+box_save+'_cleanedxytpdV3.csv')
-    RL_IceSlabs_box_2019RL_gpd.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_IceSlabs_2019RL_box_'+box_save+'_cleanedxytpdV3.csv')
     ### Save data as csv files ###
-
+    
     return RL_IceSlabs_box
 
 
@@ -651,7 +678,7 @@ from shapely.geometry import Point, LineString, MultiLineString, Polygon
 import geoutils as gu
 from matplotlib_scalebar.scalebar import ScaleBar
 
-extract_data_in_boxes='FALSE'
+extract_data_in_boxes='TRUE'
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -766,7 +793,12 @@ if (extract_data_in_boxes == 'TRUE'):
 
     for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:
         print(indiv_box_nb)
-        
+        '''
+        if (indiv_box_nb == 21):
+            pdb.set_trace()
+        else:
+            continue
+        '''
         #Extract the RL lines
         RL_line_2012_indiv_box,RL_line_2019_indiv_box = extract_RL_line_from_xytpd(df_xytpd_2012,df_xytpd_2019)
                 
@@ -905,7 +937,9 @@ else:
 pdb.set_trace()
 
 #+1h jeudi soir
-#vendredi: 8h20
+#vendredi: 8h20-10h40
+#+1h15 samedi
+#16h55-
 
 
 #Load ice slabs and RL elevations and distance csv files to display in Fig. 1.b
