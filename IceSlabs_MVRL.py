@@ -212,7 +212,7 @@ def create_polygon_inclusion_box21(indiv_Boxes_Tedstone2022_in_func):#,ax_plot):
     return box_21_inclusion_polygon,box_21_exclusion_polygon
 
 
-def extract_IceSlabs_UpperEnd(iceslabs_boundary_gpd,polygon_for_intersection_gpd_in_func,ax_plot,GrIS_DEM_in_func_extract,box_nb_in_func,slice_id_in_func):    
+def extract_IceSlabs_UpperEnd(iceslabs_boundary_gpd,polygon_for_intersection_gpd_in_func,ax_plot,GrIS_DEM_in_func_extract,box_nb_in_func,slice_id_in_func):
     #Intersect slice with ice slabs boundaries
     intersection_slice_iceslabs_boundary=gpd.clip(iceslabs_boundary_gpd, polygon_for_intersection_gpd_in_func)#inspired thanks to https://gis.stackexchange.com/questions/246782/geopandas-line-polygon-intersection
                 
@@ -253,7 +253,7 @@ def extract_IceSlabs_UpperEnd(iceslabs_boundary_gpd,polygon_for_intersection_gpd
             ax_plot.scatter(row[0].x, row[0].y,color='blue',s=100)
             #Extract elevation
             lines_centroids_df.loc[int(i),'elevation']=GrIS_DEM_in_func_extract.value_at_coords(row[0].x, row[0].y)
-        
+                
         if ((lines_centroids_df.elevation==-9999).astype(int).sum()>0):
             #pdb.set_trace()
             #If one elevation is -9999, ignore maximum ice slabs retrieval in this slice and return an empty df
@@ -404,7 +404,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     #Loop over each slice
     while condition_while:
         print('Slice_id:',slice_id)
-
+        
         #Create a temporary summary dataframe
         RL_IceSlabs= pd.DataFrame({'slice_id' : [np.nan],
                                    'box_id' : [np.nan],
@@ -502,7 +502,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
             RL_IceSlabs['Elevation_2019_RL']=GrIS_DEM_in_func.value_at_coords(intersection_slice_2019_RL.centroid[0].x, intersection_slice_2019_RL.centroid[0].y)
         
         #If both 2012 RL and 2019 RL exist in this slice
-        if (~(intersection_slice_2019_RL.is_empty[0])&(intersection_slice_2019_RL.is_empty[0])):
+        if ((~(intersection_slice_2019_RL.is_empty[0]))&(~(intersection_slice_2019_RL.is_empty[0]))):
             #Calculate distance between 2012 and 2019 runoff limit
             RL_IceSlabs['Distance_2012_2019_RL'] = intersection_slice_2012_RL.centroid[0].distance(intersection_slice_2019_RL.centroid[0])
         
@@ -567,6 +567,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         #Update slice id
         slice_id=slice_id+1
     
+    #pdb.set_trace()
     #Save figure
     plt.savefig(path_switchdrive+'RT3/figures/Fig1/IceSlabs_and_RL_extraction/ExtractionSlabs_and_RL_box_'+box_nb+'_cleanedxytpdV3_final.png',dpi=500,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -834,7 +835,7 @@ if (extract_data_in_boxes == 'TRUE'):
     for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:
         print(indiv_box_nb)
         '''
-        if (indiv_box_nb == 22):
+        if (indiv_box_nb == 5):
             pdb.set_trace()
         else:
             continue
@@ -846,6 +847,7 @@ if (extract_data_in_boxes == 'TRUE'):
         RL2012_coordinates=pd.DataFrame()
         RL2012_coordinates['x']=np.array(RL_line_2012_indiv_box.geometry.iloc[0].coords.xy[0])
         RL2012_coordinates['y']=np.array(RL_line_2012_indiv_box.geometry.iloc[0].coords.xy[1])
+        
         #Save the 2012 RL line
         RL2012_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_line_2012_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
         
@@ -870,9 +872,10 @@ if (extract_data_in_boxes == 'TRUE'):
             RL2019_coordinates=pd.DataFrame()
             RL2019_coordinates['x']=np.array(RL_line_2019_indiv_box.geometry.iloc[0].coords.xy[0])
             RL2019_coordinates['y']=np.array(RL_line_2019_indiv_box.geometry.iloc[0].coords.xy[1])
+            
             #Save the RL lines
             RL2019_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
-        
+            
         #Perform extraction: generate figure and datasets
         if (indiv_box_nb==22):            
             #Perform analysis in the west side of the box
@@ -887,7 +890,9 @@ if (extract_data_in_boxes == 'TRUE'):
 else:
     #Data already generated, open and display plot
     print('Dataset already generated, load data and display on figure')
-            
+    
+    pdb.set_trace()
+    
     #Create empty dataframe
     RL_2012=pd.DataFrame()
     RL_2019=pd.DataFrame()
