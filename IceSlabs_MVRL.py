@@ -719,7 +719,7 @@ from shapely.geometry import Point, LineString, MultiLineString, Polygon
 import geoutils as gu
 from matplotlib_scalebar.scalebar import ScaleBar
 
-extract_data_in_boxes='TRUE'
+extract_data_in_boxes='FALSE'
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -732,6 +732,7 @@ path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRuno
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
 my_pal = {'SW': "#9e9ac8", 'CW': "#9e9ac8", 'NW': "#9e9ac8", 'NO': "#9e9ac8", 'NE': "#9e9ac8"}
+pal_year= {2012 : "#bcbddc", 2019 : "#fdcdac"}
 
 ### -------------------------- Load shapefiles --------------------------- ###
 #Load Rignot et al., 2016 Greenland drainage bassins
@@ -974,12 +975,6 @@ else:
 
 pdb.set_trace()
 
-#+1h jeudi soir
-#vendredi: 8h20-10h40
-#+1h15 samedi
-#16h55-
-
-
 
 #Prepare plot
 #Set fontsize plot
@@ -995,7 +990,7 @@ axsummary_elev = plt.subplot(gs[0:5, 5:7])
 axsummary_signed_dist = plt.subplot(gs[5:10, 5:7])
 
 #Display coastlines
-ax1.coastlines(edgecolor='black',linewidth=0.075)
+ax1.coastlines(edgecolor='grey',linewidth=0.5)
 #Display 2010-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 #Display 2010-2012 high end ice slabs jullien et al., 2023
@@ -1007,8 +1002,8 @@ poly_2012.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
 poly_2019.plot(ax=ax1,facecolor='none',edgecolor='#54278f',linewidth=1,zorder=3)
 '''
 #Cleaned xytpd_V3
-RL_lines_2012_gdp.plot(ax=ax1,color='#fdcdac',linewidth=2,zorder=3)#'#c994c7'
-RL_lines_2019_gdp.plot(ax=ax1,color='#54278f',linewidth=1,zorder=3)
+RL_lines_2012_gdp.plot(ax=ax1,color='#54278f',linewidth=2,zorder=3)#'#c994c7'
+RL_lines_2019_gdp.plot(ax=ax1,color='#fdcdac',linewidth=1,zorder=3)
 
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
@@ -1016,7 +1011,7 @@ Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask,
 box_21_inclusion,box_21_exclusion = create_polygon_inclusion_box21(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==21])
 box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
-GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black',zorder=5)
+GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
 #Display firn aquifers Miège et al., 2016
 ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=4)
 
@@ -1038,33 +1033,110 @@ ax1.set_ylim(-3366273, -784280)
 legend_elements = [Patch(facecolor='#6baed6',edgecolor='none',label='2010-2012 ice slabs'),
                    Patch(facecolor='#ba2b2b',edgecolor='none',label='2010-2018 ice slabs'),
                    Line2D([0], [0], color='#74c476', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
-                   Line2D([0], [0], color='#fdcdac', lw=2, label='2012 runoff limit'),
-                   Line2D([0], [0], color='#54278f', lw=2, label='2019 runoff limit'),
+                   Line2D([0], [0], color='#54278f', lw=2, label='2012 runoff limit'),
+                   Line2D([0], [0], color='#fdcdac', lw=2, label='2019 runoff limit'),
                    Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
 ax1.legend(handles=legend_elements,loc='lower right',fontsize=12.5,framealpha=1).set_zorder(7)
 plt.show()
 
 # Display scalebar with GeoPandas
-ax1.add_artist(ScaleBar(1,location='upper right'))
+ax1.add_artist(ScaleBar(1,location='lower left'))
 
-pdb.set_trace()
 
 ### !!! There is a -9999 elevation in 2012 in box 5
 
 
 
-#Elevation difference between Ice Slabs boundary and 2012 RL
-RL_IceSlabs_gdp['Elev_diff_IceSlabs_2012RL']=RL_IceSlabs_gdp.Elevation_IceSlabsBoundary-RL_IceSlabs_gdp.Elevation_2012_RL
+#Elevation difference, and signed distances between 2010-2012 Ice Slabs boundary and 2012 RL. Positive means ice slabs upper end higher than RL
+RL_IceSlabs_gdp['Elev_diff_IceSlabs20102012_2012RL']=RL_IceSlabs_gdp.Elevation_IceSlabsBoundary20102012-RL_IceSlabs_gdp.Elevation_2012_RL
+RL_IceSlabs_gdp['Signed_dist_IceSlabs20102012_2012RL']=RL_IceSlabs_gdp.Distance_IceSlabsBoundary20102012_2012_RL*np.sign(RL_IceSlabs_gdp.Elev_diff_IceSlabs20102012_2012RL)
+
+#Elevation difference, and signed distances between 2010-2018 Ice Slabs boundary and 2019 RL. Positive means ice slabs upper end higher than RL
+RL_IceSlabs_gdp['Elev_diff_IceSlabs20102018_2019RL']=RL_IceSlabs_gdp.Elevation_IceSlabsBoundary20102018-RL_IceSlabs_gdp.Elevation_2019_RL
+RL_IceSlabs_gdp['Signed_dist_IceSlabs20102018_2019RL']=RL_IceSlabs_gdp.Distance_IceSlabsBoundary20102018_2019_RL*np.sign(RL_IceSlabs_gdp.Elev_diff_IceSlabs20102018_2019RL)
+
+#Concatenate data to do a violin plot
+df_plot_IceSlabs20102012_2012RL=RL_IceSlabs_gdp[['Elev_diff_IceSlabs20102012_2012RL','Signed_dist_IceSlabs20102012_2012RL','RL2012Region']].copy()
+df_plot_IceSlabs20102012_2012RL['Year']=[2012]*len(df_plot_IceSlabs20102012_2012RL)
+df_plot_IceSlabs20102012_2012RL.rename(columns={"Elev_diff_IceSlabs20102012_2012RL": "Elev_diff_IceSlabs_RL", 'Signed_dist_IceSlabs20102012_2012RL': 'Signed_dist_IceSlabs_RL', "RL2012Region": "Region"},inplace=True)
+
+df_plot_IceSlabs20102018_2019RL=RL_IceSlabs_gdp[['Elev_diff_IceSlabs20102018_2019RL','Signed_dist_IceSlabs20102018_2019RL','RL2019Region']].copy()
+df_plot_IceSlabs20102018_2019RL['Year']=[2019]*len(df_plot_IceSlabs20102018_2019RL)
+df_plot_IceSlabs20102018_2019RL.rename(columns={"Elev_diff_IceSlabs20102018_2019RL": "Elev_diff_IceSlabs_RL", 'Signed_dist_IceSlabs20102018_2019RL': 'Signed_dist_IceSlabs_RL', "RL2019Region": "Region"},inplace=True)
+
+#Display quantiles in the difference regions of signed distances and elevation difference.
+print('---- df_plot_IceSlabs20102012_2012RL ---- ')
+print('signed_dist_diff:')
+print('    ',df_plot_IceSlabs20102012_2012RL.groupby(["Region"]).quantile([0.25,0.5,0.75]).Signed_dist_IceSlabs_RL)
+print(' ')
+print('elev_diff:')
+print('    ',df_plot_IceSlabs20102012_2012RL.groupby(["Region"]).quantile([0.25,0.5,0.75]).Elev_diff_IceSlabs_RL)
+print(' ')
+print('Count:')
+print('    ',df_plot_IceSlabs20102012_2012RL.groupby(["Region"]).count())
+
+print('---- df_plot_IceSlabs20102018_2019RL ---- ')
+print('signed_dist_diff:')
+print('    ',df_plot_IceSlabs20102018_2019RL.groupby(["Region"]).quantile([0.25,0.5,0.75]).Signed_dist_IceSlabs_RL)
+print(' ')
+print('elev_diff:')
+print('    ',df_plot_IceSlabs20102018_2019RL.groupby(["Region"]).quantile([0.25,0.5,0.75]).Elev_diff_IceSlabs_RL)
+print(' ')
+print('Count:')
+print('    ',df_plot_IceSlabs20102018_2019RL.groupby(["Region"]).count())
+
+df_plot_IceSlabs_RL = pd.concat([df_plot_IceSlabs20102012_2012RL,df_plot_IceSlabs20102018_2019RL])
+#Reset index of df_plot_IceSlabs_RL
+df_plot_IceSlabs_RL.reset_index(inplace=True)
+
+#Transform signed distances from m to km
+df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL=df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL/1000
+
+#Display violing plot of elevation differences
+sns.violinplot(data=df_plot_IceSlabs_RL,y="Elev_diff_IceSlabs_RL",x="Region",hue='Year',ax=axsummary_elev,orient='v',scale="width",palette=pal_year)
+sns.violinplot(data=df_plot_IceSlabs_RL,y="Signed_dist_IceSlabs_RL",x="Region",hue='Year',ax=axsummary_signed_dist,orient='v',scale="width",palette=pal_year)
+
+#Custom plot
+axsummary_elev.set_ylabel('Elevation difference [m]')
+axsummary_elev.set_xlabel('Region',labelpad=10)
+axsummary_elev.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False, left=False, labelleft=False, right=True, labelright=True)
+axsummary_elev.xaxis.set_label_position('top')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+axsummary_elev.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+axsummary_elev.set_ylim(-400,400)
+axsummary_elev.grid(linestyle='dashed')
+axsummary_signed_dist.set_ylabel('Distance difference [km]',labelpad=12.5)
+axsummary_signed_dist.set_xlabel(' ')
+axsummary_signed_dist.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
+axsummary_signed_dist.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+axsummary_signed_dist.set_ylim(-50,50)
+axsummary_signed_dist.grid(linestyle='dashed')
+axsummary_signed_dist.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+
+#Add region name on map - this is from Fig. 2 paper Ice Slabs Expansion and Thickening
+ax1.text(NO_rignotetal.centroid.x-50000,NO_rignotetal.centroid.y-100000,np.asarray(NO_rignotetal.SUBREGION1)[0])
+ax1.text(NE_rignotetal.centroid.x-150000,NE_rignotetal.centroid.y-100000,np.asarray(NE_rignotetal.SUBREGION1)[0])
+ax1.text(SE_rignotetal.centroid.x-100000,SE_rignotetal.centroid.y+30000,np.asarray(SE_rignotetal.SUBREGION1)[0])
+ax1.text(SW_rignotetal.centroid.x-35000,SW_rignotetal.centroid.y-100000,np.asarray(SW_rignotetal.SUBREGION1)[0])
+ax1.text(CW_rignotetal.centroid.x-50000,CW_rignotetal.centroid.y-60000,np.asarray(CW_rignotetal.SUBREGION1)[0])
+ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y-50000,np.asarray(NW_rignotetal.SUBREGION1)[0])
+
+#Add label panel
+ax1.text(0.01, 0.9,'a',ha='center', va='center', transform=ax1.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axsummary_elev.text(-0.1, 0.95,'b',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axsummary_signed_dist.text(-0.1, 0.95,'c',ha='center', va='center', transform=axsummary_signed_dist.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+pdb.set_trace()
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v3/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
 
 
-
-
-#Perform the difference in elevation
-indiv_elev_diff=(joined_df.elev_2012-joined_df.elev_2019)
-elevation_differences=np.append(elevation_differences,indiv_elev_diff.to_numpy())
-
-
-
+#Display boxes summary
+display_summary(elevation_differences,'Elevation',10)
+display_summary(distance_differences,'Distance',100)
+display_summary(signed_distances,'Signed distance',100)
 
 
 #Transform xytpd dataframe into geopandas dataframe for distance calculation
@@ -1223,65 +1295,6 @@ for indiv_box in df_xytpd_2012.box_id.unique():
     '''
     #Possibly filter out outliers? (e.g. 300 m difference is very likely one). Do not do it,maybe consider later on
     plt.close()
-
-#Reset index of summary_df
-summary_df.reset_index(inplace=True)
-
-#Display boxes summary
-display_summary(elevation_differences,'Elevation',10)
-display_summary(distance_differences,'Distance',100)
-display_summary(signed_distances,'Signed distance',100)
-
-#Display quantiles in the difference regions of signed distances and elevation difference.
-print('signed_dist_diff:')
-print(summary_df.groupby(["SUBREGION1"]).quantile([0.25,0.5,0.75]).signed_dist_diff)
-print(' ')
-print('elev_diff:')
-print(summary_df.groupby(["SUBREGION1"]).quantile([0.25,0.5,0.75]).elev_diff)
-print(' ')
-print('Count:')
-print(summary_df.groupby(["SUBREGION1"]).count())
-
-#Transform signed distances from m to km
-summary_df.signed_dist_diff=summary_df.signed_dist_diff/1000
-
-#Display the violin plot of signed distances and elevation difference
-sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="signed_dist_diff",x="SUBREGION1",ax=axsummary_signed_dist,orient='v',palette=my_pal)
-sns.violinplot(data=summary_df[~(summary_df.SUBREGION1.astype(str)=='nan')],y="elev_diff",x="SUBREGION1",ax=axsummary_elev,orient='v',palette=my_pal)
-
-axsummary_elev.set_ylabel('Runoff limit elevation difference [m]')
-axsummary_elev.set_xlabel('Region',labelpad=10)
-axsummary_elev.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False, left=False, labelleft=False, right=True, labelright=True)
-axsummary_elev.xaxis.set_label_position('top')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
-axsummary_elev.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
-axsummary_elev.set_ylim(-500,500)
-axsummary_elev.grid(linestyle='dashed')
-axsummary_signed_dist.set_ylabel('Runoff limit distance difference [km]',labelpad=12.5)
-axsummary_signed_dist.set_xlabel(' ')
-axsummary_signed_dist.tick_params(top=False, labeltop=False, bottom=False, labelbottom=False, left=False, labelleft=False, right=True, labelright=True)
-axsummary_signed_dist.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
-axsummary_signed_dist.set_ylim(-50,50)
-axsummary_signed_dist.grid(linestyle='dashed')
-
-#Add region name on map - this is from Fig. 2 paper Ice Slabs Expansion and Thickening
-ax1.text(NO_rignotetal.centroid.x-50000,NO_rignotetal.centroid.y-100000,np.asarray(NO_rignotetal.SUBREGION1)[0])
-ax1.text(NE_rignotetal.centroid.x-150000,NE_rignotetal.centroid.y-100000,np.asarray(NE_rignotetal.SUBREGION1)[0])
-ax1.text(SE_rignotetal.centroid.x-100000,SE_rignotetal.centroid.y+30000,np.asarray(SE_rignotetal.SUBREGION1)[0])
-ax1.text(SW_rignotetal.centroid.x-35000,SW_rignotetal.centroid.y-100000,np.asarray(SW_rignotetal.SUBREGION1)[0])
-ax1.text(CW_rignotetal.centroid.x-50000,CW_rignotetal.centroid.y-60000,np.asarray(CW_rignotetal.SUBREGION1)[0])
-ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y-50000,np.asarray(NW_rignotetal.SUBREGION1)[0])
-
-#Add label panel
-ax1.text(0.01, 0.9,'a',ha='center', va='center', transform=ax1.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-axsummary_elev.text(-0.1, 0.95,'b',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-axsummary_signed_dist.text(-0.1, 0.95,'c',ha='center', va='center', transform=axsummary_signed_dist.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
-pdb.set_trace()
-'''
-#Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v2/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
-#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
 
 print('--- End of code ---')
 
