@@ -891,9 +891,7 @@ if (extract_data_in_boxes == 'TRUE'):
 else:
     #Data already generated, open and display plot
     print('Dataset already generated, load data and display on figure')
-    
-    pdb.set_trace()
-    
+        
     #Create empty dataframe
     RL_2012=pd.DataFrame()
     RL_2019=pd.DataFrame()
@@ -936,7 +934,7 @@ else:
                 #Load runoff limit lines
                 indiv_2019_RL_temp = pd.read_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_'+str(i)+'_cleanedxytpdV3.csv')
                 #Add box number to the dataframe
-                indiv_2019_RL_temp['box_nb']=int(str(indiv_box_nb)+str(i))
+                indiv_2019_RL_temp['box_nb']=float(str(indiv_box_nb)+str(i))/10
                 #Concatenate
                 indiv_2019_RL=pd.concat([indiv_2019_RL,indiv_2019_RL_temp])
         else:
@@ -959,7 +957,11 @@ else:
         RL_line_2019=LineString(RL_tuple_2019)
         RL_line_2019_gdp=gpd.GeoDataFrame(pd.DataFrame({'box_nb':[indiv_box_nb]}),geometry=[RL_line_2019],crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
         RL_lines_2019_gdp=pd.concat([RL_lines_2019_gdp,RL_line_2019_gdp])
-    
+        
+    #Sort by boxes
+    RL_2012.sort_values(by=['box_nb','Unnamed: 0'],inplace=True)
+    RL_2019.sort_values(by=['box_nb','Unnamed: 0'],inplace=True)
+
     #Set index in the geopandas dataframes as being the box number
     RL_lines_2012_gdp.set_index("box_nb",inplace=True)
     RL_lines_2019_gdp.set_index("box_nb",inplace=True)
@@ -971,6 +973,7 @@ else:
     #Drop index and Unnamed colums
     RL_2012.drop(columns=['index','Unnamed: 0'],inplace=True)
     RL_2019.drop(columns=['index','Unnamed: 0'],inplace=True)
+    
 ### ----------- Ice slabs upper end and RL 2012/2019 extraction ----------- ###
 
 pdb.set_trace()
@@ -1001,15 +1004,71 @@ iceslabs_20102012_jullienetal2023.plot(ax=ax1,facecolor='#6baed6',edgecolor='#6b
 poly_2012.plot(ax=ax1,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
 poly_2019.plot(ax=ax1,facecolor='none',edgecolor='#54278f',linewidth=1,zorder=3)
 '''
+'''
 #Cleaned xytpd_V3
 RL_lines_2012_gdp.plot(ax=ax1,color='#54278f',linewidth=2,zorder=3)#'#c994c7'
 RL_lines_2019_gdp.plot(ax=ax1,color='#fdcdac',linewidth=1,zorder=3)
+'''
+#Treat the follwing boxes together
+list_together_2012=np.array([[4,6],[7,9],[10,13],[14,14],[16,19],[21,21],[22,27],[28,30],[31,31]])
+
+#loop over box to apply a rolling window 2012
+for i in range(0,len(list_together_2012)):
+    print(list_together_2012[i,0])
+    print(list_together_2012[i,1])
+    RL_2012_continuum = RL_2012[np.logical_and(RL_2012.box_nb>=list_together_2012[i,0],RL_2012.box_nb<=list_together_2012[i,1])]
+    roll_window_2012 = RL_2012_continuum.rolling(5,center=True).mean()
+    #Do not loose data! Where NaN due to rolling window at extreme ends, include these data!
+    roll_window_2012[roll_window_2012.isna()]=RL_2012_continuum[roll_window_2012.isna()]
+    #plot
+    ax1.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color='#54278f')
+   
+#Treat the follwing boxes together
+list_together_2019=np.array([[4,14],[16,19],[21,21],[22,27],[28,31]])
+
+#loop over box to apply a rolling window 2019
+for i in range(0,len(list_together_2019)):
+    print(list_together_2019[i,0])
+    print(list_together_2019[i,1])
+    RL_2019_continuum = RL_2019[np.logical_and(RL_2019.box_nb>=list_together_2019[i,0],RL_2019.box_nb<=list_together_2019[i,1])]
+    
+    #2019 must be cut at box 25
+    if ((list_together_2019[i,0]>=22)&(list_together_2019[i,0]<=27)):
+        #Where to break
+        break_end_index = RL_2019_continuum[RL_2019_continuum.box_nb==25].index[-1]
+        break_start_index = RL_2019_continuum[RL_2019_continuum.box_nb==25.1].index[0]
+        
+        #Define continuums
+        RL_2019_continuum_1=RL_2019_continuum.loc[0:break_end_index]
+        RL_2019_continuum_2=RL_2019_continuum.loc[break_start_index:]
+        
+        #Perform roll
+        roll_window_2019_continuum_1 = RL_2019_continuum_1.rolling(5,center=True).mean()
+        roll_window_2019_continuum_2 = RL_2019_continuum_2.rolling(5,center=True).mean()
+
+        #Do not loose data! Where NaN due to rolling window at extreme ends, include these data!
+        roll_window_2019_continuum_1[roll_window_2019_continuum_1.isna()]=RL_2019_continuum_1[roll_window_2019_continuum_1.isna()]
+        roll_window_2019_continuum_2[roll_window_2019_continuum_2.isna()]=RL_2019_continuum_2[roll_window_2019_continuum_2.isna()]
+
+        #plot
+        ax1.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color='#fdcdac')
+        ax1.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color='#fdcdac')
+        
+    else:
+        roll_window_2019 = RL_2019_continuum.rolling(5,center=True).mean()
+        #Do not loose data! Where NaN due to rolling window at extreme ends, include these data!
+        roll_window_2019[roll_window_2019.isna()]=RL_2019_continuum[roll_window_2019.isna()]
+        #plot
+        ax1.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color='#fdcdac')
+
 
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display exclusion box in box 21
 box_21_inclusion,box_21_exclusion = create_polygon_inclusion_box21(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==21])
 box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+#Display exclusion box 15!
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
 GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
 #Display firn aquifers Miège et al., 2016
@@ -1095,6 +1154,9 @@ df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL=df_plot_IceSlabs_RL.Signed_dist_IceS
 #Display violing plot of elevation differences
 sns.violinplot(data=df_plot_IceSlabs_RL,y="Elev_diff_IceSlabs_RL",x="Region",hue='Year',ax=axsummary_elev,orient='v',scale="width",palette=pal_year)
 sns.violinplot(data=df_plot_IceSlabs_RL,y="Signed_dist_IceSlabs_RL",x="Region",hue='Year',ax=axsummary_signed_dist,orient='v',scale="width",palette=pal_year)
+
+#sns.lineplot(data=df_plot_IceSlabs_RL,x="Year",y="Signed_dist_IceSlabs_RL",hue='Region')
+
 
 #Custom plot
 axsummary_elev.set_ylabel('Elevation difference [m]')
