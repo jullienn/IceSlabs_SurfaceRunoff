@@ -113,11 +113,9 @@ my_pal = {'2002': '#1b7837', '2003': '#5aae61', '2004': '#a6dba0', '2005': '#d9f
           '2014': "#fee090", '2015': '#e0f3f8', '2016': '#abd9e9', '2017': "#74add1",
           '2018': "#4575b4", '2019': '#313695', '2020': '#1a1a1a'}
 '''
-my_pal = {'2002': '#980043', '2003': '#dd1c77', '2004': '#df65b0',
-          '2005': '#54278f', '2006': '#756bb1', '2007': '#9e9ac8', '2008': '#cbc9e2', '2009': '#f2f0f7',
-          '2010': "#bd0026", '2011': "#f03b20", '2012': "#fd8d3c", '2013': "#fecc5c", '2014': "#ffffb2",
-          '2015': '#006d2c', '2016': '#31a354', '2017': "#74c476", '2018': "#bae4b3", '2019': '#edf8e9',
-          '2020': '#993404'}
+my_pal = {'2009': '#feebe2',
+          '2010': "#fcc5c0", '2011': "#fa9fb5", '2012': "#f768a1",'2014': "#dd3497",
+          '2016': '#ae017e', '2019': '#7a0177'}
 
 
 from matplotlib.colors import  ListedColormap
@@ -255,7 +253,7 @@ CaseStudyFS={2002:'empty',
             2018:'empty'}
 
 #Define the panel to study
-investigation_year=CaseStudy2
+investigation_year=CaseStudy1
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -269,6 +267,15 @@ gs.update(wspace=0.1)
 gs.update(wspace=0.5)
 
 if (investigation_year==CaseStudy1):
+    #For talk Limerick
+    ax3 = plt.subplot(gs[0:4, 0:100])
+    ax5 = plt.subplot(gs[4:8, 0:100])
+    ax7 = plt.subplot(gs[8:12, 0:100])
+    ax8 = plt.subplot(gs[12:16, 0:100])
+    axc = plt.subplot(gs[0:16, 100:101])
+    
+    '''
+    #Original
     ax1 = plt.subplot(gs[0:4, 0:100])
     ax2 = plt.subplot(gs[4:8, 0:100])
     ax3 = plt.subplot(gs[8:12, 0:100])
@@ -277,6 +284,7 @@ if (investigation_year==CaseStudy1):
     ax7 = plt.subplot(gs[20:24, 0:100])
     ax8 = plt.subplot(gs[24:28, 0:100])
     axc = plt.subplot(gs[8:28, 100:101])
+    '''
     '''
     #For ice layers identification for Fig. 1 in paper Slabs thickening
     ax1 = plt.subplot(gs[0:6, 0:100])
@@ -345,6 +353,11 @@ else:
 dataframe={}
 
 for single_year in investigation_year.keys():
+    
+    if (single_year in list([2002,2003,2011])):
+        continue
+    
+    
     #If no data, continue
     if (investigation_year[single_year]=='empty'):
         print('No data for year '+str(single_year)+', continue')
@@ -602,6 +615,9 @@ lat_transet=[]
 lon_transet=[]
 
 for single_year in investigation_year.keys():
+    
+    if (single_year in list([2002,2003,2011])):
+        continue
 
     if (investigation_year[single_year]=='empty'):
         continue
@@ -811,7 +827,7 @@ index_end_map=np.argmin(np.abs(np.abs(dataframe[str(year_limit)]['lon_appended']
 x_min=dataframe[str(year_limit)]['lon_3413'][index_start_map]
 x_max=dataframe[str(year_limit)]['lon_3413'][index_end_map]
 y_min=dataframe[str(year_limit)]['lat_3413'][index_start_map]-3e3
-y_max=dataframe[str(year_limit)]['lat_3413'][index_end_map]+3e3
+y_max=dataframe[str(year_limit)]['lat_3413'][index_end_map]+6e3
 
 #Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
 #This section of displaying sat data was coding using tips from
@@ -868,17 +884,22 @@ count=0
 #Create a list of years holding data
 list_holding_data=[]
 for holding_data in investigation_year.keys():
+    if (holding_data in list([2002,2003,2011])):
+        continue
     if (investigation_year[holding_data]!='empty'):
         list_holding_data=np.append(list_holding_data,holding_data)
 
 #Display Emax
 for single_year in range(2002,2021):
     
+    if (single_year not in list([2009,2010,2011,2012,2014,2016,2019])):
+        continue
+    '''
     #If no data before this year, continue
     if (single_year<list_holding_data[0]):
         print('No data in',str(single_year))
         continue
-    
+    '''
     print(single_year)
     
     #Select data of the desired year
@@ -895,6 +916,7 @@ for single_year in range(2002,2021):
     ax_map.set_xlim(x_min,x_max)
     ax_map.set_ylim(y_min,y_max)
     '''
+    '''
     #Select the transect around which to perform Emax extraction
     if (single_year in list_holding_data):
         #We have a transect on this particular year, select it
@@ -905,6 +927,8 @@ for single_year in range(2002,2021):
         year_list=list_holding_data[list_holding_data<=single_year]
         year_transect=np.max(year_list).astype(int)
         print('Chosen year:', str(year_transect))
+    '''
+    year_transect=2017#TO DELETE
     
     #Create upper and lower line around chosen transect to extract Emax points
     index_within_bounds_transect=np.logical_and(dataframe[str(year_transect)]['lon_appended']>=start_transect,dataframe[str(year_transect)]['lon_appended']<=end_transect)
@@ -994,17 +1018,20 @@ for single_year in range(2002,2021):
     pdb.set_trace()
     ax_map.scatter(highest_Emax_extraction['x'],highest_Emax_extraction['y'],c='yellow',s=10,zorder=count+1)#Display this easternmost point
     '''
-    
+    '''
     #Store the closest and highest points
     best_Emax_points=pd.concat([closest_Emax_extraction, highest_Emax_extraction])
     
     #If the difference in elevation between the two points is larger than 50m (to change?), we probably have two Emax points at two different hydrological features. Discard the lowest one
     if (np.diff(best_Emax_points.elev)>50):
         best_Emax_points=best_Emax_points.iloc[np.where(best_Emax_points.elev==np.max(best_Emax_points.elev))]
-
+    '''
+    #Store the closest and highest points
+    best_Emax_points=highest_Emax_extraction.copy()
+    
     #pdb.set_trace()
     #Display the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=50,zorder=200,c=my_pal[str(single_year)],edgecolors='black')#Display the best Emax points #count+1
+    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=100,zorder=200,c=my_pal[str(single_year)],edgecolors='black')#Display the best Emax points #count+1
     ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
     
     ### In case yearly map of Emax point are desired to be plotted, comment this ###
@@ -1015,6 +1042,34 @@ for single_year in range(2002,2021):
         #Convert to coordinates into EPSG:4326
         coord_Emax=transformer_3413_to_4326.transform(np.array(best_Emax_points['x']),np.array(best_Emax_points['y']))
         
+        #Plot Emax on the correct radargrams
+        if (single_year<2010):
+            ax3.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2010):
+            ax3.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2011):
+            ax3.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2012):
+            ax5.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2013):
+            ax5.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2014):
+            ax7.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2015):
+            ax7.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2016):
+            ax7.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2017):
+            ax8.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2018):
+            ax8.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        elif(single_year==2019):
+            ax8.axvline(coord_Emax[0][0],color=my_pal[str(single_year)],linewidth=2)
+        else:
+            print('Should not end up there')
+            pdb.set_trace()
+            
+        '''
         #Plot Emax on the correct radargrams
         if (year_transect==2002):
             ax1.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
@@ -1038,7 +1093,7 @@ for single_year in range(2002,2021):
             print('Should not end up there')
             pdb.set_trace()
     ### In case yearly map of Emax point are desired to be plotted, comment this ###
-
+    '''
     '''
     #In case yearly map of Emax point are desired to be plotted
     #Save figure
@@ -1051,6 +1106,22 @@ for single_year in range(2002,2021):
 #pdb.set_trace() #In case yearly map of Emax point are desired to be plotted, uncomment this
 
 if (investigation_year==CaseStudy1):
+    
+    ax5.set_ylabel('Depth [m]')
+    ax8.set_yticklabels(['0','10','20'])
+    ticks_through=ax8.get_xticks()
+    year_ticks=2017
+    ax_tick_plot=ax8
+    ax_top=ax3
+    ax_map.set_title('Case study 1')
+    ax_top.set_title('Case study 1')
+
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[66.05,66.10], x_inline=False, y_inline=False,linewidth=0.5)
+    ###################### From Tedstone et al., 2022 #####################
+    
+    '''
     ax4.set_ylabel('Depth [m]')
     ax8.set_yticklabels(['0','10','20'])
     ticks_through=ax8.get_xticks()
@@ -1064,6 +1135,7 @@ if (investigation_year==CaseStudy1):
     #from plot_map_decadal_change.py
     gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[66.05,66.10], x_inline=False, y_inline=False,linewidth=0.5)
     ###################### From Tedstone et al., 2022 #####################
+    '''
 elif (investigation_year==CaseStudy2):
     ax9.set_ylabel('Depth [m]')
     ax9.set_yticklabels(['0','10','20'])
@@ -1234,7 +1306,7 @@ plt.show()
 pdb.set_trace()
 
 #Save the figure
-plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS2/v2/CS2_NDWI_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
+plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS2/v2/CS2_CumHydro_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 

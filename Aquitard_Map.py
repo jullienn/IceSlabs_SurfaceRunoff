@@ -91,7 +91,7 @@ import rioxarray as rxr
 import os
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
-from scalebar import scale_bar
+#from scalebar import scale_bar
 import matplotlib.patches as patches
 
 #If saving aquitard raster is desired
