@@ -1293,13 +1293,13 @@ RL_IceSlabs_gdp["Elev_diff_2019RL_2012RL"]=RL_IceSlabs_gdp.Elevation_2019_RL-RL_
 RL_IceSlabs_gdp["Signed_Distance_2019_2012_RL"]=RL_IceSlabs_gdp.Distance_2012_2019_RL*np.sign(RL_IceSlabs_gdp.Elev_diff_2019RL_2012RL)
 
 print('---- Elev_diff_2019RL_2012RL ---- ')
-print('    ',RL_IceSlabs_gdp.groupby(["RL2019Region"]).quantile([0.25,0.5,0.75]).Elev_diff_2019RL_2012RL)
+print('    ',np.round(RL_IceSlabs_gdp.groupby(["RL2019Region"]).quantile([0.25,0.5,0.75]).Elev_diff_2019RL_2012RL))
 print(' ')
 print('---- Signed dist_2019RL_2012RL ---- ')
-print('    ',RL_IceSlabs_gdp.groupby(["RL2019Region"]).quantile([0.25,0.5,0.75]).Signed_Distance_2019_2012_RL)
+print('    ',np.round(RL_IceSlabs_gdp.groupby(["RL2019Region"]).quantile([0.25,0.5,0.75]).Signed_Distance_2019_2012_RL))
 print(' ')
 print('Count:')
-print('    ',RL_IceSlabs_gdp.groupby(["RL2019Region"]).count().Elev_diff_2019RL_2012RL)
+print('    ',np.round(RL_IceSlabs_gdp.groupby(["RL2019Region"]).count().Elev_diff_2019RL_2012RL))
 
 RL_IceSlabs_gdp.Signed_Distance_2019_2012_RL=RL_IceSlabs_gdp.Signed_Distance_2019_2012_RL/1000
 #Set fontsize plot
