@@ -380,6 +380,7 @@ from scipy import stats
 
 composite='TRUE'
 radius=500
+SAR_quantiles_extraction='FALSE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
 
 #Define projection
 ###################### From Tedstone et al., 2022 #####################
@@ -589,6 +590,382 @@ plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2Year
 
 ###############################################################################
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
+###############################################################################
+
+pdb.set_trace()
+
+###############################################################################
+###                                   SAR                                   ###
+###############################################################################
+############################# Sectors - 2019 MVRL #############################
+
+if (SAR_quantiles_extraction == 'TRUE'):
+    
+    #Create dataframe to associate each box with its region
+    box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,32),'region': np.nan})
+    box_and_region['region'].iloc[0:9]='SW'
+    box_and_region['region'].iloc[9]='shared'
+    box_and_region['region'].iloc[10:14]='CW'
+    box_and_region['region'].iloc[14]='shared'
+    box_and_region['region'].iloc[15:21]='NW'
+    box_and_region['region'].iloc[21]='shared'
+    box_and_region['region'].iloc[22:28]='NO'
+    box_and_region['region'].iloc[28]='shared'
+    box_and_region['region'].iloc[29:32]='NE'
+    
+    above_all=pd.DataFrame()
+    within_all=pd.DataFrame()
+    below_all=pd.DataFrame()
+    in_between_all=pd.DataFrame()
+    
+    #Load SAR csv files
+    for indiv_box in range(4,32):
+        print(indiv_box)
+        #open above
+        try:
+            above = pd.read_csv(path_data+'SAR_sectors/above/SAR_above_box_'+str(indiv_box)+'_year_2019.csv')
+            #drop index column
+            above=above.drop(columns=["Unnamed: 0"])
+            above['sector']=pd.Series(['Above']*len(above))
+            above['box_nb']=pd.Series([indiv_box]*len(above))
+            above['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(above))
+            #Append data
+            above_all=pd.concat([above_all,above])
+        except FileNotFoundError:
+            print('No above')
+        
+        #open in_between
+        try:
+            in_between = pd.read_csv(path_data+'SAR_sectors/in_between/SAR_in_between_box_'+str(indiv_box)+'_year_2019.csv')
+            #drop index column
+            in_between=in_between.drop(columns=["Unnamed: 0"])
+            in_between['sector']=pd.Series(['InBetween']*len(in_between))
+            in_between['box_nb']=pd.Series([indiv_box]*len(in_between))
+            in_between['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(in_between))
+            #Append data
+            in_between_all=pd.concat([in_between_all,in_between])
+        except FileNotFoundError:
+            print('No in_between')
+            
+        #open within
+        try:
+            within = pd.read_csv(path_data+'SAR_sectors/within/SAR_within_box_'+str(indiv_box)+'_year_2019.csv')
+            #drop index column
+            within=within.drop(columns=["Unnamed: 0"])
+            within['sector']=pd.Series(['Within']*len(within))
+            within['box_nb']=pd.Series([indiv_box]*len(within))
+            within['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(within))
+            #Append data
+            within_all=pd.concat([within_all,within])
+        except FileNotFoundError:
+            print('No within')
+        
+        #open below
+        try:
+            below = pd.read_csv(path_data+'SAR_sectors/below/SAR_below_box_'+str(indiv_box)+'_year_2019.csv')
+            #drop index column
+            below=below.drop(columns=["Unnamed: 0"])
+            below['sector']=pd.Series(['Below']*len(below))
+            below['box_nb']=pd.Series([indiv_box]*len(below))
+            below['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(below))
+            #Append data
+            below_all=pd.concat([below_all,below])
+        except FileNotFoundError:
+            print('No below')
+    
+    pdb.set_trace()
+    ### For boxes which share different regions, perform intersection with GrIS drainage bassins ###
+    #Reunite all the sectors into one single dataframe
+    SAR_all_sectors=pd.concat([above_all,in_between_all,within_all,below_all])
+    #Reset index to have a single index per data point
+    SAR_all_sectors=SAR_all_sectors.reset_index(drop=True)
+    #Identify index which have the 'shared' region
+    index_shared=SAR_all_sectors[SAR_all_sectors.region=='shared'].index
+    #Select data in boxes sharing 2 regions
+    SAR_all_sectors_shared=SAR_all_sectors.loc[index_shared].copy()
+    #Transform SAR_all_sectors_shared into a geopandas dataframe
+    SAR_all_sectors_shared_gdp = gpd.GeoDataFrame(SAR_all_sectors_shared,
+                                                  geometry=gpd.GeoSeries.from_xy(SAR_all_sectors_shared['x_coord_SAR'],
+                                                                                 SAR_all_sectors_shared['y_coord_SAR'],
+                                                                                 crs='EPSG:3413'))
+    #Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+    SAR_all_sectors_shared_gdp_with_regions = gpd.sjoin(SAR_all_sectors_shared_gdp, GrIS_drainage_bassins, predicate='within')
+    #Drop index of drainage bassins and the 'region' colum storing 'shared'
+    SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.drop(columns=["region","index_right"])
+    SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.rename(columns={"SUBREGION1":"region"})
+    #fill in the SAR_all_sectors dataframe the identified regions
+    SAR_all_sectors.loc[index_shared,'region']=SAR_all_sectors_shared_gdp_with_regions.region
+    
+    pdb.set_trace()
+    
+    '''
+    #Make sure identifcation went well - yes, it performs perfectly! Rechecked on May 31, all good :)
+    fig = plt.figure()
+    gs = gridspec.GridSpec(10, 6)
+    ax_region_check = plt.subplot(gs[0:10, 0:6],projection=crs)
+    
+    GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='SW'].plot(ax=ax_region_check,color='red',alpha=0.2)
+    GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='CW'].plot(ax=ax_region_check,color='magenta',alpha=0.2)
+    GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NW'].plot(ax=ax_region_check,color='green',alpha=0.2)
+    GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NO'].plot(ax=ax_region_check,color='blue',alpha=0.2)
+    GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NE'].plot(ax=ax_region_check,color='cyan',alpha=0.2)
+    
+    ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='SW'].x_coord_SAR,
+                            SAR_all_sectors[SAR_all_sectors.region=='SW'].y_coord_SAR,
+                            color='red') #Perfect!
+    ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='CW'].x_coord_SAR,
+                            SAR_all_sectors[SAR_all_sectors.region=='CW'].y_coord_SAR,
+                            color='magenta') #Perfect!
+    ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NW'].x_coord_SAR,
+                            SAR_all_sectors[SAR_all_sectors.region=='NW'].y_coord_SAR,
+                            color='green')
+    ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NO'].x_coord_SAR,
+                            SAR_all_sectors[SAR_all_sectors.region=='NO'].y_coord_SAR,
+                            color='blue') #Perfect!
+    ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NE'].x_coord_SAR,
+                            SAR_all_sectors[SAR_all_sectors.region=='NE'].y_coord_SAR,
+                            color='cyan')   
+    '''
+    
+    #Display figure distribution
+    fig, (ax_distrib) = plt.subplots()      
+    ax_distrib.hist(SAR_all_sectors[SAR_all_sectors.sector=='Below'].SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
+    #ax_distrib.hist(in_between_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='yellow',label='In Between')
+    #ax_distrib.hist(within_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='red',label='Within')
+    ax_distrib.hist(SAR_all_sectors[SAR_all_sectors.sector=='Above'].SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
+    ax_distrib.set_xlim(-20,-2)
+    ax_distrib.set_xlabel('Signal strength [dB]')
+    ax_distrib.set_ylabel('Density')
+    ax_distrib.legend()
+    ax_distrib.set_title('GrIS-wide')
+    '''
+    #Save the figure
+    plt.savefig(path_data+'SAR_sectors/Composite2019_HistoGrIS_SAR_cleanedxytpdV3.png',dpi=500)
+    '''
+    
+    print('--- SAR ---')
+    #Display figure distribution in different regions
+    fig, (ax_distrib_SW,ax_distrib_CW,ax_distrib_NW,ax_distrib_NO,ax_distrib_NE) = plt.subplots(5,1)  
+    hist_regions(SAR_all_sectors[SAR_all_sectors.region=='SW'],'SW',ax_distrib_SW)
+    hist_regions(SAR_all_sectors[SAR_all_sectors.region=='CW'],'CW',ax_distrib_CW)
+    hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NW'],'NW',ax_distrib_NW)
+    hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NO'],'NO',ax_distrib_NO)
+    hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NE'],'NE',ax_distrib_NE)
+    ax_distrib_SW.legend()
+    fig.suptitle('Regional separation')
+    '''
+    #Save the figure
+    plt.savefig(path_data+'SAR_sectors/Composite2019_HistoRegions_SAR_cleanedxytpdV3.png',dpi=500)
+    '''
+    #Display boxplot
+    #GrIS-wide
+    fig = plt.figure(figsize=(10,6))
+    gs = gridspec.GridSpec(10, 6)
+    ax_SAR = plt.subplot(gs[0:10, 0:6])
+    sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))], y="sector", x="SAR",ax=ax_SAR)#, kde=True)
+    ax_SAR.set_xlabel('Signal strength [dB]')
+    ax_SAR.set_ylabel('Category')
+    ax_SAR.set_title('GrIS-wide')
+    '''
+    #Save the figure
+    plt.savefig(path_data+'SAR_sectors/Composite2019_BoxplotGrIS_SAR_cleanedxytpdV3.png',dpi=500)
+    '''
+    
+    #Regions
+    fig = plt.figure(figsize=(10,6))
+    gs = gridspec.GridSpec(10, 6)
+    ax_SAR = plt.subplot(gs[0:10, 0:6])
+    sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))], y="region", x="SAR",hue="sector",ax=ax_SAR)#, kde=True)
+    ax_SAR.set_xlabel('Signal strength [dB]')
+    ax_SAR.set_ylabel('Category')
+    ax_SAR.set_title('GrIS-wide')
+    '''
+    #Save the figure
+    plt.savefig(path_data+'SAR_sectors/Composite2019_BoxplotRegions_SAR_cleanedxytpdV3.png',dpi=500)
+    '''
+    #Violin plot
+    fig = plt.figure(figsize=(10,6))
+    gs = gridspec.GridSpec(10, 6)
+    ax_SAR = plt.subplot(gs[0:10, 0:6])
+    sns.violinplot(data=pd.DataFrame(SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))].to_dict()),
+                   y="region", x="SAR",hue="sector",ax=ax_SAR,palette=my_pal)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+    ax_SAR.set_xlabel('Signal strength [dB]')
+    ax_SAR.set_ylabel('Region')
+    ax_SAR.set_title('GrIS-wide')
+    '''
+    #Save the figure
+    plt.savefig(path_data+'SAR_sectors/Composite2019_ViolinPlotRegions_SAR_AboveBelow_cleanedxytpdV3.png',dpi=500)
+    '''
+    
+    #Display above, within and below violin plot!
+    df_except_InBetween=SAR_all_sectors.drop(SAR_all_sectors[SAR_all_sectors.sector=='InBetween'].index.to_numpy()).copy()
+    #Violin plot
+    fig = plt.figure(figsize=(10,6))
+    gs = gridspec.GridSpec(10, 6)
+    ax_SAR = plt.subplot(gs[0:10, 0:6])
+    sns.violinplot(data=pd.DataFrame(df_except_InBetween.to_dict()),
+                   y="region", x="SAR",hue="sector",ax=ax_SAR,palette=my_pal)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+    ax_SAR.set_xlabel('Signal strength [dB]')
+    ax_SAR.set_ylabel('Region')
+    ax_SAR.set_title('GrIS-wide')
+    '''
+    #Save the figure
+    plt.savefig(path_data+'SAR_sectors/Composite2019_ViolinPlotRegions_SAR_cleanedxytpdV3.png',dpi=500)
+    '''
+    ############################# Sectors - 2019 MVRL #############################
+    pdb.set_trace()
+    
+    #Display SAR sectorial summary statistics
+    print('--- SW ---')
+    print('- Above')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='SW'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Within')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='SW'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Below')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='SW'))].SAR.quantile([0.25,0.5,0.75]))
+    
+    print('--- CW ---')
+    print('- Above')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='CW'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Within')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='CW'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Below')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='CW'))].SAR.quantile([0.25,0.5,0.75]))
+    
+    print('--- NW ---')
+    print('- Above')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='NW'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Within')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='NW'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Below')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NW'))].SAR.quantile([0.25,0.5,0.75]))
+    
+    print('--- NO ---')
+    print('- Above')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='NO'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Within')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='NO'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Below')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NO'))].SAR.quantile([0.25,0.5,0.75]))
+    
+    print('--- NE ---')
+    print('- Above')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Within')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
+    print('- Below')
+    print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
+    
+    
+    #Display ice thickness and SAR for each regions for each sector as violin plot aside each other
+    plt.rcParams.update({'font.size': 15})
+    fig = plt.figure(figsize=(12,10))
+    gs = gridspec.GridSpec(5, 10)
+    gs.update(hspace=0)
+    gs.update(wspace=0.1)
+    ax_SAR = plt.subplot(gs[0:5,0:5])
+    sns.violinplot(data=pd.DataFrame(df_except_InBetween.to_dict()), x="SAR", y="region",hue="sector",orient="h",scale="width",ax=ax_SAR,palette=my_pal)#, kde=True)
+    ax_SAR.set_xlabel('Signal strength [dB]',labelpad=10)
+    ax_SAR.set_ylabel('Region',labelpad=10)
+    ax_SAR.grid(linestyle='dashed')
+    ax_SAR.text(0.03, 0.97,'a',ha='center', va='center', transform=ax_SAR.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    
+    ax_ice_thickness = plt.subplot(gs[0:5, 5:10])
+    sns.violinplot(data=IceThickness_all_sectors, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",scale="width",ax=ax_ice_thickness,palette=my_pal)#, kde=True)
+    ax_ice_thickness.set_xlabel('Ice thickness [m]',labelpad=10)
+    ax_ice_thickness.set_ylabel('Region',labelpad=10)
+    ax_ice_thickness.grid(linestyle='dashed')
+    ax_ice_thickness.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
+    ax_ice_thickness.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+    ax_ice_thickness.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+    ax_ice_thickness.text(0.03, 0.97,'b',ha='center', va='center', transform=ax_ice_thickness.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    
+    #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+    legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Above'),
+                       Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
+                       Patch(facecolor=my_pal['Below'],edgecolor='black',label='Below')]
+    ax_SAR.legend(handles=legend_elements,loc='lower left',fontsize=15,framealpha=0.8).set_zorder(7)
+    
+    '''
+    #Save the figure
+    plt.savefig(path_switchdrive+'RT3/figures/FigS1/v1/FigS1.png',dpi=500,bbox_inches='tight')
+    #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    '''
+
+'''
+Results of the quantiles in the different regions for the different sectors
+--- SW ---
+- Above
+0.25   -7.973435
+0.50   -7.243513
+0.75   -6.613111
+- Within
+0.25    -9.74725
+0.50   -9.196233
+0.75   -8.638897
+- Below
+0.25   -10.226363
+0.50    -9.654804
+0.75    -9.110144
+
+--- CW ---
+- Above
+0.25   -6.131196
+0.50   -5.750285
+0.75   -5.419163
+- Within
+0.25   -9.191771
+0.50   -8.053114
+0.75   -7.038067
+- Below
+0.25   -10.469379
+0.50    -9.074578
+0.75     -7.82364
+
+--- NW ---
+- Above
+0.25   -7.991582
+0.50   -6.810143
+0.75   -5.905346
+- Within
+0.25   -10.610457
+0.50    -9.192882
+0.75    -8.266375
+- Below
+0.25   -11.335603
+0.50   -10.204542
+0.75    -8.982688
+
+--- NO ---
+- Above
+0.25   -5.820288
+0.50   -5.166023
+0.75   -4.389923
+- Within
+0.25   -8.500205
+0.50   -7.081633
+0.75   -6.104299
+- Below
+0.25     -9.9055
+0.50   -8.558269
+0.75   -7.194321
+
+--- NE ---
+- Above
+0.25   -5.696267
+0.50   -4.993743
+0.75   -4.297798
+- Within
+0.25   -7.451725
+0.50   -6.661402
+0.75   -5.715943
+- Below
+0.25   -8.455717
+0.50   -7.189671
+0.75   -6.329797
+'''
+###############################################################################
+###                                   SAR                                   ###
 ###############################################################################
 
 pdb.set_trace()
@@ -882,379 +1259,6 @@ plt.savefig(path_data+'Composite2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs
 
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
-###############################################################################
-
-pdb.set_trace()
-
-###############################################################################
-###                                   SAR                                   ###
-###############################################################################
-############################# Sectors - 2019 MVRL #############################
-
-#Create dataframe to associate each box with its region
-box_and_region=pd.DataFrame(data={'box_nb': np.arange(1,32),'region': np.nan})
-box_and_region['region'].iloc[0:9]='SW'
-box_and_region['region'].iloc[9]='shared'
-box_and_region['region'].iloc[10:14]='CW'
-box_and_region['region'].iloc[14]='shared'
-box_and_region['region'].iloc[15:21]='NW'
-box_and_region['region'].iloc[21]='shared'
-box_and_region['region'].iloc[22:28]='NO'
-box_and_region['region'].iloc[28]='shared'
-box_and_region['region'].iloc[29:32]='NE'
-
-above_all=pd.DataFrame()
-within_all=pd.DataFrame()
-below_all=pd.DataFrame()
-in_between_all=pd.DataFrame()
-
-#Load SAR csv files
-for indiv_box in range(4,32):
-    print(indiv_box)
-    #open above
-    try:
-        above = pd.read_csv(path_data+'SAR_sectors/above/SAR_above_box_'+str(indiv_box)+'_year_2019.csv')
-        #drop index column
-        above=above.drop(columns=["Unnamed: 0"])
-        above['sector']=pd.Series(['Above']*len(above))
-        above['box_nb']=pd.Series([indiv_box]*len(above))
-        above['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(above))
-        #Append data
-        above_all=pd.concat([above_all,above])
-    except FileNotFoundError:
-        print('No above')
-    
-    #open in_between
-    try:
-        in_between = pd.read_csv(path_data+'SAR_sectors/in_between/SAR_in_between_box_'+str(indiv_box)+'_year_2019.csv')
-        #drop index column
-        in_between=in_between.drop(columns=["Unnamed: 0"])
-        in_between['sector']=pd.Series(['InBetween']*len(in_between))
-        in_between['box_nb']=pd.Series([indiv_box]*len(in_between))
-        in_between['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(in_between))
-        #Append data
-        in_between_all=pd.concat([in_between_all,in_between])
-    except FileNotFoundError:
-        print('No in_between')
-        
-    #open within
-    try:
-        within = pd.read_csv(path_data+'SAR_sectors/within/SAR_within_box_'+str(indiv_box)+'_year_2019.csv')
-        #drop index column
-        within=within.drop(columns=["Unnamed: 0"])
-        within['sector']=pd.Series(['Within']*len(within))
-        within['box_nb']=pd.Series([indiv_box]*len(within))
-        within['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(within))
-        #Append data
-        within_all=pd.concat([within_all,within])
-    except FileNotFoundError:
-        print('No within')
-    
-    #open below
-    try:
-        below = pd.read_csv(path_data+'SAR_sectors/below/SAR_below_box_'+str(indiv_box)+'_year_2019.csv')
-        #drop index column
-        below=below.drop(columns=["Unnamed: 0"])
-        below['sector']=pd.Series(['Below']*len(below))
-        below['box_nb']=pd.Series([indiv_box]*len(below))
-        below['region']=pd.Series([box_and_region.iloc[indiv_box-1]['region']]*len(below))
-        #Append data
-        below_all=pd.concat([below_all,below])
-    except FileNotFoundError:
-        print('No below')
-
-#pdb.set_trace()
-### For boxes which share different regions, perform intersection with GrIS drainage bassins ###
-#Reunite all the sectors into one single dataframe
-SAR_all_sectors=pd.concat([above_all,in_between_all,within_all,below_all])
-#Reset index to have a single index per data point
-SAR_all_sectors=SAR_all_sectors.reset_index(drop=True)
-#Identify index which have the 'shared' region
-index_shared=SAR_all_sectors[SAR_all_sectors.region=='shared'].index
-#Select data in boxes sharing 2 regions
-SAR_all_sectors_shared=SAR_all_sectors.loc[index_shared].copy()
-#Transform SAR_all_sectors_shared into a geopandas dataframe
-SAR_all_sectors_shared_gdp = gpd.GeoDataFrame(SAR_all_sectors_shared,
-                                              geometry=gpd.GeoSeries.from_xy(SAR_all_sectors_shared['x_coord_SAR'],
-                                                                             SAR_all_sectors_shared['y_coord_SAR'],
-                                                                             crs='EPSG:3413'))
-#Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
-SAR_all_sectors_shared_gdp_with_regions = gpd.sjoin(SAR_all_sectors_shared_gdp, GrIS_drainage_bassins, predicate='within')
-#Drop index of drainage bassins and the 'region' colum storing 'shared'
-SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.drop(columns=["region","index_right"])
-SAR_all_sectors_shared_gdp_with_regions=SAR_all_sectors_shared_gdp_with_regions.rename(columns={"SUBREGION1":"region"})
-#fill in the SAR_all_sectors dataframe the identified regions
-SAR_all_sectors.loc[index_shared,'region']=SAR_all_sectors_shared_gdp_with_regions.region
-
-pdb.set_trace()
-
-'''
-#Make sure identifcation went well - yes, it performs perfectly! Rechecked on May 31, all good :)
-fig = plt.figure()
-gs = gridspec.GridSpec(10, 6)
-ax_region_check = plt.subplot(gs[0:10, 0:6],projection=crs)
-
-GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='SW'].plot(ax=ax_region_check,color='red',alpha=0.2)
-GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='CW'].plot(ax=ax_region_check,color='magenta',alpha=0.2)
-GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NW'].plot(ax=ax_region_check,color='green',alpha=0.2)
-GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NO'].plot(ax=ax_region_check,color='blue',alpha=0.2)
-GrIS_drainage_bassins[GrIS_drainage_bassins.SUBREGION1=='NE'].plot(ax=ax_region_check,color='cyan',alpha=0.2)
-
-ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='SW'].x_coord_SAR,
-                        SAR_all_sectors[SAR_all_sectors.region=='SW'].y_coord_SAR,
-                        color='red') #Perfect!
-ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='CW'].x_coord_SAR,
-                        SAR_all_sectors[SAR_all_sectors.region=='CW'].y_coord_SAR,
-                        color='magenta') #Perfect!
-ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NW'].x_coord_SAR,
-                        SAR_all_sectors[SAR_all_sectors.region=='NW'].y_coord_SAR,
-                        color='green')
-ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NO'].x_coord_SAR,
-                        SAR_all_sectors[SAR_all_sectors.region=='NO'].y_coord_SAR,
-                        color='blue') #Perfect!
-ax_region_check.scatter(SAR_all_sectors[SAR_all_sectors.region=='NE'].x_coord_SAR,
-                        SAR_all_sectors[SAR_all_sectors.region=='NE'].y_coord_SAR,
-                        color='cyan')   
-'''
-
-#Display figure distribution
-fig, (ax_distrib) = plt.subplots()      
-ax_distrib.hist(SAR_all_sectors[SAR_all_sectors.sector=='Below'].SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='green',label='Below')
-#ax_distrib.hist(in_between_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='yellow',label='In Between')
-#ax_distrib.hist(within_all.SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='red',label='Within')
-ax_distrib.hist(SAR_all_sectors[SAR_all_sectors.sector=='Above'].SAR,density=True,alpha=0.5,bins=np.arange(-21,1,0.5),color='blue',label='Above')
-ax_distrib.set_xlim(-20,-2)
-ax_distrib.set_xlabel('Signal strength [dB]')
-ax_distrib.set_ylabel('Density')
-ax_distrib.legend()
-ax_distrib.set_title('GrIS-wide')
-'''
-#Save the figure
-plt.savefig(path_data+'SAR_sectors/Composite2019_HistoGrIS_SAR_cleanedxytpdV3.png',dpi=500)
-'''
-
-print('--- SAR ---')
-#Display figure distribution in different regions
-fig, (ax_distrib_SW,ax_distrib_CW,ax_distrib_NW,ax_distrib_NO,ax_distrib_NE) = plt.subplots(5,1)  
-hist_regions(SAR_all_sectors[SAR_all_sectors.region=='SW'],'SW',ax_distrib_SW)
-hist_regions(SAR_all_sectors[SAR_all_sectors.region=='CW'],'CW',ax_distrib_CW)
-hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NW'],'NW',ax_distrib_NW)
-hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NO'],'NO',ax_distrib_NO)
-hist_regions(SAR_all_sectors[SAR_all_sectors.region=='NE'],'NE',ax_distrib_NE)
-ax_distrib_SW.legend()
-fig.suptitle('Regional separation')
-'''
-#Save the figure
-plt.savefig(path_data+'SAR_sectors/Composite2019_HistoRegions_SAR_cleanedxytpdV3.png',dpi=500)
-'''
-#Display boxplot
-#GrIS-wide
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_SAR = plt.subplot(gs[0:10, 0:6])
-sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))], y="sector", x="SAR",ax=ax_SAR)#, kde=True)
-ax_SAR.set_xlabel('Signal strength [dB]')
-ax_SAR.set_ylabel('Category')
-ax_SAR.set_title('GrIS-wide')
-'''
-#Save the figure
-plt.savefig(path_data+'SAR_sectors/Composite2019_BoxplotGrIS_SAR_cleanedxytpdV3.png',dpi=500)
-'''
-
-#Regions
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_SAR = plt.subplot(gs[0:10, 0:6])
-sns.boxplot(data=SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))], y="region", x="SAR",hue="sector",ax=ax_SAR)#, kde=True)
-ax_SAR.set_xlabel('Signal strength [dB]')
-ax_SAR.set_ylabel('Category')
-ax_SAR.set_title('GrIS-wide')
-'''
-#Save the figure
-plt.savefig(path_data+'SAR_sectors/Composite2019_BoxplotRegions_SAR_cleanedxytpdV3.png',dpi=500)
-'''
-#Violin plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_SAR = plt.subplot(gs[0:10, 0:6])
-sns.violinplot(data=pd.DataFrame(SAR_all_sectors[np.logical_or((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.sector=='Below'))].to_dict()),
-               y="region", x="SAR",hue="sector",ax=ax_SAR,palette=my_pal)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
-ax_SAR.set_xlabel('Signal strength [dB]')
-ax_SAR.set_ylabel('Region')
-ax_SAR.set_title('GrIS-wide')
-'''
-#Save the figure
-plt.savefig(path_data+'SAR_sectors/Composite2019_ViolinPlotRegions_SAR_AboveBelow_cleanedxytpdV3.png',dpi=500)
-'''
-
-#Display above, within and below violin plot!
-df_except_InBetween=SAR_all_sectors.drop(SAR_all_sectors[SAR_all_sectors.sector=='InBetween'].index.to_numpy()).copy()
-#Violin plot
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_SAR = plt.subplot(gs[0:10, 0:6])
-sns.violinplot(data=pd.DataFrame(df_except_InBetween.to_dict()),
-               y="region", x="SAR",hue="sector",ax=ax_SAR,palette=my_pal)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
-ax_SAR.set_xlabel('Signal strength [dB]')
-ax_SAR.set_ylabel('Region')
-ax_SAR.set_title('GrIS-wide')
-'''
-#Save the figure
-plt.savefig(path_data+'SAR_sectors/Composite2019_ViolinPlotRegions_SAR_cleanedxytpdV3.png',dpi=500)
-'''
-############################# Sectors - 2019 MVRL #############################
-pdb.set_trace()
-
-#Display SAR sectorial summary statistics
-print('--- SW ---')
-print('- Above')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='SW'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Within')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='SW'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Below')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='SW'))].SAR.quantile([0.25,0.5,0.75]))
-
-print('--- CW ---')
-print('- Above')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='CW'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Within')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='CW'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Below')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='CW'))].SAR.quantile([0.25,0.5,0.75]))
-
-print('--- NW ---')
-print('- Above')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='NW'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Within')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='NW'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Below')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NW'))].SAR.quantile([0.25,0.5,0.75]))
-
-print('--- NO ---')
-print('- Above')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='NO'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Within')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='NO'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Below')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NO'))].SAR.quantile([0.25,0.5,0.75]))
-
-print('--- NE ---')
-print('- Above')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Above'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Within')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Within'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
-print('- Below')
-print(SAR_all_sectors[np.logical_and((SAR_all_sectors.sector=='Below'),(SAR_all_sectors.region=='NE'))].SAR.quantile([0.25,0.5,0.75]))
-
-
-#Display ice thickness and SAR for each regions for each sector as violin plot aside each other
-plt.rcParams.update({'font.size': 15})
-fig = plt.figure(figsize=(12,10))
-gs = gridspec.GridSpec(5, 10)
-gs.update(hspace=0)
-gs.update(wspace=0.1)
-ax_SAR = plt.subplot(gs[0:5,0:5])
-sns.violinplot(data=pd.DataFrame(df_except_InBetween.to_dict()), x="SAR", y="region",hue="sector",orient="h",scale="width",ax=ax_SAR,palette=my_pal)#, kde=True)
-ax_SAR.set_xlabel('Signal strength [dB]',labelpad=10)
-ax_SAR.set_ylabel('Region',labelpad=10)
-ax_SAR.grid(linestyle='dashed')
-ax_SAR.text(0.03, 0.97,'a',ha='center', va='center', transform=ax_SAR.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
-ax_ice_thickness = plt.subplot(gs[0:5, 5:10])
-sns.violinplot(data=IceThickness_all_sectors, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",scale="width",ax=ax_ice_thickness,palette=my_pal)#, kde=True)
-ax_ice_thickness.set_xlabel('Ice thickness [m]',labelpad=10)
-ax_ice_thickness.set_ylabel('Region',labelpad=10)
-ax_ice_thickness.grid(linestyle='dashed')
-ax_ice_thickness.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
-ax_ice_thickness.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
-ax_ice_thickness.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
-ax_ice_thickness.text(0.03, 0.97,'b',ha='center', va='center', transform=ax_ice_thickness.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
-#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Above'),
-                   Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
-                   Patch(facecolor=my_pal['Below'],edgecolor='black',label='Below')]
-ax_SAR.legend(handles=legend_elements,loc='lower left',fontsize=15,framealpha=0.8).set_zorder(7)
-
-'''
-#Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/FigS1/v1/FigS1.png',dpi=500,bbox_inches='tight')
-#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
-
-'''
---- SW ---
-- Above
-0.25   -7.973435
-0.50   -7.243513
-0.75   -6.613111
-- Within
-0.25    -9.74725
-0.50   -9.196233
-0.75   -8.638897
-- Below
-0.25   -10.226363
-0.50    -9.654804
-0.75    -9.110144
-
---- CW ---
-- Above
-0.25   -6.131196
-0.50   -5.750285
-0.75   -5.419163
-- Within
-0.25   -9.191771
-0.50   -8.053114
-0.75   -7.038067
-- Below
-0.25   -10.469379
-0.50    -9.074578
-0.75     -7.82364
-
---- NW ---
-- Above
-0.25   -7.991582
-0.50   -6.810143
-0.75   -5.905346
-- Within
-0.25   -10.610457
-0.50    -9.192882
-0.75    -8.266375
-- Below
-0.25   -11.335603
-0.50   -10.204542
-0.75    -8.982688
-
---- NO ---
-- Above
-0.25   -5.820288
-0.50   -5.166023
-0.75   -4.389923
-- Within
-0.25   -8.500205
-0.50   -7.081633
-0.75   -6.104299
-- Below
-0.25     -9.9055
-0.50   -8.558269
-0.75   -7.194321
-
---- NE ---
-- Above
-0.25   -5.696267
-0.50   -4.993743
-0.75   -4.297798
-- Within
-0.25   -7.451725
-0.50   -6.661402
-0.75   -5.715943
-- Below
-0.25   -8.455717
-0.50   -7.189671
-0.75   -6.329797
-'''
-###############################################################################
-###                                   SAR                                   ###
 ###############################################################################
 
 print('--- End of code ---')
