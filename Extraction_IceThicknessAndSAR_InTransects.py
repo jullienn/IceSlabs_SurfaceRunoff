@@ -123,6 +123,9 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
     pointInPolys= gpd.tools.sjoin(Extraction_IceSlabs_transect_gpd, raster_grid_gpd, predicate="within", how='left',lsuffix='left',rsuffix='right') #This is from https://www.matecdev.com/posts/point-in-polygon.html
     ### This is from Fig2andS7andS8andS12.py from paper 'Greenland Ice Slabs Expansion and Thickening' ###
     
+    #Where ice content is NaN, delete data point
+    pointInPolys.dropna(subset=['20m_ice_content_m'],inplace=True)
+    
     if (fig_display=='TRUE'):
         #Check extraction is correct
         #Prepare plot
@@ -210,7 +213,7 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
             popt, pcov = curve_fit(func, xdata, ydata,p0=[1,0.26,-2],bounds=([0,-1,-4],[2,1,2]))
             ax_upsampled_raster.plot(xdata, func(xdata, *popt),'b',label='best fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
             ax_upsampled_raster.legend()
-           
+        
     #Save the figure
     fig_indiv.suptitle(IceSlabsTransect_name_InFunc)
     plt.savefig(path_local+raster_type_InFunc+'_and_IceThickness/images/NotClipped_With0mSlabs/'+IceSlabsTransect_name_InFunc+'_Upsampled.png',dpi=300,bbox_inches='tight')
@@ -382,8 +385,8 @@ fig_display='FALSE' #If TRUE, generate figures
 check_oversampling_over='FALSE'
 
 #Which raster extraction is to perform
-SAR_process='TRUE'
-CumHydro_process='FALSE'
+SAR_process='FALSE'
+CumHydro_process='TRUE'
 
 #For all of these transects, there was no SAR extracted while there are, because a SAR mosaic is called beforehand, which extends there but is empty. This is now fixed!
 list_check_clip=list(['20170331_01_095_098', '20170331_01_109_111','20170331_01_120_122',
@@ -449,9 +452,13 @@ master_NE_mean = rxr.open_rasterio(path_local+'data/master_maps/merge_ne/master_
 #Generate the csv files and figures of individual relationship    
 if (generate_data=='TRUE'):
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
         
+        if (IceSlabsTransect_name=='20170510_02_100_105'):
+            #Everything up to here is fine
+            pdb.set_trace()
+            
         '''
         #Partial clipping case
         if (IceSlabsTransect_name=='20180419_02_123_126'):
@@ -470,11 +477,11 @@ if (generate_data=='TRUE'):
         if (os.path.isfile(path_local+'CumHydro_and_IceThickness/csv/'+IceSlabsTransect_name+'_NotUpsampled.csv')):#this is from https://stackoverflow.com/questions/82831/how-do-i-check-whether-a-file-exists-without-exceptions
             print(IceSlabsTransect_name,' already generated, continue')    
             continue
-        '''
+        
         if (IceSlabsTransect_name in list(['20170410_01_086_088','20170422_01_138_139','20170506_01_117_118','20180423_01_056_056'])):
             print('No SAR intersections, do not process ',IceSlabsTransect_name)
             continue
-        
+        '''
         #Open transect file
         f_IceSlabsTransect = open(path_jullienetal2023+'IceSlabs_And_Coordinates/'+IceSlabsTransect_name+'_IceSlabs.pickle', "rb")
         IceSlabsTransect = pickle.load(f_IceSlabsTransect)

@@ -743,7 +743,7 @@ path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRuno
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
 my_pal = {'SW': "#9e9ac8", 'CW': "#9e9ac8", 'NW': "#9e9ac8", 'NO': "#9e9ac8", 'NE': "#9e9ac8"}
-pal_year= {2012 : "#bcbddc", 2019 : "#fdcdac"}
+pal_year= {2012 : "#2171b5", 2019 : "#fcbba1"}
 
 ### -------------------------- Load shapefiles --------------------------- ###
 #Load Rignot et al., 2016 Greenland drainage bassins
@@ -837,8 +837,6 @@ df_xytpd_all_gpd=df_xytpd_all_gpd.rename(columns={"index":"index_Emax"})
 #Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
 df_xytpd_2012=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2012].copy()
 df_xytpd_2019=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2019].copy()
-
-pdb.set_trace()
 
 if (extract_data_in_boxes == 'TRUE'):
     #Generate dataset
@@ -987,16 +985,13 @@ else:
     
 ### ----------- Ice slabs upper end and RL 2012/2019 extraction ----------- ###
 
-pdb.set_trace()
-
-
 #Prepare plot
 #Set fontsize plot
 plt.rcParams.update({'font.size': 8})
 fig = plt.figure()
-fig.set_size_inches(6.6, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(7.26,8.82) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(15, 12)
+gs = gridspec.GridSpec(12, 12)
 gs.update(hspace=0.1)
 gs.update(wspace=0.1)
 ax_north = plt.subplot(gs[0:3, 0:12],projection=crs)
@@ -1004,8 +999,6 @@ ax_NW = plt.subplot(gs[3:12, 0:4],projection=crs)
 ax_SW = plt.subplot(gs[3:12, 4:8],projection=crs)
 ax_CW = plt.subplot(gs[3:8, 8:12],projection=crs)
 ax_inset_map = plt.subplot(gs[8:12, 8:12],projection=crs)
-axsummary_elev = plt.subplot(gs[12:15, 0:6])
-axsummary_signed_dist = plt.subplot(gs[12:15, 6:12])
 
 #Draw plot of GrIS map
 ax_inset_map.coastlines(edgecolor='black',linewidth=0.075)
@@ -1020,7 +1013,6 @@ ax_inset_map.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y-150000,np.as
 ax_inset_map.axis('off')
 ax_inset_map.set_xlim(-693308, 912076)
 ax_inset_map.set_ylim(-3440844, -541728)
-
 
 #Display coastlines
 ax_north.coastlines(edgecolor='grey',linewidth=0.5)
@@ -1052,10 +1044,10 @@ for i in range(0,len(list_together_2012)):
     #Do not loose data! Where NaN due to rolling window at extreme ends, include these data!
     roll_window_2012[roll_window_2012.isna()]=RL_2012_continuum[roll_window_2012.isna()]
     #plot
-    ax_north.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color='#54278f')
-    ax_SW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color='#54278f')
-    ax_NW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color='#54278f')
-    ax_CW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color='#54278f')
+    ax_north.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
+    ax_SW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
+    ax_NW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
+    ax_CW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
 
 #Treat the follwing boxes together
 list_together_2019=np.array([[4,14],[16,19],[21,21],[22,27],[28,31]])
@@ -1085,23 +1077,23 @@ for i in range(0,len(list_together_2019)):
         roll_window_2019_continuum_2[roll_window_2019_continuum_2.isna()]=RL_2019_continuum_2[roll_window_2019_continuum_2.isna()]
 
         #plot
-        ax_north.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color='#fdcdac')
-        ax_north.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color='#fdcdac')
-        ax_SW.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color='#fdcdac')
-        ax_SW.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color='#fdcdac')
-        ax_NW.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color='#fdcdac')
-        ax_NW.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color='#fdcdac')
-        ax_CW.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color='#fdcdac')
-        ax_CW.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color='#fdcdac')
+        ax_north.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color=pal_year[2019])
+        ax_north.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color=pal_year[2019])
+        ax_SW.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color=pal_year[2019])
+        ax_SW.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color=pal_year[2019])
+        ax_NW.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color=pal_year[2019])
+        ax_NW.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color=pal_year[2019])
+        ax_CW.plot(roll_window_2019_continuum_1.x,roll_window_2019_continuum_1.y,zorder=10,color=pal_year[2019])
+        ax_CW.plot(roll_window_2019_continuum_2.x,roll_window_2019_continuum_2.y,zorder=10,color=pal_year[2019])
     else:
         roll_window_2019 = RL_2019_continuum.rolling(5,center=True).mean()
         #Do not loose data! Where NaN due to rolling window at extreme ends, include these data!
         roll_window_2019[roll_window_2019.isna()]=RL_2019_continuum[roll_window_2019.isna()]
         #plot
-        ax_north.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color='#fdcdac')
-        ax_SW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color='#fdcdac')
-        ax_NW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color='#fdcdac')
-        ax_CW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color='#fdcdac')
+        ax_north.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color=pal_year[2019])
+        ax_SW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color=pal_year[2019])
+        ax_NW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color=pal_year[2019])
+        ax_CW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color=pal_year[2019])
 
 
 #Display boxes not processed
@@ -1127,19 +1119,19 @@ GrIS_drainage_bassins.plot(ax=ax_NW,facecolor='none',edgecolor='black',zorder=5,
 GrIS_drainage_bassins.plot(ax=ax_CW,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
 
 #Display firn aquifers Miège et al., 2016
-ax_north.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=4)
-ax_SW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=4)
-ax_NW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=4)
-ax_CW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=4)
+ax_north.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
+ax_SW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
+ax_NW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
+ax_CW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
 
 ax_inset_map.set_xlim(-642397, 1005201)
 ax_inset_map.set_ylim(-3366273, -784280)
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
-gl=ax_inset_map.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=6)
+gl=ax_inset_map.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=6)
 #Customize lat labels
 gl.left_labels = False
-gl.bottom_labels = False
+gl.top_labels = False
 ax_inset_map.axis('off')
 #ax8map.legend(loc='upper right')
 ###################### From Tedstone et al., 2022 #####################
@@ -1152,28 +1144,28 @@ gl.bottom_labels = False
 
 ax_NW.set_xlim(-327640.39779065247, -218961.34771576658)
 ax_NW.set_ylim(-1874638.6166935905, -1494261.94143149)            
-gl=ax_NW.gridlines(draw_labels=True, xlocs=[-53,-54,-55,-56,-57,-58,], ylocs=[73,74,75], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl=ax_NW.gridlines(draw_labels=True, xlocs=[-53,-54,-55,-56,-57,-58,], ylocs=[73,74,75], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
 gl.top_labels = False
 
 ax_SW.set_xlim(-171994.14895702014, -65379.43459850631)
 ax_SW.set_ylim(-2755750.7046506493, -2374228.6276486944)
-gl=ax_SW.gridlines(draw_labels=True, xlocs=[-49,-48,-47,], ylocs=[65,66,67,68], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl=ax_SW.gridlines(draw_labels=True, xlocs=[-49,-48,-47,], ylocs=[65,66,67,68], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
-gl.bottom_labels = False
+gl.top_labels = False
 
-ax_CW.set_ylim(-2381493.0223843493, -1989311.8430954106)
-ax_CW.set_xlim(-198412.31532111834, -53837.05007477198)
-gl=ax_CW.gridlines(draw_labels=True, xlocs=[-46,-48,-50,], ylocs=[69,70,71], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+ax_CW.set_ylim(-2371444.091024203, -2100576.8206960047)
+ax_CW.set_xlim(-180122.38693612092, -60365.835438492126)
+gl=ax_CW.gridlines(draw_labels=True, xlocs=[-47,-48,-49], ylocs=[69,70], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
 gl.bottom_labels = False
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor='#6baed6',edgecolor='none',label='2010-2012 ice slabs'),
                    Patch(facecolor='#ba2b2b',edgecolor='none',label='2010-2018 ice slabs'),
-                   Line2D([0], [0], color='#74c476', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
-                   Line2D([0], [0], color='#54278f', lw=2, label='2012 runoff limit'),
-                   Line2D([0], [0], color='#fdcdac', lw=2, label='2019 runoff limit'),
+                   Line2D([0], [0], color='#238b45', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
+                   Line2D([0], [0], color=pal_year[2012], lw=2, label='2012 runoff limit'),
+                   Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
                    Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
 ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=1, bbox_to_anchor=(0.65, 0)).set_zorder(7)
 plt.show()
@@ -1198,11 +1190,18 @@ ax_CW.text(0.075, 0.95,'d',ha='center', va='center', transform=ax_CW.transAxes,w
 ax_inset_map.text(-0.1, 0.95,'e',ha='center', va='center', transform=ax_inset_map.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Display panel label on inset map
-ax_inset_map.text(ax_north.get_xlim()[1]+120000, (ax_north.get_ylim()[0]+ax_north.get_ylim()[1])/2-100000,'a',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_inset_map.text(ax_north.get_xlim()[1]+120000, (ax_north.get_ylim()[0]+ax_north.get_ylim()[1])/2,'a',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ax_inset_map.text(ax_NW.get_xlim()[0]-120000, (ax_NW.get_ylim()[0]+ax_NW.get_ylim()[1])/2,'b',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ax_inset_map.text(ax_SW.get_xlim()[0]-120000, (ax_SW.get_ylim()[0]+ax_SW.get_ylim()[1])/2,'c',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ax_inset_map.text(ax_CW.get_xlim()[0]-120000, (ax_CW.get_ylim()[0]+ax_CW.get_ylim()[1])/2,'d',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
+pdb.set_trace()
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v5/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
 
 ### !!! There is a -9999 elevation in 2012 in box 5
 
@@ -1225,6 +1224,7 @@ df_plot_IceSlabs20102018_2019RL.rename(columns={"Elev_diff_IceSlabs20102018_2019
 
 #Display quantiles in the difference regions of signed distances and elevation difference.
 print('---- df_plot_IceSlabs20102012_2012RL ---- ')
+print('- Regions')
 print('signed_dist_diff:')
 print('    ',df_plot_IceSlabs20102012_2012RL.groupby(["Region"]).quantile([0.25,0.5,0.75]).Signed_dist_IceSlabs_RL)
 print(' ')
@@ -1234,7 +1234,20 @@ print(' ')
 print('Count:')
 print('    ',df_plot_IceSlabs20102012_2012RL.groupby(["Region"]).count())
 
+#Display quantiles of signed distances and elevation difference without differentiating the regions.
+print('- Total')
+print('signed_dist_diff:')
+print('    ',df_plot_IceSlabs20102012_2012RL.quantile([0.25,0.5,0.75]).Signed_dist_IceSlabs_RL)
+print(' ')
+print('elev_diff:')
+print('    ',df_plot_IceSlabs20102012_2012RL.quantile([0.25,0.5,0.75]).Elev_diff_IceSlabs_RL)
+print(' ')
+print('Count:')
+print('    ',df_plot_IceSlabs20102012_2012RL.count())
+
+
 print('---- df_plot_IceSlabs20102018_2019RL ---- ')
+print('- Regions')
 print('signed_dist_diff:')
 print('    ',df_plot_IceSlabs20102018_2019RL.groupby(["Region"]).quantile([0.25,0.5,0.75]).Signed_dist_IceSlabs_RL)
 print(' ')
@@ -1244,15 +1257,17 @@ print(' ')
 print('Count:')
 print('    ',df_plot_IceSlabs20102018_2019RL.groupby(["Region"]).count())
 
-### Display median elev diff and signest dist without differentiating the regions ###
-print('---- Median elev diff and signest dist GrIS wide for 2012, without the CW ---- ')
-print('    ',df_plot_IceSlabs20102012_2012RL[~(df_plot_IceSlabs20102012_2012RL.Region=='CW')].Elev_diff_IceSlabs_RL.median())
-print('    ',df_plot_IceSlabs20102012_2012RL[~(df_plot_IceSlabs20102012_2012RL.Region=='CW')].Signed_dist_IceSlabs_RL.median())
-print('---- Median elev diff and signest dist GrIS wide for 2019 ---- ')
-print('    ',df_plot_IceSlabs20102018_2019RL.Elev_diff_IceSlabs_RL.median())
-print('    ',df_plot_IceSlabs20102018_2019RL.Signed_dist_IceSlabs_RL.median())
+#Display quantiles of signed distances and elevation difference without differentiating the regions.
+print('- Total')
+print('signed_dist_diff:')
+print('    ',df_plot_IceSlabs20102018_2019RL.quantile([0.25,0.5,0.75]).Signed_dist_IceSlabs_RL)
 print(' ')
-### Display median elev diff and signest dist without differentiating the regions ###
+print('elev_diff:')
+print('    ',df_plot_IceSlabs20102018_2019RL.quantile([0.25,0.5,0.75]).Elev_diff_IceSlabs_RL)
+print(' ')
+print('Count:')
+print('    ',df_plot_IceSlabs20102018_2019RL.count())
+
 
 #Concatenate data to display panels f and g
 df_plot_IceSlabs_RL = pd.concat([df_plot_IceSlabs20102012_2012RL,df_plot_IceSlabs20102018_2019RL])
@@ -1261,6 +1276,16 @@ df_plot_IceSlabs_RL.reset_index(inplace=True)
 
 #Transform signed distances from m to km
 df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL=df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL/1000
+
+#Prepare plot
+plt.rcParams.update({'font.size': 12})
+fig = plt.figure(figsize=(8.55, 4.09))
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+gs = gridspec.GridSpec(5, 10)
+gs.update(hspace=0)
+gs.update(wspace=0.1)
+axsummary_elev = plt.subplot(gs[0:5, 0:5])
+axsummary_signed_dist = plt.subplot(gs[0:5, 5:10])
 
 #Display violing plot of elevation differences
 sns.boxplot(data=df_plot_IceSlabs_RL,x="Elev_diff_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_elev,orient='h',palette=pal_year)
@@ -1277,12 +1302,20 @@ axsummary_signed_dist.set_ylabel(' ')
 axsummary_signed_dist.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
 axsummary_signed_dist.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
 axsummary_signed_dist.set_xlim(-50,50)
-axsummary_elev.text(0.035, 0.925,'f',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-axsummary_signed_dist.text(0.035, 0.925,'g',ha='center', va='center', transform=axsummary_signed_dist.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axsummary_elev.text(0.03, 0.95,'a',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+axsummary_signed_dist.text(0.03, 0.95,'b',ha='center', va='center', transform=axsummary_signed_dist.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+#This is from https://stackoverflow.com/questions/1726391/matplotlib-draw-grid-lines-behind-other-graph-elements
+axsummary_elev.set_axisbelow(True)
+axsummary_elev.grid(color='gray', linestyle='dashed')
+axsummary_signed_dist.set_axisbelow(True)
+axsummary_signed_dist.grid(color='gray', linestyle='dashed')
+
+pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v4/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v5/Fig1Supp_boxplots_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
