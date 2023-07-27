@@ -989,16 +989,17 @@ else:
 #Set fontsize plot
 plt.rcParams.update({'font.size': 8})
 fig = plt.figure()
-fig.set_size_inches(7.26,8.82) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(7.09, 10.15) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(12, 12)
+gs = gridspec.GridSpec(15, 12)
 gs.update(hspace=0.1)
 gs.update(wspace=0.1)
 ax_north = plt.subplot(gs[0:3, 0:12],projection=crs)
 ax_NW = plt.subplot(gs[3:12, 0:4],projection=crs)
-ax_SW = plt.subplot(gs[3:12, 4:8],projection=crs)
-ax_CW = plt.subplot(gs[3:8, 8:12],projection=crs)
-ax_inset_map = plt.subplot(gs[8:12, 8:12],projection=crs)
+ax_CW = plt.subplot(gs[3:12, 4:8],projection=crs)
+ax_SW = plt.subplot(gs[3:12, 8:12],projection=crs)
+ax_inset_map = plt.subplot(gs[12:15, 8:12],projection=crs)
+axsummary_elev = plt.subplot(gs[12:15, 1:8])
 
 #Draw plot of GrIS map
 ax_inset_map.coastlines(edgecolor='black',linewidth=0.075)
@@ -1144,21 +1145,21 @@ gl.bottom_labels = False
 
 ax_NW.set_xlim(-327640.39779065247, -218961.34771576658)
 ax_NW.set_ylim(-1874638.6166935905, -1494261.94143149)            
-gl=ax_NW.gridlines(draw_labels=True, xlocs=[-53,-54,-55,-56,-57,-58,], ylocs=[73,74,75], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl=ax_NW.gridlines(draw_labels=True, xlocs=[-52,-53,-54,-55,-56,-57,-58,], ylocs=[73,74,75,76], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
-gl.top_labels = False
+#gl.bottom_labels = False
 
 ax_SW.set_xlim(-171994.14895702014, -65379.43459850631)
 ax_SW.set_ylim(-2755750.7046506493, -2374228.6276486944)
-gl=ax_SW.gridlines(draw_labels=True, xlocs=[-49,-48,-47,], ylocs=[65,66,67,68], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl=ax_SW.gridlines(draw_labels=True, xlocs=[-49,-48,-47,], ylocs=[65,66,67,68], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
-gl.top_labels = False
+#gl.bottom_labels = False
 
-ax_CW.set_ylim(-2371444.091024203, -2100576.8206960047)
-ax_CW.set_xlim(-180122.38693612092, -60365.835438492126)
-gl=ax_CW.gridlines(draw_labels=True, xlocs=[-47,-48,-49], ylocs=[69,70], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+ax_CW.set_ylim(-2375526.002225974, -2022535.0326401703)
+ax_CW.set_xlim(-183736.7996412225, -62636.10288859956)
+gl=ax_CW.gridlines(draw_labels=True, xlocs=[-47,-48,-49,-50], ylocs=[69,70,71,72], x_inline=True, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
-gl.bottom_labels = False
+#gl.bottom_labels = False
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor='#6baed6',edgecolor='none',label='2010-2012 ice slabs'),
@@ -1171,10 +1172,10 @@ ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha
 plt.show()
 
 # Display scalebar with GeoPandas
-ax_north.add_artist(ScaleBar(1,location='upper left')).set_pad(2)
-ax_NW.add_artist(ScaleBar(1,location='lower left'))
-ax_SW.add_artist(ScaleBar(1,location='lower right'))
-ax_CW.add_artist(ScaleBar(1,location='lower left'))
+ax_north.add_artist(ScaleBar(1,location='upper left',box_alpha=1)).set_pad(2)
+ax_NW.add_artist(ScaleBar(1,location='lower left',box_alpha=1))
+ax_SW.add_artist(ScaleBar(1,location='lower right',box_alpha=1))
+ax_CW.add_artist(ScaleBar(1,location='lower left',box_alpha=1))
 
 #Display boxes zoom
 add_rectangle_zoom(ax_inset_map,ax_north)
@@ -1185,23 +1186,16 @@ add_rectangle_zoom(ax_inset_map,ax_SW)
 #Display panel label
 ax_north.text(0.02, 0.95,'a',ha='center', va='center', transform=ax_north.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ax_NW.text(0.05, 0.975,'b',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_SW.text(0.05, 0.975,'c',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_CW.text(0.075, 0.95,'d',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_inset_map.text(-0.1, 0.95,'e',ha='center', va='center', transform=ax_inset_map.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_CW.text(0.05, 0.975,'c',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_SW.text(0.05, 0.975,'d',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_inset_map.text(-0.1, 0.95,'f',ha='center', va='center', transform=ax_inset_map.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Display panel label on inset map
 ax_inset_map.text(ax_north.get_xlim()[1]+120000, (ax_north.get_ylim()[0]+ax_north.get_ylim()[1])/2,'a',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ax_inset_map.text(ax_NW.get_xlim()[0]-120000, (ax_NW.get_ylim()[0]+ax_NW.get_ylim()[1])/2,'b',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_inset_map.text(ax_SW.get_xlim()[0]-120000, (ax_SW.get_ylim()[0]+ax_SW.get_ylim()[1])/2,'c',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_inset_map.text(ax_CW.get_xlim()[0]-120000, (ax_CW.get_ylim()[0]+ax_CW.get_ylim()[1])/2,'d',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_inset_map.text(ax_CW.get_xlim()[0]-120000, (ax_CW.get_ylim()[0]+ax_CW.get_ylim()[1])/2,'c',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_inset_map.text(ax_SW.get_xlim()[0]-120000, (ax_SW.get_ylim()[0]+ax_SW.get_ylim()[1])/2,'d',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
-pdb.set_trace()
-
-'''
-#Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v5/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
-#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-'''
 
 ### !!! There is a -9999 elevation in 2012 in box 5
 
@@ -1273,41 +1267,49 @@ print('    ',df_plot_IceSlabs20102018_2019RL.count())
 df_plot_IceSlabs_RL = pd.concat([df_plot_IceSlabs20102012_2012RL,df_plot_IceSlabs20102018_2019RL])
 #Reset index of df_plot_IceSlabs_RL
 df_plot_IceSlabs_RL.reset_index(inplace=True)
-
 #Transform signed distances from m to km
 df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL=df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL/1000
 
-#Prepare plot
-plt.rcParams.update({'font.size': 12})
-fig = plt.figure(figsize=(8.55, 4.09))
-#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(5, 10)
-gs.update(hspace=0)
-gs.update(wspace=0.1)
-axsummary_elev = plt.subplot(gs[0:5, 0:5])
-axsummary_signed_dist = plt.subplot(gs[0:5, 5:10])
-
-#Display violing plot of elevation differences
+#Display elevation difference
 sns.boxplot(data=df_plot_IceSlabs_RL,x="Elev_diff_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_elev,orient='h',palette=pal_year)
-sns.boxplot(data=df_plot_IceSlabs_RL,x="Signed_dist_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_signed_dist,orient='h',palette=pal_year)
-
-#Custom plot
 axsummary_elev.set_xlabel('Elevation difference [m]')
 axsummary_elev.set_ylabel('Region',labelpad=10)
 axsummary_elev.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=True, labelleft=True, right=False, labelright=False)
 axsummary_elev.set_xlim(-350,350)
-axsummary_elev.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+axsummary_elev.text(0.025, 0.9,'e',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+#This is from https://stackoverflow.com/questions/1726391/matplotlib-draw-grid-lines-behind-other-graph-elements
+axsummary_elev.set_axisbelow(True)
+axsummary_elev.grid(color='gray', linestyle='dashed')
+
+pdb.set_trace()
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v6/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
+
+#Display signed distances
+#Prepare plot
+plt.rcParams.update({'font.size': 12})
+fig = plt.figure(figsize=(8.55, 4.09))
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+gs = gridspec.GridSpec(5, 5)
+axsummary_signed_dist = plt.subplot(gs[0:5, 0:5])
+
+#Display violing plot of signed distances differences
+sns.boxplot(data=df_plot_IceSlabs_RL,x="Signed_dist_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_signed_dist,orient='h',palette=pal_year)
+
+#Custom plot
 axsummary_signed_dist.set_xlabel('Distance difference [km]')
 axsummary_signed_dist.set_ylabel(' ')
 axsummary_signed_dist.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
 axsummary_signed_dist.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
 axsummary_signed_dist.set_xlim(-50,50)
-axsummary_elev.text(0.03, 0.95,'a',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 axsummary_signed_dist.text(0.03, 0.95,'b',ha='center', va='center', transform=axsummary_signed_dist.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #This is from https://stackoverflow.com/questions/1726391/matplotlib-draw-grid-lines-behind-other-graph-elements
-axsummary_elev.set_axisbelow(True)
-axsummary_elev.grid(color='gray', linestyle='dashed')
 axsummary_signed_dist.set_axisbelow(True)
 axsummary_signed_dist.grid(color='gray', linestyle='dashed')
 
@@ -1315,7 +1317,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v5/Fig1Supp_boxplots_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v6/Fig1Supp_SignedDist_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
