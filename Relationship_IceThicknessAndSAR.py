@@ -1101,55 +1101,36 @@ fig = plt.figure(figsize=(12,6))
 gs = gridspec.GridSpec(5, 10)
 gs.update(hspace=0)
 gs.update(wspace=0.1)
-ax_filtered_regions_SAR = plt.subplot(gs[0:5, 0:5])
+ax_filtered_regions_SAR = plt.subplot(gs[0:5, 5:10])
 sns.violinplot(data=final_df_SAR_IceThickness,
-               y="SUBREGION1", x="raster_values",hue="aquitard",ax=ax_filtered_regions_SAR,scale="width",palette=pal_zones)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
-
-#Display lower and upper cutoffs as red lines
-ax_filtered_regions_SAR.axvline(x=-9.110144,ymin=0.90, ymax=0.98,color='#ba2b2b',linewidth=2)
-ax_filtered_regions_SAR.axvline(x=-8.638897,ymin=0.82, ymax=0.90,color='#ba2b2b',linewidth=2)
-
-ax_filtered_regions_SAR.axvline(x=-7.82364,ymin=0.70, ymax=0.78,color='#ba2b2b',linewidth=2)
-ax_filtered_regions_SAR.axvline(x=-7.038067,ymin=0.62, ymax=0.70,color='#ba2b2b',linewidth=2)
-
-ax_filtered_regions_SAR.axvline(x=-8.982688,ymin=0.50, ymax=0.58,color='#ba2b2b',linewidth=2)
-ax_filtered_regions_SAR.axvline(x=-8.266375,ymin=0.42, ymax=0.50,color='#ba2b2b',linewidth=2)
-
-ax_filtered_regions_SAR.axvline(x=-7.194321,ymin=0.30, ymax=0.38,color='#ba2b2b',linewidth=2)
-ax_filtered_regions_SAR.axvline(x=-6.104299,ymin=0.22, ymax=0.30,color='#ba2b2b',linewidth=2)
-
-ax_filtered_regions_SAR.axvline(x=-6.329797,ymin=0.10, ymax=0.18,color='#ba2b2b',linewidth=2)
-ax_filtered_regions_SAR.axvline(x=-5.715943,ymin=0.02, ymax=0.10,color='#ba2b2b',linewidth=2)
-
+               y="SUBREGION1", x="raster_values",hue="aquitard",ax=ax_filtered_regions_SAR,scale="width",palette=pal_zones,cut=0)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
 ax_filtered_regions_SAR.set_xlabel('Signal strenght [dB]',labelpad=10)
-ax_filtered_regions_SAR.set_ylabel('Region',labelpad=10)
+ax_filtered_regions_SAR.set_ylabel('')
+ax_filtered_regions_SAR.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
+ax_filtered_regions_SAR.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
 ax_filtered_regions_SAR.grid(linestyle='dashed')
-
-#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#0a4aaa',edgecolor='black',label='Lateral runoff'),
-                   Patch(facecolor='#e7f1ff',edgecolor='black',label='Retention'),
-                   Line2D([0], [0], color='#ba2b2b', lw=2, label='Cutoff')]
-ax_filtered_regions_SAR.legend(handles=legend_elements,loc='lower left',fontsize=15,framealpha=0.8).set_zorder(7)
-ax_filtered_regions_SAR.text(0.03, 0.95,'e',ha='center', va='center', transform=ax_filtered_regions_SAR.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_filtered_regions_SAR.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+ax_filtered_regions_SAR.text(0.03, 0.95,'g',ha='center', va='center', transform=ax_filtered_regions_SAR.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 
 # Display ice thickness violin plot for lateral runoff and retention zones
-ax_filtered_regions_IceThickness = plt.subplot(gs[0:5,5:10])
+ax_filtered_regions_IceThickness = plt.subplot(gs[0:5,0:5])
 sns.violinplot(data=final_df_SAR_IceThickness,
-               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_filtered_regions_IceThickness,scale="width",palette=pal_zones)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+               y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_filtered_regions_IceThickness,scale="width",palette=pal_zones,cut=0)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
 ax_filtered_regions_IceThickness.set_xlabel('Ice Thickness [m]',labelpad=10)
-ax_filtered_regions_IceThickness.set_ylabel('')
-ax_filtered_regions_IceThickness.get_legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+ax_filtered_regions_IceThickness.set_ylabel('Region',labelpad=10)
 ax_filtered_regions_IceThickness.grid(linestyle='dashed')
-ax_filtered_regions_IceThickness.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
-ax_filtered_regions_IceThickness.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
-ax_filtered_regions_IceThickness.text(0.03, 0.95,'f',ha='center', va='center', transform=ax_filtered_regions_IceThickness.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor='#0a4aaa',edgecolor='black',label='Lateral runoff'),
+                   Patch(facecolor='#e7f1ff',edgecolor='black',label='Retention')]
+ax_filtered_regions_IceThickness.legend(handles=legend_elements,loc='lower right',fontsize=15,framealpha=0.8).set_zorder(7)
+ax_filtered_regions_IceThickness.text(0.03, 0.95,'f',ha='center', va='center', transform=ax_filtered_regions_IceThickness.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig2/v2/Fig2_ef.png',dpi=1000)
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v3/Fig2_fg.png',dpi=300)
 '''
 
 fig = plt.figure(figsize=(10,6))

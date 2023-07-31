@@ -48,8 +48,7 @@ def apply_MinMax_nornalisation(raster_to_rescale,lower_bound,upper_bound):
     
     return raster_to_rescale
 
-
-def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display_full,axis_display_SW,axis_display_NW,axis_display_NO,vmin_bassin,vmax_bassin,name_save,save_aquitard):
+def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display_NO,axis_display_SW,axis_display_NW,axis_display_CW,axis_SW_zoom_display,vmin_bassin,vmax_bassin,name_save,save_aquitard):
     #Perform clip between SAR with region - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
     SAR_intersected = SAR_to_intersect.rio.clip(individual_bassin.geometry.values, individual_bassin.crs, drop=True, invert=False)
     #Determine extent of SAR_SW_00_00_SW
@@ -60,11 +59,12 @@ def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display
     SAR_intersected.data = apply_MinMax_nornalisation(SAR_intersected.data,vmin_bassin,vmax_bassin)
     
     #Display SAR image
-    axis_display_full.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+    axis_display_NO.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     axis_display_SW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     axis_display_NW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
-    axis_display_NO.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
-
+    axis_display_CW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+    axis_SW_zoom_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+    
     if (save_aquitard=='TRUE'):
         print('Saving raster',name_save)
         #Save the resulting aquitard map - this is from https://corteva.github.io/rioxarray/stable/examples/convert_to_raster.html
@@ -91,8 +91,8 @@ import rioxarray as rxr
 import os
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
-from scalebar import scale_bar
 import matplotlib.patches as patches
+from matplotlib_scalebar.scalebar import ScaleBar
 
 #If saving aquitard raster is desired
 save_aquitard_true='FALSE'
@@ -190,29 +190,33 @@ SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
 
 #Prepare plot
-plt.rcParams.update({'font.size': 15})
+plt.rcParams.update({'font.size': 12})
 fig = plt.figure()
-fig.set_size_inches(12, 10) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(12, 14) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(8, 8)
+
+gs = gridspec.GridSpec(14, 12)
 gs.update(hspace=0.1)
 gs.update(wspace=0.1)
-ax1 = plt.subplot(gs[0:8, 0:4], projection=crs)
-ax_NO_zoom = plt.subplot(gs[0:2, 4:8], projection=crs)
-ax_NW_zoom = plt.subplot(gs[2:8, 4:6], projection=crs)
-ax_SW_zoom = plt.subplot(gs[2:8, 6:8], projection=crs)
+ax_NO = plt.subplot(gs[0:5, 0:12],projection=crs)
+ax_NW = plt.subplot(gs[5:14, 0:3],projection=crs)
+ax_CW = plt.subplot(gs[5:14, 3:6],projection=crs)
+ax_SW = plt.subplot(gs[5:14, 6:9],projection=crs)
+ax_SW_zoom = plt.subplot(gs[5:14, 9:12],projection=crs)
 
 #Display coastlines
-ax1.coastlines(edgecolor='black',linewidth=0.075)
+ax_NO.coastlines(edgecolor='black',linewidth=0.075)
+ax_NW.coastlines(edgecolor='black',linewidth=0.075)
+ax_CW.coastlines(edgecolor='black',linewidth=0.075)
+ax_SW.coastlines(edgecolor='black',linewidth=0.075)
 ax_SW_zoom.coastlines(edgecolor='black',linewidth=0.075)
-ax_NO_zoom.coastlines(edgecolor='black',linewidth=0.075)
-ax_NW_zoom.coastlines(edgecolor='black',linewidth=0.075)
 
 #Display ice sheet background
-GrIS_drainage_bassins.plot(ax=ax1,facecolor='#f7fbff',edgecolor='none')
+GrIS_drainage_bassins.plot(ax=ax_NO,facecolor='#f7fbff',edgecolor='none')
+GrIS_drainage_bassins.plot(ax=ax_NW,facecolor='#f7fbff',edgecolor='none')
+GrIS_drainage_bassins.plot(ax=ax_CW,facecolor='#f7fbff',edgecolor='none')
+GrIS_drainage_bassins.plot(ax=ax_SW,facecolor='#f7fbff',edgecolor='none')
 GrIS_drainage_bassins.plot(ax=ax_SW_zoom,facecolor='#f7fbff',edgecolor='none')
-GrIS_drainage_bassins.plot(ax=ax_NO_zoom,facecolor='#f7fbff',edgecolor='none')
-GrIS_drainage_bassins.plot(ax=ax_NW_zoom,facecolor='#f7fbff',edgecolor='none')
 
 '''
 --- SW ---
@@ -285,149 +289,171 @@ GrIS_drainage_bassins.plot(ax=ax_NW_zoom,facecolor='#f7fbff',edgecolor='none')
 0.50   -7.189671
 0.75   -6.329797
 '''
+pdb.set_trace()
 
 #quantile 0.75 of below to quantile 0.75 of within
-intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-9.110144,-8.638897,'aquitard_SW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-9.110144,-8.638897,'aquitard_SW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-7.82364,-7.038067,'aquitard_CW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-7.82364,-7.038067,'aquitard_CW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-8.982688,-8.266375,'aquitard_NW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NW_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-8.982688,-8.266375,'aquitard_NW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NO_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-7.194321,-6.104299,'aquitard_NO_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-7.194321,-6.104299,'aquitard_NO_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NE_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-6.329797,-5.715943,'aquitard_NE_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax1,ax_SW_zoom,ax_NW_zoom,ax_NO_zoom,-6.329797,-5.715943,'aquitard_NE_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-9.110144,-8.638897,'aquitard_SW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-9.110144,-8.638897,'aquitard_SW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.82364,-7.038067,'aquitard_CW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.82364,-7.038067,'aquitard_CW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-8.982688,-8.266375,'aquitard_NW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-8.982688,-8.266375,'aquitard_NW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NO_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.194321,-6.104299,'aquitard_NO_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.194321,-6.104299,'aquitard_NO_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-6.329797,-5.715943,'aquitard_NE_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-6.329797,-5.715943,'aquitard_NE_2',save_aquitard_true)
 
 #Display dry snow zone mask
-DrySnowZoneMask.plot(ax=ax1,facecolor='#f7fbff',edgecolor='none')
-DrySnowZoneMask.plot(ax=ax_SW_zoom,facecolor='#f7fbff',edgecolor='none')
-DrySnowZoneMask.plot(ax=ax_NW_zoom,facecolor='#f7fbff',edgecolor='none')
-DrySnowZoneMask.plot(ax=ax_NO_zoom,facecolor='#f7fbff',edgecolor='none')
+DrySnowZoneMask.plot(ax=ax_NO,facecolor='#f7fbff',edgecolor='none')
+DrySnowZoneMask.plot(ax=ax_NW,facecolor='#f7fbff',edgecolor='none')
+DrySnowZoneMask.plot(ax=ax_CW,facecolor='#f7fbff',edgecolor='none')
+DrySnowZoneMask.plot(ax=ax_SW,facecolor='#f7fbff',edgecolor='none')
+ax_SW_zoom.plot(ax=ax_SW,facecolor='#f7fbff',edgecolor='none')
 
 #Display 2013-2020 edited runoff limit
-poly_2013_2020_median_edited.plot(ax=ax1,facecolor='none',edgecolor='#fed976',linewidth=1)
+poly_2013_2020_median_edited.plot(ax=ax_NO,facecolor='none',edgecolor='#fed976',linewidth=1)
+poly_2013_2020_median_edited.plot(ax=ax_NW,facecolor='none',edgecolor='#fed976',linewidth=1)
+poly_2013_2020_median_edited.plot(ax=ax_CW,facecolor='none',edgecolor='#fed976',linewidth=1)
+poly_2013_2020_median_edited.plot(ax=ax_SW,facecolor='none',edgecolor='#fed976',linewidth=1)
 poly_2013_2020_median_edited.plot(ax=ax_SW_zoom,facecolor='none',edgecolor='#fed976',linewidth=1)
-poly_2013_2020_median_edited.plot(ax=ax_NW_zoom,facecolor='none',edgecolor='#fed976',linewidth=1)
-poly_2013_2020_median_edited.plot(ax=ax_NO_zoom,facecolor='none',edgecolor='#fed976',linewidth=1)
 
 #Display boxes not processed
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax1,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NO,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW_zoom,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW_zoom,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NO_zoom,color='#d9d9d9',edgecolor='#d9d9d9')#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 
 #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
-GrIS_drainage_bassins.plot(ax=ax1,facecolor='none',edgecolor='black')
+GrIS_drainage_bassins.plot(ax=ax_NO,facecolor='none',edgecolor='black')
+GrIS_drainage_bassins.plot(ax=ax_NW,facecolor='none',edgecolor='black')
+GrIS_drainage_bassins.plot(ax=ax_CW,facecolor='none',edgecolor='black')
+GrIS_drainage_bassins.plot(ax=ax_SW,facecolor='none',edgecolor='black')
 GrIS_drainage_bassins.plot(ax=ax_SW_zoom,facecolor='none',edgecolor='black')
-GrIS_drainage_bassins.plot(ax=ax_NW_zoom,facecolor='none',edgecolor='black')
-GrIS_drainage_bassins.plot(ax=ax_NO_zoom,facecolor='none',edgecolor='black')
 
 #Display 2010-2018 high end ice slabs jullien et al., 2023
-iceslabs_20102018_jullienetal2023.plot(ax=ax1,facecolor='none',edgecolor='#ba2b2b')
+iceslabs_20102018_jullienetal2023.plot(ax=ax_NO,facecolor='none',edgecolor='#ba2b2b')
+iceslabs_20102018_jullienetal2023.plot(ax=ax_NW,facecolor='none',edgecolor='#ba2b2b')
+iceslabs_20102018_jullienetal2023.plot(ax=ax_CW,facecolor='none',edgecolor='#ba2b2b')
+iceslabs_20102018_jullienetal2023.plot(ax=ax_SW,facecolor='none',edgecolor='#ba2b2b')
 iceslabs_20102018_jullienetal2023.plot(ax=ax_SW_zoom,facecolor='none',edgecolor='#ba2b2b')
-iceslabs_20102018_jullienetal2023.plot(ax=ax_NW_zoom,facecolor='none',edgecolor='#ba2b2b')
-iceslabs_20102018_jullienetal2023.plot(ax=ax_NO_zoom,facecolor='none',edgecolor='#ba2b2b')
 
 #Display firn aquifers Miège et al., 2016
-ax1.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=2)
-ax_SW_zoom.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=5,zorder=2)
-ax_NW_zoom.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=5,zorder=2)
-ax_NO_zoom.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=5,zorder=2)
+ax_NO.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=2)
+ax_NW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
+ax_CW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
+ax_SW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
+ax_SW_zoom.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
 
 #Set limits
-#Main map zoom
-ax1.set_xlim(-695388, 881944)
-ax1.set_ylim(-4025179, -656237)
+#NO
+ax_NO.set_xlim(-605557.1790513115, 464264.83348328667)
+ax_NO.set_ylim(-1214409.8703545197, -874562.5225317206)
+#NW
+ax_NW.set_xlim(-327640.39779065247, -218961.34771576658)
+ax_NW.set_ylim(-1874638.6166935905, -1494261.94143149) 
+#CW
+ax_CW.set_xlim(-183736.7996412225, -62636.10288859956)
+ax_CW.set_ylim(-2375526.002225974, -2022535.0326401703)
+#SW
+ax_SW.set_xlim(-171994.14895702014, -65379.43459850631)
+ax_SW.set_ylim(-2755750.7046506493, -2374228.6276486944)
 #SW zoom
-ax_SW_zoom.set_xlim(-174213, -50795)
-ax_SW_zoom.set_ylim(-2753815, -2429055)
-#NW zoom
-ax_NW_zoom.set_xlim(-309018, -201503)
-ax_NW_zoom.set_ylim(-1888429, -1610700)
-#NO zoom
-ax_NO_zoom.set_xlim(-602129, -244227)
-ax_NO_zoom.set_ylim(-1186532, -1040432)
+ax_SW_zoom.set_xlim(-127109.2920592131, -99678.47675615078)
+ax_SW_zoom.set_ylim(-2649282.3420033744, -2565299.618246693)
 
 #Display panel label
-ax1.text(-0.1, 0.925,'a',ha='center', va='center', transform=ax1.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_NO_zoom.text(0.03, 0.91,'b',ha='center', va='center', transform=ax_NO_zoom.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_NW_zoom.text(0.06, 0.97,'c',ha='center', va='center', transform=ax_NW_zoom.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_SW_zoom.text(0.06, 0.97,'d',ha='center', va='center', transform=ax_SW_zoom.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_NO.text(0.02, 0.95,'a',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_NW.text(0.05, 0.975,'b',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_CW.text(0.05, 0.975,'c',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_SW.text(0.05, 0.975,'d',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_SW_zoom.text(0.05, 0.975,'e',ha='center', va='center', transform=ax_SW_zoom.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
-#Display panel label on main map
-ax1.text(ax_NO_zoom.get_xlim()[1]+35000, (ax_NO_zoom.get_ylim()[0]+ax_NO_zoom.get_ylim()[1])/2-30000,'b',ha='center', va='center', fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax1.text(ax_NW_zoom.get_xlim()[1]+35000, (ax_NW_zoom.get_ylim()[0]+ax_NW_zoom.get_ylim()[1])/2,'c',ha='center', va='center', fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax1.text(ax_SW_zoom.get_xlim()[1]+40000,(ax_SW_zoom.get_ylim()[0]+ax_SW_zoom.get_ylim()[1])/2,'d',ha='center', va='center', fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+#Re add frame on top of plot
+ax_NO.add_patch(patches.Rectangle(([ax_NO.get_xlim()[0],ax_NO.get_ylim()[0]][0],[ax_NO.get_xlim()[0],ax_NO.get_ylim()[0]][1]),
+                                    np.abs([ax_NO.get_xlim()[0],ax_NO.get_ylim()[0]][0]-[ax_NO.get_xlim()[1],ax_NO.get_ylim()[1]][0]),
+                                    np.abs([ax_NO.get_xlim()[0],ax_NO.get_ylim()[0]][1]-[ax_NO.get_xlim()[1],ax_NO.get_ylim()[1]][1]),
+                                    angle=0, linewidth=1, edgecolor='black', facecolor='none',zorder=11))
+
+ax_NW.add_patch(patches.Rectangle(([ax_NW.get_xlim()[0],ax_NW.get_ylim()[0]][0],[ax_NW.get_xlim()[0],ax_NW.get_ylim()[0]][1]),
+                                    np.abs([ax_NW.get_xlim()[0],ax_NW.get_ylim()[0]][0]-[ax_NW.get_xlim()[1],ax_NW.get_ylim()[1]][0]),
+                                    np.abs([ax_NW.get_xlim()[0],ax_NW.get_ylim()[0]][1]-[ax_NW.get_xlim()[1],ax_NW.get_ylim()[1]][1]),
+                                    angle=0, linewidth=1, edgecolor='black', facecolor='none',zorder=11))
+
+ax_CW.add_patch(patches.Rectangle(([ax_CW.get_xlim()[0],ax_CW.get_ylim()[0]][0],[ax_CW.get_xlim()[0],ax_CW.get_ylim()[0]][1]),
+                                    np.abs([ax_CW.get_xlim()[0],ax_CW.get_ylim()[0]][0]-[ax_CW.get_xlim()[1],ax_CW.get_ylim()[1]][0]),
+                                    np.abs([ax_CW.get_xlim()[0],ax_CW.get_ylim()[0]][1]-[ax_CW.get_xlim()[1],ax_CW.get_ylim()[1]][1]),
+                                    angle=0, linewidth=1, edgecolor='black', facecolor='none',zorder=11))
+
+ax_SW.add_patch(patches.Rectangle(([ax_SW.get_xlim()[0],ax_SW.get_ylim()[0]][0],[ax_SW.get_xlim()[0],ax_SW.get_ylim()[0]][1]),
+                                    np.abs([ax_SW.get_xlim()[0],ax_SW.get_ylim()[0]][0]-[ax_SW.get_xlim()[1],ax_SW.get_ylim()[1]][0]),
+                                    np.abs([ax_SW.get_xlim()[0],ax_SW.get_ylim()[0]][1]-[ax_SW.get_xlim()[1],ax_SW.get_ylim()[1]][1]),
+                                    angle=0, linewidth=1, edgecolor='black', facecolor='none',zorder=11))
+
+ax_SW_zoom.add_patch(patches.Rectangle(([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][0],[ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][1]),
+                                       np.abs([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][0]-[ax_SW_zoom.get_xlim()[1],ax_SW_zoom.get_ylim()[1]][0]),
+                                       np.abs([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][1]-[ax_SW_zoom.get_xlim()[1],ax_SW_zoom.get_ylim()[1]][1]),
+                                       angle=0, linewidth=1, edgecolor='black', facecolor='none',zorder=11))
 
 ###################### From Tedstone et al., 2022 #####################
 #from plot_map_decadal_change.py
-#Main map
-gl=ax1.gridlines(draw_labels=True, xlocs=[-20,-30,-40,-50,-60,-70], ylocs=[60,65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+
+#NO
+gl=ax_NO.gridlines(draw_labels=True, xlocs=[-30,-50,-70], ylocs=[78,79,80,81], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
 gl.bottom_labels = False
-ax1.axis('off')
+
+#NW
+gl=ax_NW.gridlines(draw_labels=True, xlocs=[-52,-53,-54,-55,-56,-57,-58,], ylocs=[73,74,75,76], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl.right_labels = False
+gl.top_labels = False
+
+#CW
+gl=ax_CW.gridlines(draw_labels=True, xlocs=[-47,-48,-49,-50], ylocs=[69,70,71,72], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl.right_labels = False
+gl.top_labels = False
+
+#SW
+gl=ax_SW.gridlines(draw_labels=True, xlocs=[-49,-48,-47], ylocs=[65,66,67,68], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl.right_labels = False
+gl.top_labels = False
 
 #SW zoom
-gl=ax_SW_zoom.gridlines(draw_labels=True, xlocs=[-48,-47,-46], ylocs=[65,66,67,68], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
-gl.left_labels = False
-gl.top_labels = False
-#NW zoom
-gl=ax_NW_zoom.gridlines(draw_labels=True, xlocs=[-56,-54,-52], ylocs=[73,74,75], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+gl=ax_SW_zoom.gridlines(draw_labels=True, xlocs=[-47.25,-47.50,-47.75], ylocs=[66.00,66.25,66.5], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
 gl.top_labels = False
-#NO zoom
-gl=ax_NO_zoom.gridlines(draw_labels=True, xlocs=[-60,-65,-70,-75], ylocs=[78,79,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
-gl.left_labels = False
-gl.bottom_labels = False
 ###################### From Tedstone et al., 2022 #####################
 
-
-#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Lateral runoff areas'),
-                   Patch(facecolor='none',edgecolor='#ba2b2b',label='2010-2018 ice slabs'),
-                   Line2D([0], [0], color='#fed976', lw=2, label='2013-2020 runoff limit'),
-                   Line2D([0], [0], color='#74c476', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
-                   Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
-ax1.legend(handles=legend_elements,loc='lower center',fontsize=12.5,framealpha=1).set_zorder(7)
-plt.show()
-
-#Display scalebar - from Fig2andS6andS7andS10.py
-scale_bar(ax1, (0.65, 0.28), 200, 3,5)# axis, location (x,y), length, linewidth, rotation of text
-#by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
-scale_bar(ax_SW_zoom, (0.775, 0.05), 50, 3,0)# axis, location (x,y), length, linewidth, rotation of text
-scale_bar(ax_NW_zoom, (0.57, 0.9), 50, 3,-5)# axis, location (x,y), length, linewidth, rotation of text
-scale_bar(ax_NO_zoom, (0.85, 0.45), 50, 3,-20)# axis, location (x,y), length, linewidth, rotation of text
-
-#Add region name on map - this is from Fig. 2 paper Ice Slabs Expansion and Thickening
-ax1.text(NO_rignotetal.centroid.x-50000,NO_rignotetal.centroid.y-150000,np.asarray(NO_rignotetal.SUBREGION1)[0])
-ax1.text(NE_rignotetal.centroid.x-150000,NE_rignotetal.centroid.y-100000,np.asarray(NE_rignotetal.SUBREGION1)[0])
-ax1.text(SE_rignotetal.centroid.x-100000,SE_rignotetal.centroid.y+30000,np.asarray(SE_rignotetal.SUBREGION1)[0])
-ax1.text(SW_rignotetal.centroid.x-60000,SW_rignotetal.centroid.y-100000,np.asarray(SW_rignotetal.SUBREGION1)[0])
-ax1.text(CW_rignotetal.centroid.x-50000,CW_rignotetal.centroid.y-60000,np.asarray(CW_rignotetal.SUBREGION1)[0])
-ax1.text(NW_rignotetal.centroid.x,NW_rignotetal.centroid.y-50000,np.asarray(NW_rignotetal.SUBREGION1)[0])
-
-#Display rectangle around datalocation - this is from Fig1.py paper Greenland Ice Sheet Ice Slabs Expansion and Thickening  
+#Display rectangle around SWW zoom - this is from Fig1.py paper Greenland Ice Sheet Ice Slabs Expansion and Thickening  
 #This is from https://stackoverflow.com/questions/37435369/matplotlib-how-to-draw-a-rectangle-on-image
 # Create a Rectangle patch and add the patch to the Axes
-ax1.add_patch(patches.Rectangle(([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][0],[ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][1]),
-                                np.abs([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][0]-[ax_SW_zoom.get_xlim()[1],ax_SW_zoom.get_ylim()[1]][0]),
-                                np.abs([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][1]-[ax_SW_zoom.get_xlim()[1],ax_SW_zoom.get_ylim()[1]][1]),
-                                angle=0, linewidth=1, edgecolor='black', facecolor='none'))
-              
-ax1.add_patch(patches.Rectangle(([ax_NW_zoom.get_xlim()[0],ax_NW_zoom.get_ylim()[0]][0],[ax_NW_zoom.get_xlim()[0],ax_NW_zoom.get_ylim()[0]][1]),
-                                np.abs([ax_NW_zoom.get_xlim()[0],ax_NW_zoom.get_ylim()[0]][0]-[ax_NW_zoom.get_xlim()[1],ax_NW_zoom.get_ylim()[1]][0]),
-                                np.abs([ax_NW_zoom.get_xlim()[0],ax_NW_zoom.get_ylim()[0]][1]-[ax_NW_zoom.get_xlim()[1],ax_NW_zoom.get_ylim()[1]][1]),
-                                angle=0, linewidth=1, edgecolor='black', facecolor='none'))
+ax_SW.add_patch(patches.Rectangle(([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][0],[ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][1]),
+                                    np.abs([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][0]-[ax_SW_zoom.get_xlim()[1],ax_SW_zoom.get_ylim()[1]][0]),
+                                    np.abs([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim()[0]][1]-[ax_SW_zoom.get_xlim()[1],ax_SW_zoom.get_ylim()[1]][1]),
+                                    angle=0, linewidth=1, edgecolor='black', facecolor='none'))
+#Add panel label
+ax_SW.text(ax_SW_zoom.get_xlim()[1]+5000, (ax_SW_zoom.get_ylim()[0]+ax_SW_zoom.get_ylim()[1])/2-35000,'e',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
-ax1.add_patch(patches.Rectangle(([ax_NO_zoom.get_xlim()[0],ax_NO_zoom.get_ylim()[0]][0],[ax_NO_zoom.get_xlim()[0],ax_NO_zoom.get_ylim()[0]][1]),
-                                np.abs([ax_NO_zoom.get_xlim()[0],ax_NO_zoom.get_ylim()[0]][0]-[ax_NO_zoom.get_xlim()[1],ax_NO_zoom.get_ylim()[1]][0]),
-                                np.abs([ax_NO_zoom.get_xlim()[0],ax_NO_zoom.get_ylim()[0]][1]-[ax_NO_zoom.get_xlim()[1],ax_NO_zoom.get_ylim()[1]][1]),
-                                angle=0, linewidth=1, edgecolor='black', facecolor='none'))      
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Runoff areas'),
+                   Patch(facecolor='none',edgecolor='#ba2b2b',label='2010-2018 ice slabs'),
+                   Line2D([0], [0], color='#fed976', lw=2, label='2013-2020 runoff limit'),
+                   Line2D([0], [0], color='#238b45', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
+                   Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
+ax_NO.legend(handles=legend_elements,loc='lower center',fontsize=12,framealpha=1, bbox_to_anchor=(0.65, 0)).set_zorder(7)
 
+# Display scalebar with GeoPandas
+ax_NO.add_artist(ScaleBar(1,location='upper left',box_alpha=0,box_color=None)).set_pad(2)
+ax_NW.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))
+ax_CW.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))
+ax_SW.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+ax_SW_zoom.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+
+plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig2/v2/Fig2_abcd.png',dpi=1000)
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v3/Fig2_abcde.png',dpi=300)
 '''
 
 ############################################################################
