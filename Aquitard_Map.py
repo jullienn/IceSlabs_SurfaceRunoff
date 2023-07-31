@@ -453,7 +453,7 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig2/v3/Fig2_abcde.png',dpi=300)
+plt.savefig(path_switchdrive+'RT3/figures/Fig3/v3/Fig3_abcde.png',dpi=300)
 '''
 
 ############################################################################
