@@ -91,8 +91,8 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
     return
 
 
-def func(x, a, b, c):
-    return a * np.exp(-b * x) + c
+def exponential_func(x, a, b, c):
+    return a * np.exp(b * x) + c
 
 def deg_n(x, a, n):
     return a * np.power(x,n)
@@ -176,122 +176,200 @@ def hist_regions(df_to_plot,region_to_plot,ax_region):
     
 def regional_normalisation(df_to_normalize,region):
     #x'=(x-min(x))/(max(x)-min(x))
+    #○Note that I did choose to normalise using quantile 0.01 and quantile 0.99 to avoid normalisation by outliers
     #Select regional df
     df_to_normalize_regional = df_to_normalize[df_to_normalize.SUBREGION1==region].copy()
     #normalise
-    df_to_normalize_regional['normalized_raster']=(df_to_normalize_regional.raster_values-df_to_normalize_regional.raster_values.min())/(df_to_normalize_regional.raster_values.max()-df_to_normalize_regional.raster_values.min())
-    
+    df_to_normalize_regional['normalized_raster']=(df_to_normalize_regional.raster_values-df_to_normalize_regional.raster_values.quantile(0.01))/(df_to_normalize_regional.raster_values.quantile(0.99)-df_to_normalize_regional.raster_values.quantile(0.01))
+    #Where outside of [0,1] range, set to min and max
+    df_to_normalize_regional.loc[df_to_normalize_regional["normalized_raster"]>1,"normalized_raster"]=1
+    df_to_normalize_regional.loc[df_to_normalize_regional["normalized_raster"]<0,"normalized_raster"]=0
+
     return df_to_normalize_regional
 
 
-def display_2d_histogram(df_to_display,FS_display,method):
-        
+def extract_regional_normalised_SAR(df_for_normalization,SAR_to_normalize,region):
+    #x'=(x-min(x))/(max(x)-min(x))
+    #○Note that I did choose to normalise using quantile 0.01 and quantile 0.99 to avoid normalisation by outliers
+    #Select regional df
+    df_for_normalization_regional = df_for_normalization[df_for_normalization.SUBREGION1==region].copy()
+    #normalise    
+    normalised_regional_SAR=(SAR_to_normalize[region]['SAR']-df_for_normalization_regional.raster_values.quantile(0.01))/(df_for_normalization_regional.raster_values.quantile(0.99)-df_for_normalization_regional.raster_values.quantile(0.01))
+    
+    return normalised_regional_SAR
+
+
+def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_in_func):
+    
+    #Create empty datafrme to store regional nornalised SAR dataframes
+    df_to_display_normalised=pd.DataFrame()
+    
     #Display 2D histogram
     fig_heatmap, ((ax_SW, ax_CW, ax_NW), (ax_NO, ax_NE, ax_GrIS)) = plt.subplots(2, 3)
     fig_heatmap.set_size_inches(14, 7) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-
-    cbar_SW=ax_SW.hist2d(df_to_display[df_to_display.SUBREGION1=='SW']['raster_values'],
-                         df_to_display[df_to_display.SUBREGION1=='SW']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
-    #Set a maximum to the colorbar   
-    cbar_SW[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_SW[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
-    #Display firn cores ice content and SAR
-    ax_SW.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='blue')
-    ax_SW.axhline(y=10,linestyle='dashed',color='red')
-    ax_SW.set_ylim(0,16)
-    ax_SW.set_xlim(-16,-3.5)
-    ax_SW.set_title('SW')
-    fig_heatmap.colorbar(cbar_SW[3], ax=ax_SW,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-
     
-    cbar_CW=ax_CW.hist2d(df_to_display[df_to_display.SUBREGION1=='CW']['raster_values'],
-                         df_to_display[df_to_display.SUBREGION1=='CW']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
-    #Set a maximum to the colorbar   
-    cbar_CW[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_CW[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
-    ax_CW.axhline(y=10,linestyle='dashed',color='red')
+    for region in list(['SW','CW','NW','NO','NE']):
+        if (region == 'SW'):
+            ax_plot=ax_SW
+        elif (region == 'CW'):
+            ax_plot=ax_CW
+        elif (region == 'NW'):
+            ax_plot=ax_NW
+        elif (region == 'NO'):
+            ax_plot=ax_NO
+        elif (region == 'NE'):
+            ax_plot=ax_NE
+        else:
+            print('Region not found!')
+            pdb.set_trace()
+        
+        #Display 2d hist
+        cbar_region=ax_plot.hist2d(df_to_display[df_to_display.SUBREGION1==region]['raster_values'],
+                                   df_to_display[df_to_display.SUBREGION1==region]['20m_ice_content_m'],
+                                   bins=[np.arange(-16,-3,0.5),np.arange(0,16.5,0.5)],cmap='magma_r',cmin=1)
+        
+        #The maximum of occurrence in a single cell is the maximum occurrence without considering < 1 m and > 16 m thick ice slabs
+        occurrence_matrix = cbar_region[0][:,np.logical_and(cbar_region[2]>=1,cbar_region[2]<15.5)[0:-1]]
+        
+        #Set a maximum to the colorbar   
+        cbar_region[3].set_clim(vmin=np.quantile(np.arange(np.nanmin(occurrence_matrix),np.nanmax(occurrence_matrix),1),0.05), vmax=np.nanmax(occurrence_matrix))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
+        #For ice thickness at SAR threshold extraction, set quantile to 0.5
+        
+        
+        #Display colorbar
+        fig_heatmap.colorbar(cbar_region[3], ax=ax_plot,label='Occurrence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
-    ax_CW.set_ylim(0,16)
-    ax_CW.set_xlim(-16,-3.5)
-    ax_CW.set_title('CW')
-    fig_heatmap.colorbar(cbar_CW[3], ax=ax_CW,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+        #Display runoff thresholds
+        ax_plot.axvline(x=thresholds_dictionnary_in_func[region]['SAR'][0],linestyle='dashed',color='green')
+        ax_plot.axvline(x=thresholds_dictionnary_in_func[region]['SAR'][1],linestyle='dashed',color='red')
+        ax_plot.set_ylim(0,16)
+        ax_plot.set_xlim(-16,-3.5)
+        ax_plot.set_title(region)
+        
+        #Normalise SAR per region!
+        df_to_display_normalised_region = regional_normalisation(df_to_display,region)
+        #Concatenate regional normalised dataframes
+        df_to_display_normalised=pd.concat([df_to_display_normalised,df_to_display_normalised_region])
+        
+        #Identify the corresponding value to which the SAR thresholds correspond to in the normalised world
+        thresholds_dictionnary_in_func[region]['normalised_SAR']=extract_regional_normalised_SAR(df_to_display,thresholds_dictionnary_in_func,region)
 
-
-    cbar_NW=ax_NW.hist2d(df_to_display[df_to_display.SUBREGION1=='NW']['raster_values'],
-                         df_to_display[df_to_display.SUBREGION1=='NW']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
-    #Set a maximum to the colorbar   
-    cbar_NW[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_NW[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
-    ax_NW.axhline(y=10,linestyle='dashed',color='red')
-
-    ax_NW.set_ylim(0,16)
-    ax_NW.set_xlim(-16,-3.5)
-    ax_NW.set_title('NW')
-    fig_heatmap.colorbar(cbar_NW[3], ax=ax_NW,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-
-
-    cbar_NO=ax_NO.hist2d(df_to_display[df_to_display.SUBREGION1=='NO']['raster_values'],
-                         df_to_display[df_to_display.SUBREGION1=='NO']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
-    #Set a maximum to the colorbar   
-    cbar_NO[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_NO[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
-    ax_NO.axhline(y=10,linestyle='dashed',color='red')
-
-    ax_NO.set_ylim(0,16)
-    ax_NO.set_xlim(-16,-3.5)
-    ax_NO.set_title('NO')
-    fig_heatmap.colorbar(cbar_NO[3], ax=ax_NO,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-
-
-    cbar_NE=ax_NE.hist2d(df_to_display[df_to_display.SUBREGION1=='NE']['raster_values'],
-                         df_to_display[df_to_display.SUBREGION1=='NE']['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)
-    #Set a maximum to the colorbar   
-    cbar_NE[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_NE[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
-    ax_NE.axhline(y=10,linestyle='dashed',color='red')
-
-    ax_NE.set_ylim(0,16)
-    ax_NE.set_xlim(-16,-3.5)
-    ax_NE.set_title('NE')
-    fig_heatmap.colorbar(cbar_NE[3], ax=ax_NE,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-
-    #Normalise SAR per region!        
-    df_to_display_SW=regional_normalisation(df_to_display,'SW')
-    df_to_display_CW=regional_normalisation(df_to_display,'CW')
-    df_to_display_NW=regional_normalisation(df_to_display,'NW')
-    df_to_display_NO=regional_normalisation(df_to_display,'NO')
-    df_to_display_NE=regional_normalisation(df_to_display,'NE')
-
-    #concat dataframes
-    df_to_display_normalised=pd.concat([df_to_display_SW,df_to_display_CW,df_to_display_NW,df_to_display_NO,df_to_display_NE])
+    '''
+    ### Display manual fit function to data ###
+    ax_SW.plot(np.arange(-16,-3,0.05), exponential_func(np.arange(-16,-3,0.05), 0.25,-0.44,-5),color='blue',label='y = 0.25*exp(-0.44*x)-5')
+    ax_CW.plot(np.arange(-16,-3,0.05), exponential_func(np.arange(-16,-3,0.05), 1.8,-0.24,-7),color='blue',label='y = 1.8*exp(-0.24*x)-7')
+    ax_NW.plot(np.arange(-16,-3,0.05), exponential_func(np.arange(-16,-3,0.05), 1.8,-0.225,-6),color='blue',label='y = 1.8*exp(-0.225*x)-6')
+    ax_NO.plot(np.arange(-16,-3,0.05), exponential_func(np.arange(-16,-3,0.05), 1.6,-0.26,-7),color='blue',label='y = 1.6*exp(-0.26*x)-7')
+    ax_NE.plot(np.arange(-10,-3,0.05), exponential_func(np.arange(-10,-3,0.05), 2,-0.3,-12),color='blue',label='y = 2*exp(-0.3*x)-12')
+    ### Display manual fit function to data ###
+    '''
+    ### Display ice thickness estimates needed to trigger runoff ###
+    ax_SW.plot([-16,thresholds_dictionnary_in_func['SW']['SAR'][1]],
+                [3.5,3.5],linestyle='dashed',color='black')
+    ax_SW.plot([-16,thresholds_dictionnary_in_func['SW']['SAR'][1]],
+                [8.5,8.5],linestyle='dashed',color='black')
     
-    #Display 2d histogram
+    ax_CW.plot([-16,thresholds_dictionnary_in_func['CW']['SAR'][1]],
+                [3,3],linestyle='dashed',color='black')
+    ax_CW.plot([-16,thresholds_dictionnary_in_func['CW']['SAR'][1]],
+                [6,6],linestyle='dashed',color='black')
+    
+    ax_NW.plot([-16,thresholds_dictionnary_in_func['NW']['SAR'][1]],
+                [3.5,3.5],linestyle='dashed',color='black')
+    ax_NW.plot([-16,thresholds_dictionnary_in_func['NW']['SAR'][1]],
+                [8.5,8.5],linestyle='dashed',color='black')
+    
+    ax_NO.plot([-16,thresholds_dictionnary_in_func['NO']['SAR'][1]],
+                [2,2],linestyle='dashed',color='black')
+    ax_NO.plot([-16,thresholds_dictionnary_in_func['NO']['SAR'][1]],
+                [5,5],linestyle='dashed',color='black')
+    
+    ax_NE.plot([-16,thresholds_dictionnary_in_func['NE']['SAR'][1]],
+                [3.5,3.5],linestyle='dashed',color='black')
+    ax_NE.plot([-16,thresholds_dictionnary_in_func['NE']['SAR'][1]],
+                [4.5,4.5],linestyle='dashed',color='black')
+    ### Display ice thickness estimates needed to trigger runoff ###
+
+    #Display GrIS normalised 2d histogram
     cbar_GrIS=ax_GrIS.hist2d(df_to_display_normalised['normalized_raster'],
-                             df_to_display_normalised['20m_ice_content_m'],bins=30,cmap='magma_r',cmin=1)#,norm=mpl.colors.LogNorm())# log norm is from https://stackoverflow.com/questions/23309272/matplotlib-log-transform-counts-in-hist2d
-    #Set a maximum to the colorbar   
-    cbar_GrIS[3].set_clim(vmin=1, vmax=np.nanquantile(cbar_GrIS[0],0.99))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
-    ax_GrIS.axhline(y=10,linestyle='dashed',color='red')
+                             df_to_display_normalised['20m_ice_content_m'],
+                             bins=[len(np.linspace(0,1,len(np.arange(-16,-3,0.5)))),np.arange(0,16.5,0.5)],cmap='magma_r',cmin=1)
+    
+    #The maximum of occurrence in a single cell is the maximum occurrence without considering < 1 m and > 16 m thick ice slabs
+    occurrence_matrix = cbar_GrIS[0][:,np.logical_and(cbar_GrIS[2]>=1,cbar_GrIS[2]<15.5)[0:-1]]
+        
+    #Set a maximum to the colorbar 
+    cbar_GrIS[3].set_clim(vmin=np.quantile(np.arange(np.nanmin(occurrence_matrix),np.nanmax(occurrence_matrix),1),0.05), vmax=np.nanmax(occurrence_matrix))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
+    
     ax_GrIS.set_ylim(0,16)
     ax_GrIS.set_xlim(0,1)
-    ax_GrIS.set_title('GrIS - Normalised')
-    ax_GrIS.set_xlabel('Normalised SAR [-]')
-    fig_heatmap.colorbar(cbar_GrIS[3], ax=ax_GrIS,label='Occurence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+    ax_GrIS.set_title('All')
+    ax_GrIS.set_xlabel('Normalised signal strength [-]')
+    fig_heatmap.colorbar(cbar_GrIS[3], ax=ax_GrIS,label='Occurrence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
-    #Set labels
-    ax_NO.set_xlabel('SAR [dB]')
-    ax_NO.set_ylabel('Ice thickness [m]')
-    fig_heatmap.suptitle('Occurrence map - '+method)
+    ### Display manual fit function to data ###
+    ax_GrIS.plot(xdata, exponential_func(xdata, 30,-2.5,-3),color='blue',label='y = 2*exp(-0.3*x)-12')
+    legend_elements = [Line2D([0], [0], color='blue', lw=2, label='Manual fit')]
+    ax_GrIS.legend(handles=legend_elements,loc='best',fontsize=10,framealpha=0.5).set_zorder(7)
     
-    # Fit regression line
-    if (method == 'complete_dataset'):
-        #sort df_to_display_normalised
-        df_to_display_normalised=df_to_display_normalised.sort_values(by=['normalized_raster'])
-        
-        #prepare data for fit        
-        xdata = np.array(df_to_display_normalised['normalized_raster'])
-        ydata = np.array(df_to_display_normalised['20m_ice_content_m'])       
+    ### Display manual fit function to data ###
+    
+    ### Finalise plot ###
+    #Set labels
+    ax_NO.set_xlabel('Signal strength [dB]')
+    ax_NO.set_ylabel('Ice thickness [m]')
+    #Display firn cores ice content and SAR on SW plot
+    ax_SW.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='black',marker='x')
+    legend_elements = [Line2D([0], [0], color='black', marker='x',linestyle='none', label='Firn station')]
+    ax_SW.legend(handles=legend_elements,loc='lower left',fontsize=10,framealpha=0.5).set_zorder(7)
+    
+    #Custom legend myself for ax_SW - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+    legend_elements = [Line2D([0], [0], color='red', lw=2 ,linestyle='dashed', label='Upper threshold'),
+                       Line2D([0], [0], color='green', lw=2 ,linestyle='dashed', label='Lower threshold'),
+                       Line2D([0], [0], color='black', lw=2 ,linestyle='dashed', label='Ice thickness retrieval')]
+    ax_NE.legend(handles=legend_elements,loc='upper center',fontsize=10,framealpha=0.5).set_zorder(7)
+    
+    #Add panel labels
+    ax_SW.text(0.04, 0.925,'a',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax_CW.text(0.04, 0.925,'b',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+    ax_NW.text(0.04, 0.925,'c',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+    ax_NO.text(0.04, 0.925,'d',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+    ax_NE.text(0.04, 0.925,'e',ha='center', va='center', transform=ax_NE.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+    ax_GrIS.text(0.04, 0.935,' ',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=8,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
+    ax_GrIS.text(0.04, 0.925,'f',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+    ### Finalise plot ###
+    
+    pdb.set_trace()
+    
+    #SAve figure
+    plt.savefig(path_switchdrive+'RT3/figures/Fig4/v1/Fig4.png',dpi=300,bbox_inches='tight')
+    #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
-        ax_GrIS.plot(xdata, deg_n(xdata, 1.5,-2.5),'b',label='manual fit: y = 1.5*x^(-2.5)')
-        '''
-        popt, pcov = curve_fit(deg_n, xdata, ydata,p0=[1.5,-2.5])#,bounds=([0,-1,-4],[2,1,2]))
-        ax_GrIS.plot(xdata, deg_n(xdata, *popt))#,'b',label='automatic fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
-        '''
-        ax_GrIS.legend()
+    '''
+    #sort df_to_display_normalised
+    df_to_display_normalised.sort_values(by=['normalized_raster'],inplace=True)
+    #prepare data for fit        
+    xdata = np.array(df_to_display_normalised['normalized_raster'])
+    ydata = np.array(df_to_display_normalised['20m_ice_content_m'])  
+    popt, pcov = curve_fit(deg_n, xdata, ydata,p0=[1.5,-2.5])#,bounds=([0,-1,-4],[2,1,2]))
+    ax_GrIS.plot(xdata, deg_n(xdata, *popt))#,'b',label='automatic fit: y = %5.3f*exp(-%5.3f*x)+%5.3f' % tuple(popt))#, 'r-'
+    '''
+    
+    '''
+    #Display region normalised SAR thresholds
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['SW']['normalised_SAR'][0],linestyle='dashed',color='green')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['CW']['normalised_SAR'][0],linestyle='dashed',color='green')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['NW']['normalised_SAR'][0],linestyle='dashed',color='green')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['NO']['normalised_SAR'][0],linestyle='dashed',color='green')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['NE']['normalised_SAR'][0],linestyle='dashed',color='green')
+
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['SW']['normalised_SAR'][1],linestyle='dashed',color='red')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['CW']['normalised_SAR'][1],linestyle='dashed',color='red')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['NW']['normalised_SAR'][1],linestyle='dashed',color='red')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['NO']['normalised_SAR'][1],linestyle='dashed',color='red')
+    ax_GrIS.axvline(x=thresholds_dictionnary_in_func['NE']['normalised_SAR'][1],linestyle='dashed',color='red')
+    '''
+    
     return
 
 def aquitard_identification(df_for_aquitard,region,LowCutoff,HighCutoff):
@@ -380,7 +458,7 @@ from scipy import stats
 
 composite='TRUE'
 radius=500
-SAR_quantiles_extraction='TRUE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
+SAR_quantiles_extraction='FALSE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
 
 #Define projection
 ###################### From Tedstone et al., 2022 #####################
@@ -516,7 +594,7 @@ plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2Year
 '''
 ######################## Plot with 0m thick ice slabs #########################
 
-pdb.set_trace()
+#pdb.set_trace()
 
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -592,7 +670,7 @@ plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2Year
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
-pdb.set_trace()
+#pdb.set_trace()
 
 ###############################################################################
 ###                                   SAR                                   ###
@@ -965,6 +1043,15 @@ Results of the quantiles in the different regions for the different sectors
 0.50   -7.189671
 0.75   -6.329797
 '''
+
+#Create a threshold dictionnary
+thresholds_dictionnary={'SW':{'SAR':[-9.110144,-8.638897],'SAR_normalised':[]},
+                        'CW':{'SAR':[-7.82364,-7.038067],'SAR_normalised':[]},
+                        'NW':{'SAR':[-8.982688,-8.266375],'SAR_normalised':[]},
+                        'NO':{'SAR':[-7.194321,-6.104299],'SAR_normalised':[]},
+                        'NE':{'SAR':[-6.329797,-5.715943],'SAR_normalised':[]}
+                        }
+
 ###############################################################################
 ###                                   SAR                                   ###
 ###############################################################################
@@ -999,6 +1086,9 @@ for indiv_file in list_composite:
     
     #Open the individual file
     indiv_csv=pd.read_csv(path_SAR_And_IceThickness+indiv_file)
+    
+    #If ice content is larger than 16 m thick, set it to 16 m
+    indiv_csv.loc[indiv_csv["20m_ice_content_m"]>16,"20m_ice_content_m"]=16
     
     ### ALL ###
     #Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
@@ -1066,7 +1156,8 @@ upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp = gpd.GeoDataFrame(upsampled_SAR
 #Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
 upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions = gpd.sjoin(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp, GrIS_drainage_bassins, predicate='within')
 #Display histograms
-display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,FS_pd,'sectors')
+pdb.set_trace()
+display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,FS_pd,'sectors',thresholds_dictionnary)
 #Conclusion: I think this is hard to derive a relationship between SAR and ice thickness using data in sectors
 
 '''
@@ -1074,7 +1165,7 @@ display_2d_histogram(upsampled_SAR_and_IceSlabs_allsectors_NoNaN_gdp_with_region
 plt.savefig(path_data+'Sectors2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
 
-#pdb.set_trace()
+pdb.set_trace()
 
 #Perform the comparison aquitard VS non-aquitard in all the sectors
 #Apply thresholds to differentiate between efficient aquitard VS non-efficient aquitard places - let's choose quantile 0.75 of below as low cutoff, quantile 0.75 of within for high cutoff
