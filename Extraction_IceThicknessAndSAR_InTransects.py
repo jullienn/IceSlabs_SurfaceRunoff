@@ -161,7 +161,6 @@ def ExtractRadarData_at_PointLayer(raster_clipped,Extraction_IceSlabs_transect_I
     upsampled_raster_and_IceSlabs_sorted['distances']=compute_distances(np.array(upsampled_raster_and_IceSlabs_sorted.lon_3413),
                                                                         np.array(upsampled_raster_and_IceSlabs_sorted.lat_3413))
     
-        
     #7. Plot relationship raster VS Ice slabs thickness: display the oversampled and upsampled raster values with upsampled ice content
     #Prepare plot
     fig_indiv = plt.figure()
@@ -455,10 +454,6 @@ if (generate_data=='TRUE'):
     for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
         
-        if (IceSlabsTransect_name=='20170510_02_100_105'):
-            #Everything up to here is fine
-            pdb.set_trace()
-            
         '''
         #Partial clipping case
         if (IceSlabsTransect_name=='20180419_02_123_126'):
@@ -552,7 +547,17 @@ if (generate_data=='TRUE'):
             
             #3.c. Extract CumHydro values within the buffer - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html                
             #Extract CumHydro in the vicinity of transect by considering all CumHydro files
-            raster_clipped_CumHydro=extraction_CumHydro(buffered_transect_polygon_gpd,master_SW_mean,master_NW_mean,master_NE_mean)
+            if (IceSlabsTransect_name=='20170510_02_100_105'):
+                #Long transect which should be intersected with NW where there is ice thickness data rather than in the SW where the transect pass by but only NaN in ice content.
+                #I checked this is correct, it is!
+                try:
+                    raster_clipped_CumHydro = master_NW_mean.rio.clip(buffered_transect_polygon_gpd.geometry.values, buffered_transect_polygon_gpd.crs, drop=True, invert=False)
+                    print('      Intersection found with master_NW_mean')
+                except rxr.exceptions.NoDataInBounds:
+                    print('Intersection not found')
+                    pdb.set_trace()
+            else:
+                raster_clipped_CumHydro=extraction_CumHydro(buffered_transect_polygon_gpd,master_SW_mean,master_NW_mean,master_NE_mean)
             
             #If clipping, perform extraction. If not, continue
             if (len(raster_clipped_CumHydro)>1):

@@ -1225,6 +1225,177 @@ pdb.set_trace()
 plt.savefig(path_switchdrive+'RT3/figures/Fig3/v3/Fig3_fg.png',dpi=300)
 '''
 
+
+###############################################################################
+###                       CumHydro and Ice Thickness                        ###
+###############################################################################
+# Same method as for ice thickness !
+################## Load ice slabs with Cumulative hydro dataset ################
+#Path to data
+path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
+path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/NotClipped_With0mSlabs/'
+#List all the files in the folder
+list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
+#Define empty dataframes
+upsampled_CumHydro_and_IceSlabs=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_above=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_in_between=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_within=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_below=pd.DataFrame()
+
+#The join betwwen the ice slabs and CumHydro dataset with the ice slabs with sector dataset is now performed using both datasets having as native ice slabs data the one containing 0 m thick slabs!
+
+#Loop over all the files
+for indiv_file in list_composite:
+    print(indiv_file)
+    #Open the individual file
+    indiv_csv=pd.read_csv(path_CumHydro_And_IceThickness+indiv_file)
+    '''
+    #If ice content is larger than 16 m thick, set it to 16 m
+    indiv_csv.loc[indiv_csv["20m_ice_content_m"]>16,"20m_ice_content_m"]=16
+    '''
+    ### ALL ###
+    #Upsample data: where index_right is identical (i.e. for each CumHydro cell), keep a single value of CumHydro and average the ice content
+    indiv_upsampled_CumHydro_and_IceSlabs=indiv_csv.groupby('index_right').mean()
+    #Append the data to each other
+    upsampled_CumHydro_and_IceSlabs=pd.concat([upsampled_CumHydro_and_IceSlabs,indiv_upsampled_CumHydro_and_IceSlabs])
+    ### ALL ###
+    
+    ### SECTORS ###
+    #In the sectorial dataframes, keep only data corresponding to the current TrackName
+    indiv_IceThickness_above=keep_sectorial(IceThickness_above,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_in_between=keep_sectorial(IceThickness_in_between,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_within=keep_sectorial(IceThickness_within,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_below=keep_sectorial(IceThickness_below,indiv_csv.Track_name.unique()[0])
+    
+    #Prepare figure to display
+    fig = plt.figure()
+    gs = gridspec.GridSpec(5, 5)
+    ax_check_csv_sectors = plt.subplot(gs[0:5, 0:5],projection=crs)
+    ax_check_csv_sectors.scatter(indiv_csv.lon_3413,indiv_csv.lat_3413,s=5,color='black')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_above.lon_3413,indiv_IceThickness_above.lat_3413,s=1,color='blue')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_in_between.lon_3413,indiv_IceThickness_in_between.lat_3413,s=1,color='yellow')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_within.lon_3413,indiv_IceThickness_within.lat_3413,s=1,color='red')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_below.lon_3413,indiv_IceThickness_below.lat_3413,s=1,color='green')
+    
+    #Associate the sector to the dataframe where ice thickness and CumHydro data are present by joining the two following dataframes
+    #indiv_csv is the dataframe holding ice content and CumHydro NOT upsampled, but no info on the sector
+    #indiv_IceThickness_above/in_between/within/below are the dataframe holding the ice content in the sector NOT upsampled, but no info on CumHydro.
+    indiv_upsampled_CumHydro_and_IceSlabs_above=sector_association(indiv_csv,indiv_IceThickness_above,'above')
+    indiv_upsampled_CumHydro_and_IceSlabs_in_between=sector_association(indiv_csv,indiv_IceThickness_in_between,'InBetween')
+    indiv_upsampled_CumHydro_and_IceSlabs_within=sector_association(indiv_csv,indiv_IceThickness_within,'within')
+    indiv_upsampled_CumHydro_and_IceSlabs_below=sector_association(indiv_csv,indiv_IceThickness_below,'below')
+    
+    #Append data to obtain one dataframe per sector
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_above)>0):
+        upsampled_CumHydro_and_IceSlabs_above=pd.concat([upsampled_CumHydro_and_IceSlabs_above,indiv_upsampled_CumHydro_and_IceSlabs_above])
+    
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_in_between)>0):
+        upsampled_CumHydro_and_IceSlabs_in_between=pd.concat([upsampled_CumHydro_and_IceSlabs_in_between,indiv_upsampled_CumHydro_and_IceSlabs_in_between])
+        
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_within)>0):
+        upsampled_CumHydro_and_IceSlabs_within=pd.concat([upsampled_CumHydro_and_IceSlabs_within,indiv_upsampled_CumHydro_and_IceSlabs_within])
+        
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_below)>0):
+        upsampled_CumHydro_and_IceSlabs_below=pd.concat([upsampled_CumHydro_and_IceSlabs_below,indiv_upsampled_CumHydro_and_IceSlabs_below])
+    #pdb.set_trace()
+    
+    plt.close()
+    ### SECTORS ###
+################## Load ice slabs with Cumulative hydro dataset ################
+
+pdb.set_trace()
+
+#Append data to each other
+upsampled_CumHydro_and_IceSlabs_allsectors=pd.concat([upsampled_CumHydro_and_IceSlabs_above,upsampled_CumHydro_and_IceSlabs_in_between,upsampled_CumHydro_and_IceSlabs_within,upsampled_CumHydro_and_IceSlabs_below])
+#Get rid of NaNs
+upsampled_CumHydro_and_IceSlabs_allsectors_temp=upsampled_CumHydro_and_IceSlabs_allsectors[~upsampled_CumHydro_and_IceSlabs_allsectors.raster_values.isna()].copy()
+upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN=upsampled_CumHydro_and_IceSlabs_allsectors_temp[~upsampled_CumHydro_and_IceSlabs_allsectors_temp["20m_ice_content_m"].isna()].copy()
+
+#Transform upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN as a geopandas dataframe
+upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN_gdp = gpd.GeoDataFrame(upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN,
+                                                                        geometry=gpd.GeoSeries.from_xy(upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN['lon_3413'],
+                                                                                                       upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN['lat_3413'],
+                                                                                                       crs='EPSG:3413'))
+
+#Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN_gdp_with_regions = gpd.sjoin(upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN_gdp, GrIS_drainage_bassins, predicate='within')
+
+
+#Display the raster values distributions
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(5, 5)
+ax1 = plt.subplot(gs[0:5, 0:5])
+gs.update(wspace=1)
+gs.update(hspace=1)
+sns.violinplot(data=upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN_gdp_with_regions,
+               y="SUBREGION1", x="raster_values",ax=ax1)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
+
+pdb.set_trace()
+
+
+#Display histograms
+
+import matplotlib as mpl
+
+#Full ice slabs dataset
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_CumHydro_Thickness = plt.subplot(gs[0:10, 0:6])
+ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs.raster_values-upsampled_CumHydro_and_IceSlabs.raster_values.median(),
+                             upsampled_CumHydro_and_IceSlabs['20m_ice_content_m'],cmap='magma_r',
+                             bins=[np.arange(0,200,5),np.arange(0,20,0.5)],norm=mpl.colors.LogNorm())#,cmax=upsampled_CumHydro_and_IceSlabs.raster_values.quantile(0.5))
+
+#Only sectorial ice slabs dataset
+
+#Sectorial ice slabs dataset
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_CumHydro_Thickness = plt.subplot(gs[0:10, 0:6])
+ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN.raster_values-upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN.raster_values.median(),
+                             upsampled_CumHydro_and_IceSlabs_allsectors_NoNaN['20m_ice_content_m'],cmap='magma_r',
+                             bins=[np.arange(0,100,5),np.arange(0,20,0.5)],norm=mpl.colors.LogNorm())#,cmax=upsampled_CumHydro_and_IceSlabs.raster_values.quantile(0.5))
+
+
+
+pdb.set_trace()
+
+
+
+#Normalise
+upsampled_CumHydro_and_IceSlabs["normalised_raster_values"]=(upsampled_CumHydro_and_IceSlabs.raster_values-upsampled_CumHydro_and_IceSlabs.raster_values.min())/(upsampled_CumHydro_and_IceSlabs.raster_values.max()-upsampled_CumHydro_and_IceSlabs.raster_values.min())
+
+
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_CumHydro_Thickness = plt.subplot(gs[0:10, 0:6])
+ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs.normalised_raster_values,
+                             upsampled_CumHydro_and_IceSlabs['20m_ice_content_m'],cmap='magma_r',
+                             bins=[np.arange(0,1,0.01),np.arange(0,20,0.5)],norm=mpl.colors.LogNorm())#,cmax=upsampled_CumHydro_and_IceSlabs.raster_values.quantile(0.5))
+
+
+
+#Upsampling is needed! Resolution cumulative raster= 30x30. Resolution SAR and aquitard = 40x40 -> Make it match at 120 m resolution
+
+
+###############################################################################
+###                       CumHydro and Ice Thickness                        ###
+###############################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(5, 5)
 ax_hist = plt.subplot(gs[0:5, 0:5])
@@ -1333,5 +1504,8 @@ plt.savefig(path_data+'Composite2019_Hist2D_IceSlabsThickness_SAR_2YearsRunSlabs
 ###############################################################################
 ###                          SAR and Ice Thickness                          ###
 ###############################################################################
+
+
+
 
 print('--- End of code ---')

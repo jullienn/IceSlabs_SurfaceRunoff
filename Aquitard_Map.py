@@ -528,38 +528,6 @@ ax_SAR.set_title('GrIS-wide - 0m slab is missing here!')
 
 
 
-###################### Load ice slabs with Cumulative hydro dataset ######################
-#Path to data
-path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/'
-#List all the files in the folder
-list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
-#Define empty dataframe
-upsampled_CumHydro_and_IceSlabs=pd.DataFrame()
-#Loop over all the files
-for indiv_file in list_composite:
-    print(indiv_file)
-    #Open the individual file
-    indiv_csv=pd.read_csv(path_CumHydro_And_IceThickness+indiv_file)    
-    #Upsample data: where index_right is identical (i.e. for each CumHydro cell), keep a single value of CumHydro and average the ice content
-    indiv_upsampled_CumHydro_and_IceSlabs=indiv_csv.groupby('index_right').mean()  
-    #Append the data to each other
-    upsampled_CumHydro_and_IceSlabs=pd.concat([upsampled_CumHydro_and_IceSlabs,indiv_upsampled_CumHydro_and_IceSlabs])    
-###################### Load ice slabs with Cumulative hydro dataset ######################
-
-import matplotlib as mpl
-
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_CumHydro_Thickness = plt.subplot(gs[0:10, 0:6])
-ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs.raster_values,
-                             upsampled_CumHydro_and_IceSlabs['20m_ice_content_m'],cmap='magma_r',bins=50,norm=mpl.colors.LogNorm())#,cmax=upsampled_CumHydro_and_IceSlabs.raster_values.quantile(0.5))
-
-
-#Upsampling is needed! Resolution cumulative raster= 30x30. Resolution SAR and aquitard = 40x40 -> Make it match at 120 m resolution
-
-
-
-
 
 
 

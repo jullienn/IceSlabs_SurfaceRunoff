@@ -87,7 +87,7 @@ from matplotlib.lines import Line2D
 # self.C / (1.0 + (coefficient*density_kg_m3/1000.0))
 v= 299792458
 
-desired_map='master_map'#'master_map' or 'NDWI'
+desired_map='NDWI'#'master_map' or 'NDWI'
 
 #Define paths to data
 path_data_Jullien='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/i_out_from_IceBridgeGPR_Manager_v2.py/pickles_and_images/'
@@ -255,7 +255,7 @@ CaseStudyFS={2002:'empty',
             2018:'empty'}
 
 #Define the panel to study
-investigation_year=CaseStudy2
+investigation_year=CaseStudy3
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
