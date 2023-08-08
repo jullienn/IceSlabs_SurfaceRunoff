@@ -49,20 +49,22 @@ from scipy import stats
 
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
-path_jullienetal2023=path_switchdrive+'RT1/final_dataset_2002_2018/'
 
 #Load IMBIE drainage bassins
 path_rignotetal2016_GrIS_drainage_bassins=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
-################## Load ice slabs with Cumulative hydro dataset ################
+###############################################################################
+################## Load ice slabs with Cumulative hydro dataset ###############
+###############################################################################
+
 #Path to data
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
 path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/'
 #List all the files in the folder
 list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
 
-#Set the window distance for rolling window calculations (in meter) for ice slasb thickness spatial heterogeneity
+#Set the window distance for rolling window calculations (in meter) for ice slabs thickness spatial heterogeneity
 window_distance=3000
 
 #Define empty dataframes
@@ -95,22 +97,26 @@ for indiv_file in list_composite:
 
     #2. Calculate rolling window
     
-    #For adaptive window size (because sometimnes data is missing along the transect), convert the distance into a timestamp, and calculate the rolling window on this timestamp. That works as expected!
+    #For adaptive window size (because sometimes data is missing along the transect), convert the distance into a timestamp, and calculate the rolling window on this timestamp. That works as expected!
     #The distance represent the seconds after and arbitrary time. Here, 1 meter = 1 second. The default is 01/01/1970
+    #This idea was probably inspired while looking at this https://stackoverflow.com/questions/24337499/pandas-rolling-apply-with-variable-window-length
     indiv_csv['time_distance']=pd.to_datetime(indiv_csv['distances'].round(2),unit='s')
     #Set the time_distance to the index
     indiv_csv.set_index('time_distance',inplace=True)
-    #Apply rolling window by translating the distance into second equivalent. let's chosse the median of the distance difference, which is very likely to represent the distance between consecutive points
-    indiv_csv['rolling_mean_ice_thickness'] = indiv_csv.rolling(str(window_distance)+'s',center=True,closed="both").mean()["20m_ice_content_m"]
-    indiv_csv['rolling_std_ice_thickness'] = indiv_csv.rolling(str(window_distance)+'s',center=True,closed="both").std()["20m_ice_content_m"]    
+    #Apply rolling window by translating the distance into second equivalent.
+    indiv_csv['rolling_mean_ice_thickness'] = indiv_csv.rolling(str(window_distance)+'s',center=True,closed="both")["20m_ice_content_m"].mean()
+    indiv_csv['rolling_std_ice_thickness'] = indiv_csv.rolling(str(window_distance)+'s',center=True,closed="both")["20m_ice_content_m"].std() 
     indiv_csv['rolling_CV_ice_thickness'] = indiv_csv['rolling_std_ice_thickness']/indiv_csv['rolling_mean_ice_thickness']
     indiv_csv['ice_thickness_MINUS_rolling_mean_ice_thickness'] = indiv_csv['20m_ice_content_m']-indiv_csv['rolling_mean_ice_thickness']
-
+    
     #3. Concatenate data
     Transects_2017_2018=pd.concat([Transects_2017_2018,indiv_csv])
     ### -------------- Spatial heterogeneity in ice thickness ------------- ###
 
-################## Load ice slabs with Cumulative hydro dataset ################
+###############################################################################
+################## Load ice slabs with Cumulative hydro dataset ###############
+###############################################################################
+
 
 ###############################################################################
 ###                   Ice Thickness spatial heterogeneity                   ###
@@ -138,27 +144,42 @@ sns.histplot(Transects_2017_2018, x="rolling_CV_ice_thickness",element="poly",
              stat="density",ax=ax3)
 fig.suptitle('Rolling window: '+str(window_distance)+' m')
 
+print('--- 2017-2018 dataset ---')
 print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75,0.95]).round(2))
 
 #Compare the coefficient of variation with an hypothetical ice slabs transect:
 #ice slabs transect 20 km long, whose lowermost point is 16 m thick and uppermost one is 1 m thick. Adding a noise ranging from -1 to +1 to this hypothetical ice slab thickness transect. 14 because ice slabs sampling points are roughly 14 m apart from each other
-Hypothetical_IceSlabs_Transect=pd.DataFrame(data=np.linspace(16,1,int(20000/14))+np.random.randint(-10,11,len(np.linspace(16,1,int(20000/14))))/10,columns=["ice_thickness"])
+Hypothetical_IceSlabs_Transect=pd.DataFrame(data=np.linspace(16,1,int(20000/14+1))+np.random.randint(-10,11,len(np.linspace(16,1,int(20000/14+1))))/10,columns=["ice_thickness"])
+Hypothetical_IceSlabs_Transect['time_distance']=pd.to_datetime(np.arange(0,20000,14),unit='s')
+#Set the time_distance to the index
+Hypothetical_IceSlabs_Transect.set_index('time_distance',inplace=True)
 
-#Apply rolling window
-Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(int(window_distance/14),center=True,closed="both").mean()["ice_thickness"]
-Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(int(window_distance/14),center=True,closed="both").std()["ice_thickness"]    
+#Apply rolling window by translating the distance into second equivalent.
+Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["ice_thickness"].mean()
+Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["ice_thickness"].std()
 Hypothetical_IceSlabs_Transect['rolling_CV_ice_thickness'] = Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
 Hypothetical_IceSlabs_Transect['ice_thickness_MINUS_rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect['ice_thickness']-Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
 
-print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75,0.95]).round(2))
+#Reset index to integer
+Hypothetical_IceSlabs_Transect['new_index']=np.arange(0,len(Hypothetical_IceSlabs_Transect))
+Hypothetical_IceSlabs_Transect.set_index('new_index',inplace=True)
 
+print('--- Hypothetical ice slab ---')
+print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75,0.95]).round(2))
 #The spatial variability of the 2017/2018 ice slabs dtatset is about twice as the one from the hypothetical ice slabs transect.
 #Note that in the real world dataset, there are longitudinal transects! But these ones are expected to have an even lower variability if we consider no other influence that melting gradient due to elevation gradient.
+
+#Display the hypothetical ice slab
+fig = plt.figure(figsize=(12,2))
+gs = gridspec.GridSpec(2, 6)
+ax1= plt.subplot(gs[0:2, 0:6])
+
+ax1.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"])
+ax1.set_ylim(16,0)
 
 ###############################################################################
 ###                   Ice Thickness spatial heterogeneity                   ###
 ###############################################################################
-
 
 pdb.set_trace()
 
