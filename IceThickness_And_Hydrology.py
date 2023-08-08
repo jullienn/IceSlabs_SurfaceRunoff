@@ -148,13 +148,16 @@ print('--- 2017-2018 dataset ---')
 print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75,0.95]).round(2))
 
 #Compare the coefficient of variation with an hypothetical ice slabs transect:
-#ice slabs transect 20 km long, whose lowermost point is 16 m thick and uppermost one is 1 m thick. Adding a noise ranging from -1 to +1 to this hypothetical ice slab thickness transect. 14 because ice slabs sampling points are roughly 14 m apart from each other
-Hypothetical_IceSlabs_Transect=pd.DataFrame(data=np.linspace(16,1,int(20000/14+1))+np.random.randint(-10,11,len(np.linspace(16,1,int(20000/14+1))))/10,columns=["ice_thickness"])
+#ice slabs transect 20 km long, whose lowermost point is 16 m thick and uppermost one is 1 m thick. Adding a noise ranging from -10 to +10 to this hypothetical ice slab thickness transect. 14 because ice slabs sampling points are roughly 14 m apart from each other
+Hypothetical_IceSlabs_Transect=pd.DataFrame(data=np.linspace(16,1,int(20000/14+1))+np.random.randint(-10,11,len(np.linspace(16,1,int(20000/14+1)))),columns=["underlying_data"])
 Hypothetical_IceSlabs_Transect['time_distance']=pd.to_datetime(np.arange(0,20000,14),unit='s')
 #Set the time_distance to the index
 Hypothetical_IceSlabs_Transect.set_index('time_distance',inplace=True)
 
-#Apply rolling window by translating the distance into second equivalent.
+#Apply rolling window to generate the hypothetical ice slab by translating the distance into second equivalent.
+Hypothetical_IceSlabs_Transect['ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["underlying_data"].mean()
+
+#Apply rolling window to this smoothed ice slab by translating the distance into second equivalent.
 Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["ice_thickness"].mean()
 Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["ice_thickness"].std()
 Hypothetical_IceSlabs_Transect['rolling_CV_ice_thickness'] = Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
@@ -171,12 +174,22 @@ print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.2
 
 #Display the hypothetical ice slab
 fig = plt.figure(figsize=(12,2))
-gs = gridspec.GridSpec(2, 6)
-ax1= plt.subplot(gs[0:2, 0:6])
+gs = gridspec.GridSpec(6, 6)
+ax1 = plt.subplot(gs[0:2, 0:6])
+ax2 = plt.subplot(gs[2:4, 0:6])
+ax3 = plt.subplot(gs[4:6, 0:6])
 
-ax1.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"])
+#Underlying data for hypothetical ice slab generation
+ax1.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["underlying_data"])
 ax1.set_ylim(16,0)
 
+#Hypothetical ice slab
+ax2.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["ice_thickness"])
+ax2.set_ylim(16,0)
+
+#Hypothetical ice slab after appliance of the rolling window
+ax3.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"])
+ax3.set_ylim(16,0)
 ###############################################################################
 ###                   Ice Thickness spatial heterogeneity                   ###
 ###############################################################################
