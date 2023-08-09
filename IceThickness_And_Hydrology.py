@@ -145,7 +145,7 @@ sns.histplot(Transects_2017_2018, x="rolling_CV_ice_thickness",element="poly",
 fig.suptitle('Rolling window: '+str(window_distance)+' m')
 
 print('--- 2017-2018 dataset ---')
-print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75,0.95]).round(2))
+print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75]).round(2))
 
 #Compare the coefficient of variation with an hypothetical ice slabs transect:
 #ice slabs transect 20 km long, whose lowermost point is 16 m thick and uppermost one is 1 m thick. Adding a noise ranging from -10 to +10 to this hypothetical ice slab thickness transect. 14 because ice slabs sampling points are roughly 14 m apart from each other
@@ -168,9 +168,10 @@ Hypothetical_IceSlabs_Transect['new_index']=np.arange(0,len(Hypothetical_IceSlab
 Hypothetical_IceSlabs_Transect.set_index('new_index',inplace=True)
 
 print('--- Hypothetical ice slab ---')
-print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75,0.95]).round(2))
+print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75]).round(2))
 #The spatial variability of the 2017/2018 ice slabs dtatset is about twice as the one from the hypothetical ice slabs transect.
 #Note that in the real world dataset, there are longitudinal transects! But these ones are expected to have an even lower variability if we consider no other influence that melting gradient due to elevation gradient.
+#Note that quantile 0.95 is highly variable at each run, so we do not consider it anymore! On the other han, quantile 0.25, 0.5, 0.75 are stable between the different runs.
 
 #Display the hypothetical ice slab
 fig = plt.figure(figsize=(12,2))
@@ -275,7 +276,7 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
 
 #Display regional CumHydro distributions
 distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_values_minus_min", hue="SUBREGION1",element="poly",
-                      stat="density",log_scale=[False,True],bins=np.arange(0,100,5),ax=ax_hist)
+                      stat="count",log_scale=[False,True],bins=np.arange(0,100,5),ax=ax_hist)
 sns.move_legend(distribs,"upper right",title="")
 ax_hist.set_xlim(0,95)
 ax_hist.set_xlabel('Hydrological occurrence')

@@ -72,6 +72,7 @@ from scalebar import scale_bar
 
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
+from matplotlib_scalebar.scalebar import ScaleBar
 
 '''
 #Things to be done
@@ -82,12 +83,27 @@ from matplotlib.lines import Line2D
 4. Display groups of Emax to observe any change
 '''
 
+### Set sizes ###
+# this is from https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
+plt.rc('font', size=8)          # controls default text sizes
+plt.rc('axes', titlesize=8)     # fontsize of the axes title
+plt.rc('axes', labelsize=8)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=8)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=8)    # fontsize of the tick labels
+plt.rc('legend', fontsize=8)    # legend fontsize
+plt.rc('figure', titlesize=12)  # fontsize of the figure title
+plt.rc('axes',linewidth = 0.75)  #https://stackoverflow.com/questions/1639463/how-to-change-border-width-of-a-matplotlib-graph
+plt.rc('xtick.major',width=0.75)
+plt.rc('ytick.major',width=0.75)
+### Set sizes ###
+
 #Define variables
 #Compute the speed (Modified Robin speed):
 # self.C / (1.0 + (coefficient*density_kg_m3/1000.0))
 v= 299792458
 
-desired_map='NDWI'#'master_map' or 'NDWI'
+desired_map='master_map'#'master_map' or 'NDWI'
+display_Emax="False"
 
 #Define paths to data
 path_data_Jullien='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/i_out_from_IceBridgeGPR_Manager_v2.py/pickles_and_images/'
@@ -95,6 +111,7 @@ path_data='C:/Users/jullienn/Documents/working_environment/iceslabs_MacFerrin/da
 path_20022003_data='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/2002_2003/radargram_data/'
 path_data_switchdrive='C:/Users/jullienn/switchdrive/Private/research/RT3/data/'
 path_rignotetal2016_GrIS_drainage_bassins='C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/GRE_Basins_IMBIE2_v1.3/'
+path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
 
 #Define palette for time periods, this is from fig2_paper_icelsabs.py
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
@@ -255,7 +272,7 @@ CaseStudyFS={2002:'empty',
             2018:'empty'}
 
 #Define the panel to study
-investigation_year=CaseStudy3
+investigation_year=CaseStudy2
 
 #Create figures
 plt.rcParams.update({'font.size': 20})
@@ -263,8 +280,10 @@ fig2 = plt.figure()
 ax_map = plt.subplot(projection=crs)
 GrIS_drainage_bassins.plot(ax=ax_map,facecolor='none',edgecolor='black')
 
-fig1 = plt.figure()
-gs = gridspec.GridSpec(32, 101)
+plt.rcParams.update({'font.size': 8})
+#fig1 = plt.figure(figsize=(8.27,5.435))#Nature pdf size = (8.27,10.87)
+fig1 = plt.figure(figsize=(8.27,7.82))#Nature pdf size = (8.27,10.87)
+gs = gridspec.GridSpec(46, 101)
 gs.update(wspace=0.1)
 gs.update(wspace=0.5)
 
@@ -289,6 +308,7 @@ if (investigation_year==CaseStudy1):
     axc = plt.subplot(gs[12:26, 100:101])
     '''
 elif (investigation_year==CaseStudy2):
+    '''
     ax2 = plt.subplot(gs[0:4, 0:100])
     ax3 = plt.subplot(gs[4:8, 0:100])
     ax4 = plt.subplot(gs[8:12, 0:100])
@@ -298,7 +318,20 @@ elif (investigation_year==CaseStudy2):
     ax8 = plt.subplot(gs[24:28, 0:100])
     ax9 = plt.subplot(gs[28:32, 0:100])
     axc = plt.subplot(gs[4:32, 100:101])
-    
+    '''
+    #Fig. 6 paper
+    ax2 = plt.subplot(gs[0:4, 0:99])
+    ax3 = plt.subplot(gs[4:8, 0:99])
+    ax7 = plt.subplot(gs[8:12, 0:99])
+    ax9 = plt.subplot(gs[12:16, 0:99])
+    axc = plt.subplot(gs[4:16, 99:101])
+    #Display map on the same figure
+    ax_map = plt.subplot(gs[18:32, 0:99], projection=crs)
+    axc_map = plt.subplot(gs[20:30, 99:101])
+    #Display NDWI map below
+    ax_NDWI = plt.subplot(gs[32:46, 0:99], projection=crs)
+    axc_NDWI = plt.subplot(gs[34:44, 99:101])
+        
 elif (investigation_year==CaseStudy3):
     ax1 = plt.subplot(gs[0:4, 0:100])
     ax3 = plt.subplot(gs[4:8, 0:100])
@@ -345,6 +378,7 @@ else:
 dataframe={}
 
 for single_year in investigation_year.keys():
+   
     #If no data, continue
     if (investigation_year[single_year]=='empty'):
         print('No data for year '+str(single_year)+', continue')
@@ -603,6 +637,10 @@ lon_transet=[]
 
 for single_year in investigation_year.keys():
 
+    #We do not display the following radargrams
+    if (single_year in list([2002,2011,2012,2013,2017])):
+       continue
+    
     if (investigation_year[single_year]=='empty'):
         continue
 
@@ -610,7 +648,7 @@ for single_year in investigation_year.keys():
     
     if (investigation_year==CaseStudy2):
         start_transect=-47.70785561652585
-        end_transect=-46.41555609606877
+        end_transect=-46.85#-46.41555609606877
         vmin_plot=-4.5
         vmax_plot=4.5
     elif (investigation_year==CaseStudy1):
@@ -716,7 +754,7 @@ for single_year in investigation_year.keys():
     else:
         cb=ax_plot.pcolor(X, Y, C,cmap=plt.get_cmap('gray'),zorder=-1,vmin=vmin_plot, vmax=vmax_plot)
         ax_plot.invert_yaxis() #Invert the y axis = avoid using flipud.
-
+        
     #Activate ticks ylabel
     ax_plot.yaxis.tick_left()
     
@@ -742,14 +780,15 @@ for single_year in investigation_year.keys():
     
     #Display year
     if (single_year<2004):
-        ax_plot.text(0.98, 0.6,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.text(0.98, 0.6,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     else:
-        ax_plot.text(0.98, 0.875,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.text(0.98, 0.875,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
-    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=100,color='black')#color=my_pal[str(single_year)])#)
-    
+    ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=1,color='black')#color=my_pal[str(single_year)])#)
+    ax_NDWI.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=1,color='black')#color=my_pal[str(single_year)])#)
+
     '''
     #Store the coordinates of displayed transect
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
@@ -828,6 +867,7 @@ if (desired_map=='NDWI'):
                                   masked=True).squeeze() #No need to reproject satelite image
     vlim_min=0
     vlim_max=0.3
+    cmap_raster='Blues'
     
 elif (desired_map=='master_map'):
     #Load hydrological master map from Tedstone and Machuguth (2022)
@@ -835,9 +875,10 @@ elif (desired_map=='master_map'):
     #Load master_maps data for display
     MapPlot = rxr.open_rasterio(path_CumHydroMap+'master_map_GrIS_mean.vrt',
                                   masked=True).squeeze() #No need to reproject satelite image
-    vlim_min=0
+    vlim_min=50
     vlim_max=150
-    
+    cmap_raster='viridis_r'#'magma_r'
+
 else:
     print('Enter a correct map name!')
     pdb.set_trace()
@@ -857,96 +898,190 @@ y_coord_within_bounds=y_coord_MapPlot[logical_y_coord_within_bounds]
 #Define extents based on the bounds
 extent_MapPlot = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
 #Display image
-cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',vmin=vlim_min,vmax=vlim_max,zorder=0)
+cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap=cmap_raster,vmin=vlim_min,vmax=vlim_max,zorder=0)
 
 #Set xlims
 ax_map.set_xlim(x_min,x_max)
 ax_map.set_ylim(y_min,y_max)
 
-count=0
-
-#Create a list of years holding data
-list_holding_data=[]
-for holding_data in investigation_year.keys():
-    if (investigation_year[holding_data]!='empty'):
-        list_holding_data=np.append(list_holding_data,holding_data)
-
-#Display Emax
-for single_year in range(2002,2021):
+if (display_Emax == "True"):
+    count=0
     
-    #If no data before this year, continue
-    if (single_year<list_holding_data[0]):
-        print('No data in',str(single_year))
-        continue
-    
-    print(single_year)
-    
-    #Select data of the desired year
-    points_Emax_single_year=points_Emax[points_Emax.year==single_year]
-    '''
-    #In case yearly map of Emax point are desired to be plotted
-    #Reset clean raster
-    cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',vmin=vlim_min,vmax=vlim_max,zorder=count+1) #NDWI, this is from Greenland_Hydrology_Summary.py
-    #Display year
-    ax_map.set_title(str(single_year))
-    #Display all Emax points of this year
-    ax_map.scatter(points_Emax_single_year['x'],points_Emax_single_year['y'],color='black',s=5,zorder=count+1)
-    #Set xlims
-    ax_map.set_xlim(x_min,x_max)
-    ax_map.set_ylim(y_min,y_max)
-    '''
-    #Select the transect around which to perform Emax extraction
-    if (single_year in list_holding_data):
-        #We have a transect on this particular year, select it
-        year_transect=single_year
-    else:
-        #We do not hate a transect on this particulat year, select the closest previous year
-        #Restric the lis of years from the start to the year in question
-        year_list=list_holding_data[list_holding_data<=single_year]
-        year_transect=np.max(year_list).astype(int)
-        print('Chosen year:', str(year_transect))
-    
-    #Create upper and lower line around chosen transect to extract Emax points
-    index_within_bounds_transect=np.logical_and(dataframe[str(year_transect)]['lon_appended']>=start_transect,dataframe[str(year_transect)]['lon_appended']<=end_transect)
-    upper_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]+1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
-    transect_centroid = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]})
-    lower_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]-1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
-    
-    '''
-    ############################# TO COMMENT LATER ON #############################
-    #Display upper and lower limits
-    ax_map.plot(upper_transect_lim['lon_3413_transect'],upper_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
-    ax_map.plot(lower_transect_lim['lon_3413_transect'],lower_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
-    ############################# TO COMMENT LATER ON #############################
-    '''
-    
-    ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
-    #Upper and lower max as tuples
-    upper_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in upper_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
-    transect_centroid_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in transect_centroid.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
-    lower_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in lower_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
-
-    #Make upper/lower_transect_tuple as a line
-    line_upper_transect= LineString(upper_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
-    transect_centroid_transect= LineString(transect_centroid_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
-    line_lower_transect= LineString(lower_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
-
-    #Create a polygon for Emax extraction
-    polygon_Emax_extraction=Polygon([*list(line_upper_transect.coords),*list(line_lower_transect.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
-    
-    '''
-    #Create polygon patch of the polygon above
-    plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=count+1,edgecolor='red',facecolor='none')
-    #Display plot_poylgon_Emax_extraction
-    ax_map.add_patch(plot_poylgon_Emax_extraction)
-    '''
+    #Create a list of years holding data
+    list_holding_data=[]
+    for holding_data in investigation_year.keys():
         
-    #Convert polygon of polygon_Emax_extraction into a geopandas dataframe
-    polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_Emax_extraction]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
-    #Intersection between points_Emax_single_year and polygon_Emax_extraction_gpd, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
-    Emax_extraction = gpd.sjoin(points_Emax_single_year, polygon_Emax_extraction_gpd, op='within')
+        if (investigation_year[holding_data]!='empty'):
+            list_holding_data=np.append(list_holding_data,holding_data)
     
-    if (len(Emax_extraction)==0):
+    #Display Emax
+    for single_year in range(2002,2021):
+        
+        #If no data before this year, continue
+        if (single_year<list_holding_data[0]):
+            print('No data in',str(single_year))
+            continue
+        
+        print(single_year)
+        
+        #Select data of the desired year
+        points_Emax_single_year=points_Emax[points_Emax.year==single_year]
+        '''
+        #In case yearly map of Emax point are desired to be plotted
+        #Reset clean raster
+        cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap='Blues',vmin=vlim_min,vmax=vlim_max,zorder=count+1) #NDWI, this is from Greenland_Hydrology_Summary.py
+        #Display year
+        ax_map.set_title(str(single_year))
+        #Display all Emax points of this year
+        ax_map.scatter(points_Emax_single_year['x'],points_Emax_single_year['y'],color='black',s=5,zorder=count+1)
+        #Set xlims
+        ax_map.set_xlim(x_min,x_max)
+        ax_map.set_ylim(y_min,y_max)
+        '''
+        #Select the transect around which to perform Emax extraction
+        if (single_year in list_holding_data):
+            #We have a transect on this particular year, select it
+            year_transect=single_year
+        else:
+            #We do not hate a transect on this particulat year, select the closest previous year
+            #Restric the lis of years from the start to the year in question
+            year_list=list_holding_data[list_holding_data<=single_year]
+            year_transect=np.max(year_list).astype(int)
+            print('Chosen year:', str(year_transect))
+        
+        #Create upper and lower line around chosen transect to extract Emax points
+        index_within_bounds_transect=np.logical_and(dataframe[str(year_transect)]['lon_appended']>=start_transect,dataframe[str(year_transect)]['lon_appended']<=end_transect)
+        upper_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]+1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
+        transect_centroid = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]})
+        lower_transect_lim = pd.DataFrame({'lon_3413_transect': dataframe[str(year_transect)]['lon_3413'][index_within_bounds_transect], 'lat_3413_transect': dataframe[str(year_transect)]['lat_3413'][index_within_bounds_transect]-1.1e3})#I choose 1.1e3 to include the closest 2012 Emax point
+        
+        '''
+        ############################# TO COMMENT LATER ON #############################
+        #Display upper and lower limits
+        ax_map.plot(upper_transect_lim['lon_3413_transect'],upper_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
+        ax_map.plot(lower_transect_lim['lon_3413_transect'],lower_transect_lim['lat_3413_transect'],color='black',zorder=count+1)
+        ############################# TO COMMENT LATER ON #############################
+        '''
+        
+        ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
+        #Upper and lower max as tuples
+        upper_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in upper_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        transect_centroid_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in transect_centroid.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+        lower_transect_tuple=[tuple(row[['lon_3413_transect','lat_3413_transect']]) for index, row in lower_transect_lim.iterrows()]#from https://www.geeksforgeeks.org/different-ways-to-iterate-over-rows-in-pandas-dataframe/ and https://stackoverflow.com/questions/37515659/returning-a-list-of-x-and-y-coordinate-tuples
+    
+        #Make upper/lower_transect_tuple as a line
+        line_upper_transect= LineString(upper_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
+        transect_centroid_transect= LineString(transect_centroid_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
+        line_lower_transect= LineString(lower_transect_tuple) #from https://shapely.readthedocs.io/en/stable/manual.html
+    
+        #Create a polygon for Emax extraction
+        polygon_Emax_extraction=Polygon([*list(line_upper_transect.coords),*list(line_lower_transect.coords)[::-1]]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
+        
+        '''
+        #Create polygon patch of the polygon above
+        plot_poylgon_Emax_extraction = PolygonPatch(polygon_Emax_extraction,zorder=count+1,edgecolor='red',facecolor='none')
+        #Display plot_poylgon_Emax_extraction
+        ax_map.add_patch(plot_poylgon_Emax_extraction)
+        '''
+            
+        #Convert polygon of polygon_Emax_extraction into a geopandas dataframe
+        polygon_Emax_extraction_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_Emax_extraction]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
+        #Intersection between points_Emax_single_year and polygon_Emax_extraction_gpd, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon
+        Emax_extraction = gpd.sjoin(points_Emax_single_year, polygon_Emax_extraction_gpd, op='within')
+        
+        if (len(Emax_extraction)==0):
+            '''
+            #In case yearly map of Emax point are desired to be plotted
+            #Save figure
+            plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1/CS1_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
+            #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+            '''
+            count=count+2
+            continue
+        
+        #pdb.set_trace()
+        '''
+        #Plot the result of this selection
+        ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=10,zorder=count+1)
+        '''
+        ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
+        
+    
+        ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
+        
+        ###########################################################################
+        ### After a quick look at kept best Emax point for each year with the   ###
+        ### method closest, I come to the conclusion that sometimes the closest ###
+        ### Emax point is best, sometimes the highest Emax point is best to     ###
+        ### relate the actual Emax. Hence, I keep the closest Emax point and    ###
+        ### the highest Emax point each year.                                   ###
+        ###########################################################################
+        
+        #Keep the closest Emax_extraction from the transect
+        distances_Emax_extraction_transect=Emax_extraction.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
+        closest_Emax_extraction=Emax_extraction.iloc[np.where(distances_Emax_extraction_transect==np.min(distances_Emax_extraction_transect))]#Select this closest point
+        
+        '''
+        pdb.set_trace()
+        ax_map.scatter(closest_Emax_extraction['x'],closest_Emax_extraction['y'],c='cyan',s=10,zorder=count+1)#Display this closest point
+        '''
+        
+        #Keep the highest Emax_extraction from the transect
+        highest_Emax_extraction=Emax_extraction.iloc[np.where(Emax_extraction.elev==np.max(Emax_extraction.elev))]#Select this highest point
+        #if we have to points having the same highest elevation, select the easternmost one
+        if (len(highest_Emax_extraction)>1):
+            #Keep only the easternmost Emax point, i.e. the most positive longitute
+            highest_Emax_extraction=highest_Emax_extraction.iloc[np.where(highest_Emax_extraction.x==np.max(highest_Emax_extraction.x))]
+        
+        '''
+        pdb.set_trace()
+        ax_map.scatter(highest_Emax_extraction['x'],highest_Emax_extraction['y'],c='yellow',s=10,zorder=count+1)#Display this easternmost point
+        '''
+        
+        #Store the closest and highest points
+        best_Emax_points=pd.concat([closest_Emax_extraction, highest_Emax_extraction])
+        
+        #If the difference in elevation between the two points is larger than 50m (to change?), we probably have two Emax points at two different hydrological features. Discard the lowest one
+        if (np.diff(best_Emax_points.elev)>50):
+            best_Emax_points=best_Emax_points.iloc[np.where(best_Emax_points.elev==np.max(best_Emax_points.elev))]
+    
+        #pdb.set_trace()
+        #Display the best Emax points
+        ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=50,zorder=200,c=my_pal[str(single_year)],edgecolors='black')#Display the best Emax points #count+1
+        ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
+        
+        ### In case yearly map of Emax point are desired to be plotted, comment this ###
+        if (len(best_Emax_points)==0):
+            count=count+2
+            continue
+        else:
+            #Convert to coordinates into EPSG:4326
+            coord_Emax=transformer_3413_to_4326.transform(np.array(best_Emax_points['x']),np.array(best_Emax_points['y']))
+            
+            #Plot Emax on the correct radargrams
+            if (year_transect==2002):
+                ax1.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2003):
+                ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2010):
+                ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2011):
+                ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2012):
+                ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2013):
+                ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2014):
+                ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2017):
+                ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            elif(year_transect==2018):
+                ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+            else:
+                print('Should not end up there')
+                pdb.set_trace()
+        ### In case yearly map of Emax point are desired to be plotted, comment this ###
+    
         '''
         #In case yearly map of Emax point are desired to be plotted
         #Save figure
@@ -954,99 +1089,7 @@ for single_year in range(2002,2021):
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
         '''
         count=count+2
-        continue
-    
-    #pdb.set_trace()
-    '''
-    #Plot the result of this selection
-    ax_map.scatter(Emax_extraction['x'],Emax_extraction['y'],color='red',s=10,zorder=count+1)
-    '''
-    ### ------------------ This is from Emax_SlabsTickness.py ----------------- ###
-    
-
-    ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
-    
-    ###########################################################################
-    ### After a quick look at kept best Emax point for each year with the   ###
-    ### method closest, I come to the conclusion that sometimes the closest ###
-    ### Emax point is best, sometimes the highest Emax point is best to     ###
-    ### relate the actual Emax. Hence, I keep the closest Emax point and    ###
-    ### the highest Emax point each year.                                   ###
-    ###########################################################################
-    
-    #Keep the closest Emax_extraction from the transect
-    distances_Emax_extraction_transect=Emax_extraction.geometry.distance(transect_centroid_transect)#Calculate distance of each Emax points with respect to the transect centroid, this is from https://shapely.readthedocs.io/en/stable/manual.html
-    closest_Emax_extraction=Emax_extraction.iloc[np.where(distances_Emax_extraction_transect==np.min(distances_Emax_extraction_transect))]#Select this closest point
-    
-    '''
-    pdb.set_trace()
-    ax_map.scatter(closest_Emax_extraction['x'],closest_Emax_extraction['y'],c='cyan',s=10,zorder=count+1)#Display this closest point
-    '''
-    
-    #Keep the highest Emax_extraction from the transect
-    highest_Emax_extraction=Emax_extraction.iloc[np.where(Emax_extraction.elev==np.max(Emax_extraction.elev))]#Select this highest point
-    #if we have to points having the same highest elevation, select the easternmost one
-    if (len(highest_Emax_extraction)>1):
-        #Keep only the easternmost Emax point, i.e. the most positive longitute
-        highest_Emax_extraction=highest_Emax_extraction.iloc[np.where(highest_Emax_extraction.x==np.max(highest_Emax_extraction.x))]
-    
-    '''
-    pdb.set_trace()
-    ax_map.scatter(highest_Emax_extraction['x'],highest_Emax_extraction['y'],c='yellow',s=10,zorder=count+1)#Display this easternmost point
-    '''
-    
-    #Store the closest and highest points
-    best_Emax_points=pd.concat([closest_Emax_extraction, highest_Emax_extraction])
-    
-    #If the difference in elevation between the two points is larger than 50m (to change?), we probably have two Emax points at two different hydrological features. Discard the lowest one
-    if (np.diff(best_Emax_points.elev)>50):
-        best_Emax_points=best_Emax_points.iloc[np.where(best_Emax_points.elev==np.max(best_Emax_points.elev))]
-
-    #pdb.set_trace()
-    #Display the best Emax points
-    ax_map.scatter(best_Emax_points['x'],best_Emax_points['y'],s=50,zorder=200,c=my_pal[str(single_year)],edgecolors='black')#Display the best Emax points #count+1
-    ### --------------- Inspired from Emax_Slabs_tickness.py -------------- ###
-    
-    ### In case yearly map of Emax point are desired to be plotted, comment this ###
-    if (len(best_Emax_points)==0):
-        count=count+2
-        continue
-    else:
-        #Convert to coordinates into EPSG:4326
-        coord_Emax=transformer_3413_to_4326.transform(np.array(best_Emax_points['x']),np.array(best_Emax_points['y']))
-        
-        #Plot Emax on the correct radargrams
-        if (year_transect==2002):
-            ax1.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2003):
-            ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2010):
-            ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2011):
-            ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2012):
-            ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2013):
-            ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2014):
-            ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2017):
-            ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        elif(year_transect==2018):
-            ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
-        else:
-            print('Should not end up there')
-            pdb.set_trace()
-    ### In case yearly map of Emax point are desired to be plotted, comment this ###
-
-    '''
-    #In case yearly map of Emax point are desired to be plotted
-    #Save figure
-    plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS1/CS1_NDWI_Emax_'+str(single_year)+'.png',dpi=300,bbox_inches='tight')
-    #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    '''
-    count=count+2
-    #pdb.set_trace()
+        #pdb.set_trace()
     
 #pdb.set_trace() #In case yearly map of Emax point are desired to be plotted, uncomment this
 
@@ -1077,7 +1120,7 @@ elif (investigation_year==CaseStudy2):
     '''
     ###################### From Tedstone et al., 2022 #####################
     #from plot_map_decadal_change.py
-    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5,color='black',linestyle='dashed')
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
     #Customize lat labels
     gl.right_labels = False
     gl.top_labels = False
@@ -1176,9 +1219,15 @@ elif (investigation_year==CaseStudyFS):
 else:
     print('Wrong transect name input')
 
-#Display colorbar. This is from FigS1.py
+#Display colorbars. This is from FigS1.py
 cbar_depth=fig1.colorbar(cb, cax=axc, aspect=5)#aspect is from https://stackoverflow.com/questions/33443334/how-to-decrease-colorbar-width-in-matplotlib
 cbar_depth.set_label('Radar signal strength [dB]')
+
+cbar_CumHydro=fig1.colorbar(cbar, cax=axc_map)
+cbar_CumHydro.set_label('Hydrological occurence')
+#Modify colorbar ticks according to vmin and vmax
+cbar_CumHydro.set_ticks(np.arange(vlim_min,vlim_max,20)+10)
+cbar_CumHydro.set_ticklabels(np.arange(vlim_min,vlim_max,20)+10-vlim_min)
 
 plot_dist=[]
 for indiv_tick in ticks_through:
@@ -1192,51 +1241,123 @@ for indiv_tick in ticks_through:
 
 
 if (investigation_year==CaseStudy2):
-    #Display color code with year on map
+    #Display NDWI
+    ### ------------- This is from Greenland_Hydrology_Summary.py ------------- ###
+    desired_year=2019
+    path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'
+    #Load NDWI data for display
+    MapPlot = rxr.open_rasterio(path_NDWI+'NDWI_p10_'+str(desired_year)+'.vrt',
+                                  masked=True).squeeze() #No need to reproject satelite image
+    vlim_min=0
+    vlim_max=0.6
+    cmap_raster='Blues'
+    ### ------------- This is from Greenland_Hydrology_Summary.py ------------- ###
+
+    #Extract x and y coordinates of image
+    x_coord_MapPlot=np.asarray(MapPlot.x)
+    y_coord_MapPlot=np.asarray(MapPlot.y)
+    ### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
+
+    #Extract coordinates ofcumulative raster within Emaxs bounds
+    logical_x_coord_within_bounds=np.logical_and(x_coord_MapPlot>=x_min,x_coord_MapPlot<=x_max)
+    x_coord_within_bounds=x_coord_MapPlot[logical_x_coord_within_bounds]
+    logical_y_coord_within_bounds=np.logical_and(y_coord_MapPlot>=y_min,y_coord_MapPlot<=y_max)
+    y_coord_within_bounds=y_coord_MapPlot[logical_y_coord_within_bounds]
+
+    #Define extents based on the bounds
+    extent_MapPlot = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+    #Display image
+    cbar_NDWI=ax_NDWI.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap=cmap_raster,vmin=vlim_min,vmax=vlim_max,zorder=0)
+
+    #Set xlims
+    ax_NDWI.set_xlim(x_min,x_max)
+    ax_NDWI.set_ylim(y_min,y_max)
+    
+    ###################### From Tedstone et al., 2022 #####################
+    #from plot_map_decadal_change.py
+    gl=ax_NDWI.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+    #Customize lat labels
+    gl.right_labels = False
+    gl.top_labels = False
+    ax_map.axis('off')
+    ###################### From Tedstone et al., 2022 #####################
+    
+    #Display cbar
+    cbar_NDWI=fig1.colorbar(cbar_NDWI, cax=axc_NDWI)
+    cbar_NDWI.set_label('NDWI')
+    
+    #Display legend on CumHyro and NDWI map
     legend_elements=[]
-    legend_elements.append([Line2D([0], [0], color='black', lw=2, label='Radargrams')][0])
-    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label='MVRL retrievals:')][0])
-
-    for year in range(2002,2020+1):
-        legend_elements.append(legend_building(my_pal,year)[0])
-
-    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
-    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
-    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
-    legend_elements.append([Line2D([0], [0], color=my_pal[str(2002)], lw=2, marker='o',alpha=0,linestyle='None', label=' ')][0])
-
+    legend_elements.append([Line2D([0], [0], color='black', lw=2, label='Transect')][0])
     #Display legend
     ax_map.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
+    ax_NDWI.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
     #Display panel label
-    ax2.text(0.01, 0.70,'a',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax3.text(0.01, 0.85,'b',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax4.text(0.01, 0.85,'c',ha='center', va='center', transform=ax4.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax5.text(0.01, 0.85,'d',ha='center', va='center', transform=ax5.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax6.text(0.01, 0.85,'e',ha='center', va='center', transform=ax6.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax7.text(0.01, 0.85,'f',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax8.text(0.01, 0.85,'g',ha='center', va='center', transform=ax8.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax9.text(0.01, 0.85,'h',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax_map.text(0.005, 1.05,'i',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax2.text(0.01, 0.70,'a',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax3.text(0.01, 0.85,'b',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax7.text(0.01, 0.85,'c',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax9.text(0.01, 0.85,'d',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax_map.text(0.01, 0.925,'e',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax_NDWI.text(0.01, 0.925,'f',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     plt.show()
 
-scale_bar(ax_map, (0.9, 0.8), 10, 3,0)# axis, location (x,y), length, linewidth, rotation of text
-#by measuring on the screen, the difference in precision between scalebar and length of transects is about ~200m
+# Display scalebar with GeoPandas
+ax_map.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))#.set_pad(2)
+ax_NDWI.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))#.set_pad(2)
+
+#Coordinates of sectors to display
+coord_sectors=[#(67.620575, -47.59745),
+               #(67.622106, -47.566856),
+               (67.626644, -47.414368),
+               (67.628561, -47.33543),
+               (67.629785, -47.299504),
+               (67.632129, -47.232908),
+               #(67.632711, -47.216256),
+               #(67.633521, -47.183796),
+               (67.635528, -47.14),
+               (67.636072, -47.09873)]
+#Display sections on the map
+for indiv_point in coord_sectors:
+    #Display on radargrams
+    ax2.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
+    ax3.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
+    ax7.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
+    ax9.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
+
+    #Display on map
+    #Transform the coordinates from EPSG:3413 to EPSG:4326
+    #Example from: https://pyproj4.github.io/pyproj/stable/examples.html
+    points=transformer.transform(indiv_point[1],indiv_point[0])
+    ax_map.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
+    ax_NDWI.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
+
+#Add sector label
+ax_map.text(0.39, 0.05,'A',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_map.text(0.515, 0.05,'B',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_map.text(0.615, 0.05,'C',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_map.text(0.685, 0.05,'D',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 ax_tick_plot.xaxis.set_ticks_position('bottom') 
 ax_tick_plot.set_xticklabels(np.round(plot_dist).astype(int))
 ax_tick_plot.set_xlabel('Distance [km]')
 
+'''
 figManager = plt.get_current_fig_manager()
 figManager.window.showMaximized()
-
+'''
 plt.show()
 
 pdb.set_trace()
 
+
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v2/Fig6.png',dpi=300,bbox_inches='tight')
+
+'''
 #Save the figure
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS2/v2/CS2_NDWI_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-
+'''
 
 
     
