@@ -282,8 +282,8 @@ GrIS_drainage_bassins.plot(ax=ax_map,facecolor='none',edgecolor='black')
 
 plt.rcParams.update({'font.size': 8})
 #fig1 = plt.figure(figsize=(8.27,5.435))#Nature pdf size = (8.27,10.87)
-fig1 = plt.figure(figsize=(8.27,7.82))#Nature pdf size = (8.27,10.87)
-gs = gridspec.GridSpec(46, 101)
+fig1 = plt.figure(figsize=(8.27,5.435))#Nature pdf size = (8.27,10.87)
+gs = gridspec.GridSpec(30, 101)
 gs.update(wspace=0.1)
 gs.update(wspace=0.5)
 
@@ -326,12 +326,13 @@ elif (investigation_year==CaseStudy2):
     ax9 = plt.subplot(gs[12:16, 0:99])
     axc = plt.subplot(gs[4:16, 99:101])
     #Display map on the same figure
-    ax_map = plt.subplot(gs[18:32, 0:99], projection=crs)
-    axc_map = plt.subplot(gs[20:30, 99:101])
+    ax_map = plt.subplot(gs[18:30, 0:99], projection=crs)
+    axc_map = plt.subplot(gs[20:28, 99:101])
+    '''
     #Display NDWI map below
-    ax_NDWI = plt.subplot(gs[32:46, 0:99], projection=crs)
-    axc_NDWI = plt.subplot(gs[34:44, 99:101])
-        
+    ax_NDWI = plt.subplot(gs[40:54, 0:99], projection=crs)
+    axc_NDWI = plt.subplot(gs[42:52, 99:101])
+    '''
 elif (investigation_year==CaseStudy3):
     ax1 = plt.subplot(gs[0:4, 0:100])
     ax3 = plt.subplot(gs[4:8, 0:100])
@@ -787,8 +788,10 @@ for single_year in investigation_year.keys():
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
     ax_map.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=1,color='black')#color=my_pal[str(single_year)])#)
+    '''
     ax_NDWI.scatter(dataframe[str(single_year)]['lon_3413'][index_within_bounds],dataframe[str(single_year)]['lat_3413'][index_within_bounds],s=0.1,zorder=1,color='black')#color=my_pal[str(single_year)])#)
-
+    '''
+    
     '''
     #Store the coordinates of displayed transect
     lat_transet=np.append(lat_transet,dataframe[str(single_year)]['lat_3413'][index_within_bounds])
@@ -1111,7 +1114,7 @@ elif (investigation_year==CaseStudy2):
     ax9.set_ylabel('Depth [m]')
     ax9.set_yticklabels(['0','10','20'])
     ticks_through=ax9.get_xticks()
-    year_ticks=2014
+    year_ticks=2018
     ax_tick_plot=ax9
     ax_top=ax2
     '''
@@ -1241,6 +1244,7 @@ for indiv_tick in ticks_through:
 
 
 if (investigation_year==CaseStudy2):
+    '''
     #Display NDWI
     ### ------------- This is from Greenland_Hydrology_Summary.py ------------- ###
     desired_year=2019
@@ -1285,26 +1289,31 @@ if (investigation_year==CaseStudy2):
     #Display cbar
     cbar_NDWI=fig1.colorbar(cbar_NDWI, cax=axc_NDWI)
     cbar_NDWI.set_label('NDWI')
-    
+    '''
     #Display legend on CumHyro and NDWI map
     legend_elements=[]
     legend_elements.append([Line2D([0], [0], color='black', lw=2, label='Transect')][0])
     #Display legend
     ax_map.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
+    '''
     ax_NDWI.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
+    '''
     #Display panel label
     ax2.text(0.01, 0.70,'a',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax3.text(0.01, 0.85,'b',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax7.text(0.01, 0.85,'c',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax9.text(0.01, 0.85,'d',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax_map.text(0.01, 0.925,'e',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax_NDWI.text(0.01, 0.925,'f',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    '''
+    ax_NDWI.text(0.01, 0.925,'g',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    '''
     plt.show()
 
 # Display scalebar with GeoPandas
 ax_map.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))#.set_pad(2)
+'''
 ax_NDWI.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))#.set_pad(2)
-
+'''
 #Coordinates of sectors to display
 coord_sectors=[#(67.620575, -47.59745),
                #(67.622106, -47.566856),
@@ -1329,8 +1338,9 @@ for indiv_point in coord_sectors:
     #Example from: https://pyproj4.github.io/pyproj/stable/examples.html
     points=transformer.transform(indiv_point[1],indiv_point[0])
     ax_map.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
+    '''
     ax_NDWI.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
-
+    '''
 #Add sector label
 ax_map.text(0.39, 0.05,'A',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ax_map.text(0.515, 0.05,'B',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
@@ -1349,9 +1359,8 @@ plt.show()
 
 pdb.set_trace()
 
-
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v2/Fig6.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v3/Fig6abcde.png',dpi=300)#,bbox_inches='tight')
 
 '''
 #Save the figure

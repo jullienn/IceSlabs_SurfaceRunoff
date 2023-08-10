@@ -46,6 +46,19 @@ import matplotlib as mpl
 from scipy.optimize import curve_fit
 from scipy import stats
 
+### Set sizes ###
+# this is from https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
+plt.rc('font', size=8)          # controls default text sizes
+plt.rc('axes', titlesize=8)     # fontsize of the axes title
+plt.rc('axes', labelsize=8)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=8)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=8)    # fontsize of the tick labels
+plt.rc('legend', fontsize=8)    # legend fontsize
+plt.rc('figure', titlesize=12)  # fontsize of the figure title
+plt.rc('axes',linewidth = 0.75)  #https://stackoverflow.com/questions/1639463/how-to-change-border-width-of-a-matplotlib-graph
+plt.rc('xtick.major',width=0.75)
+plt.rc('ytick.major',width=0.75)
+### Set sizes ###
 
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -147,25 +160,154 @@ fig.suptitle('Rolling window: '+str(window_distance)+' m')
 print('--- 2017-2018 dataset ---')
 print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75]).round(2))
 
-#Compare the coefficient of variation with an hypothetical ice slabs transect:
-#ice slabs transect 20 km long, whose lowermost point is 16 m thick and uppermost one is 1 m thick. Adding a noise ranging from -10 to +10 to this hypothetical ice slab thickness transect. 14 because ice slabs sampling points are roughly 14 m apart from each other
-Hypothetical_IceSlabs_Transect=pd.DataFrame(data=np.linspace(16,1,int(20000/14+1))+np.random.randint(-10,11,len(np.linspace(16,1,int(20000/14+1)))),columns=["underlying_data"])
-Hypothetical_IceSlabs_Transect['time_distance']=pd.to_datetime(np.arange(0,20000,14),unit='s')
+pdb.set_trace()
+
+### --- Perform the same analysis for the 2018 transect displayed in Fig. 6 --- ###
+TransectFig6=Transects_2017_2018[Transects_2017_2018.Track_name=='20180427_01_170_172'].copy()
+#Keep data within displayed bounds
+TransectFig6_WithinBounds = TransectFig6[np.logical_and(TransectFig6.lon>=-47.70785561652585,TransectFig6.lon<=-46.85)].copy()
+#Flip upside down the dataframe because the transect goes from high to low elevations
+TransectFig6_WithinBounds["new_index"]=np.arange(0,len(TransectFig6_WithinBounds))
+TransectFig6_WithinBounds.set_index('new_index',inplace=True)
+TransectFig6_WithinBounds_reverted=TransectFig6_WithinBounds.reindex(index=TransectFig6_WithinBounds.index[::-1]).copy()#this is from https://stackoverflow.com/questions/20444087/right-way-to-reverse-a-pandas-dataframe
+#Calculate new distances
+TransectFig6_WithinBounds_reverted['distances_reverted']=compute_distances(TransectFig6_WithinBounds_reverted['lon_3413'].to_numpy(),TransectFig6_WithinBounds_reverted['lat_3413'].to_numpy())
+
+#Display the transect in Fig.6
+fig = plt.figure(figsize=(8.27,3.55))#Nature pdf size = (8.27,10.87)
+gs = gridspec.GridSpec(8, 101)
+ax_TransectFig6 = plt.subplot(gs[2:6, 0:99])
+
+ax_TransectFig6.fill_between(TransectFig6_WithinBounds_reverted.distances_reverted,
+                         TransectFig6_WithinBounds_reverted["rolling_mean_ice_thickness"]-
+                         TransectFig6_WithinBounds_reverted["rolling_std_ice_thickness"],
+                         TransectFig6_WithinBounds_reverted["rolling_mean_ice_thickness"]+
+                         TransectFig6_WithinBounds_reverted["rolling_std_ice_thickness"],
+                         alpha=0.5)
+ax_TransectFig6.plot(TransectFig6_WithinBounds_reverted.distances_reverted,TransectFig6_WithinBounds_reverted["rolling_mean_ice_thickness"])
+ax_TransectFig6_second=ax_TransectFig6.twinx()
+ax_TransectFig6_second.plot(TransectFig6_WithinBounds_reverted.distances_reverted,TransectFig6_WithinBounds_reverted["rolling_CV_ice_thickness"],color='C1')
+#Change color of axis to match color of line, this is from https://stackoverflow.com/questions/1982770/changing-the-color-of-an-axis
+ax_TransectFig6.tick_params(axis='y', colors='C0')
+#ax_TransectFig6_second.spines['right'].set_color('C1')
+ax_TransectFig6_second.tick_params(axis='y', colors='C1')
+
+#Coordinates of sectors to display
+coord_sectors=[#(67.620575, -47.59745),
+               #(67.622106, -47.566856),
+               (67.626644, -47.414368),
+               (67.628561, -47.33543),
+               (67.629785, -47.299504),
+               (67.632129, -47.232908),
+               #(67.632711, -47.216256),
+               #(67.633521, -47.183796),
+               (67.635528, -47.14),
+               (67.636072, -47.09873)]
+
+#Display sections on the plot
+for indiv_point in coord_sectors:
+    #add vertical dashed lines
+    ax_TransectFig6.axvline(TransectFig6_WithinBounds_reverted.loc[(TransectFig6_WithinBounds_reverted.lon-indiv_point[1]).abs().idxmin()].distances_reverted,linestyle='dashed',color='black',linewidth=1)
+
+#Convert distance from m to km
+ax_TransectFig6.set_xticks(ax_TransectFig6.get_xticks())
+ax_TransectFig6.set_xticklabels((ax_TransectFig6.get_xticks()/1000).astype(int))
+#add labels
+ax_TransectFig6.set_xlabel('Distance [km]')
+ax_TransectFig6.set_ylabel('Ice thickness [m]',color='C0')
+ax_TransectFig6_second.set_ylabel('Coefficient of variation [ ]',color='C1')
+ax_TransectFig6.set_xlim(0,36836)
+ax_TransectFig6_second.set_ylim(0,TransectFig6_WithinBounds_reverted.rolling_CV_ice_thickness.max()+0.025)
+
+#Identification of the max distance to match radargrams in CaseStudy_Emax_IceSlabs.py:
+#dataframe[str(year_ticks)]['distances'][np.argmin(np.abs(dataframe[str(year_ticks)]['lon_appended']-end_transect))]/1000-dataframe[str(year_ticks)]['distances'][np.argmin(np.abs(dataframe[str(year_ticks)]['lon_appended']-start_transect))]/1000
+#gives 36.836142729833256
+
+#Add which transect is displayed
+ax_TransectFig6.text(0.97, 0.925,'2018',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_TransectFig6.text(0.010, 0.9,'f',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v3/Fig6_f.png',dpi=300)#,bbox_inches='tight')
+'''
+### --- Perform the same analysis for the 2018 transect displayed in Fig. 6 --- ###
+
+pdb.set_trace()
+
+### --------- Perform the same analysis for an hypothetical ice slab --------- ###
+#Choose the amount of the random noise
+offset=20
+#Create and ice slabs transect 35 km long (to match case study transect length),
+#whose lowermost point is 16 m thick and uppermost one is 1 m thick.
+#Adding a noise ranging from -20 to +20 to this hypothetical ice slab thickness transect.
+#14 because ice slabs sampling points are roughly 14 m apart from each other
+Hypothetical_IceSlabs_Transect=pd.DataFrame(data=np.linspace(16,1,int(35000/14+1))+np.random.randint(-offset,offset+1,len(np.linspace(16,1,int(35000/14+1)))),columns=["underlying_data"])
+#Add the offset to prevent having slabs thinner than 1 m which mess up the calculation of the coefficient of variation
+Hypothetical_IceSlabs_Transect["underlying_data"]=Hypothetical_IceSlabs_Transect["underlying_data"]+offset
+#Compute distance
+Hypothetical_IceSlabs_Transect['distance']=np.arange(0,35000+1,14)/1000
+Hypothetical_IceSlabs_Transect['time_distance']=pd.to_datetime(np.arange(0,35000+1,14),unit='s')
 #Set the time_distance to the index
 Hypothetical_IceSlabs_Transect.set_index('time_distance',inplace=True)
 
 #Apply rolling window to generate the hypothetical ice slab by translating the distance into second equivalent.
 Hypothetical_IceSlabs_Transect['ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["underlying_data"].mean()
 
-#Apply rolling window to this smoothed ice slab by translating the distance into second equivalent.
+#Apply rolling window to this hypothetical ice slab by translating the distance into second equivalent.
 Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["ice_thickness"].mean()
 Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both")["ice_thickness"].std()
 Hypothetical_IceSlabs_Transect['rolling_CV_ice_thickness'] = Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
 Hypothetical_IceSlabs_Transect['ice_thickness_MINUS_rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect['ice_thickness']-Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
 
+#Remove the offset
+Hypothetical_IceSlabs_Transect['ice_thickness']=Hypothetical_IceSlabs_Transect['ice_thickness']-offset
+Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']=Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']-offset
+
 #Reset index to integer
 Hypothetical_IceSlabs_Transect['new_index']=np.arange(0,len(Hypothetical_IceSlabs_Transect))
 Hypothetical_IceSlabs_Transect.set_index('new_index',inplace=True)
+
+#Display the hypothetical ice slab
+fig = plt.figure(figsize=(8.27,3.55))#Nature pdf size = (8.27,10.87)
+gs = gridspec.GridSpec(8, 101)
+ax_Hypothetical_radargram = plt.subplot(gs[0:4, 0:99])
+ax_Hypothetical_plot = plt.subplot(gs[4:8, 0:99])
+
+#Hypothetical radargram
+ax_Hypothetical_radargram.fill_between(Hypothetical_IceSlabs_Transect["distance"],Hypothetical_IceSlabs_Transect["ice_thickness"])
+ax_Hypothetical_radargram.set_ylim(16,0)
+ax_Hypothetical_radargram.set_xlim(0,35)
+ax_Hypothetical_radargram.set_ylabel('Ice thickness [m]')
+ax_Hypothetical_radargram.set_xticks([])
+
+#Average, stdev and cv
+ax_Hypothetical_plot.fill_between(Hypothetical_IceSlabs_Transect.distance,
+                                  Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"]-
+                                  Hypothetical_IceSlabs_Transect["rolling_std_ice_thickness"],
+                                  Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"]+
+                                  Hypothetical_IceSlabs_Transect["rolling_std_ice_thickness"],
+                                  alpha=0.5)
+ax_Hypothetical_plot.plot(Hypothetical_IceSlabs_Transect.distance,Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"])
+ax_Hypothetical_plot_second=ax_Hypothetical_plot.twinx()
+ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distance,Hypothetical_IceSlabs_Transect["rolling_CV_ice_thickness"],color='C1')
+#Change color of axis to match color of line, this is from https://stackoverflow.com/questions/1982770/changing-the-color-of-an-axis
+ax_Hypothetical_plot.tick_params(axis='y', colors='C0')
+#ax_TransectFig6_second.spines['right'].set_color('C1')
+ax_Hypothetical_plot_second.tick_params(axis='y', colors='C1')
+
+#Custom labelas
+ax_Hypothetical_plot.set_xlabel('Distance [km]')
+ax_Hypothetical_plot.set_ylabel('Ice thickness [m]',color='C0')
+ax_Hypothetical_plot_second.set_ylabel('Coefficient of variation [ ]',color='C1')
+ax_Hypothetical_plot.set_ylim(0,16)
+ax_Hypothetical_plot.set_xlim(0,35)
+ax_Hypothetical_plot_second.set_ylim(0,TransectFig6_WithinBounds_reverted.rolling_CV_ice_thickness.max()+0.025)
+
+#Add panel labels
+ax_Hypothetical_radargram.text(0.01, 0.925,'a',ha='center', va='center', transform=ax_Hypothetical_radargram.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_Hypothetical_plot.text(0.010, 0.9,'b',ha='center', va='center', transform=ax_Hypothetical_plot.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
 
 print('--- Hypothetical ice slab ---')
 print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75]).round(2))
@@ -173,24 +315,12 @@ print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.2
 #Note that in the real world dataset, there are longitudinal transects! But these ones are expected to have an even lower variability if we consider no other influence that melting gradient due to elevation gradient.
 #Note that quantile 0.95 is highly variable at each run, so we do not consider it anymore! On the other han, quantile 0.25, 0.5, 0.75 are stable between the different runs.
 
-#Display the hypothetical ice slab
-fig = plt.figure(figsize=(12,2))
-gs = gridspec.GridSpec(6, 6)
-ax1 = plt.subplot(gs[0:2, 0:6])
-ax2 = plt.subplot(gs[2:4, 0:6])
-ax3 = plt.subplot(gs[4:6, 0:6])
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v3/Fig_hypothetical_slab.png',dpi=300)#,bbox_inches='tight')
+'''
+### --------- Perform the same analysis for an hypothetical ice slab --------- ###
 
-#Underlying data for hypothetical ice slab generation
-ax1.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["underlying_data"])
-ax1.set_ylim(16,0)
-
-#Hypothetical ice slab
-ax2.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["ice_thickness"])
-ax2.set_ylim(16,0)
-
-#Hypothetical ice slab after appliance of the rolling window
-ax3.fill_between(np.arange(0,len(Hypothetical_IceSlabs_Transect)),Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"])
-ax3.set_ylim(16,0)
 ###############################################################################
 ###                   Ice Thickness spatial heterogeneity                   ###
 ###############################################################################
