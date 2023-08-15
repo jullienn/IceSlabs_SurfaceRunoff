@@ -1303,7 +1303,7 @@ if (investigation_year==CaseStudy2):
     ax3.text(0.01, 0.85,'b',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax7.text(0.01, 0.85,'c',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax9.text(0.01, 0.85,'d',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax_map.text(0.01, 0.925,'e',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax_map.text(0.01, 0.925,'f',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     '''
     ax_NDWI.text(0.01, 0.925,'g',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     '''
@@ -1360,7 +1360,7 @@ plt.show()
 pdb.set_trace()
 
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v3/Fig6abcde.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/Fig6abcdf.png',dpi=300)#,bbox_inches='tight')
 
 '''
 #Save the figure
