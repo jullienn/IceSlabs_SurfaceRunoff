@@ -20,6 +20,66 @@ def compute_distances(eastings,northings):
 
     return return_cumsum_distances
 
+def load_and_diplay_raster(path_data,vlim_min,vlim_max,cmap_raster,ax_plot,axc_plot,type_map):
+    '''
+    #Define limits, here case study 2 limits
+    x_min=-103459
+    x_max=-89614
+    y_min=-2454966
+    y_max=-2447521
+    '''
+    x_min=-115968
+    x_max=-79143
+    y_min=-2454966
+    y_max=-2447521
+        
+    ### ------------- This is from Greenland_Hydrology_Summary.py ------------- ###
+    #Load raster data for display
+    MapPlot = rxr.open_rasterio(path_data,masked=True).squeeze() #No need to reproject satelite image
+    ### ------------- This is from Greenland_Hydrology_Summary.py ------------- ###
+    
+    #Extract x and y coordinates of image
+    x_coord_MapPlot=np.asarray(MapPlot.x)
+    y_coord_MapPlot=np.asarray(MapPlot.y)
+    ### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
+    
+    #Extract coordinates ofcumulative raster within Emaxs bounds
+    logical_x_coord_within_bounds=np.logical_and(x_coord_MapPlot>=x_min,x_coord_MapPlot<=x_max)
+    x_coord_within_bounds=x_coord_MapPlot[logical_x_coord_within_bounds]
+    logical_y_coord_within_bounds=np.logical_and(y_coord_MapPlot>=y_min,y_coord_MapPlot<=y_max)
+    y_coord_within_bounds=y_coord_MapPlot[logical_y_coord_within_bounds]
+
+    #Define extents based on the bounds
+    extent_MapPlot = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+    
+    #Display map
+    cbar_MapPlot=ax_plot.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap=cmap_raster,vmin=vlim_min,vmax=vlim_max,zorder=0)
+    
+    if (type_map=='DEM'):
+        #Display DEM contours 
+        ax_plot.contour(x_coord_within_bounds,
+                        y_coord_within_bounds,
+                        MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds],
+                        levels=np.arange(1659,1895,5), transform=crs, origin='upper', cmap='gray_r',vmin=1650,vmax=1655,zorder=1,alpha=0.5)
+        
+    #Set lims
+    ax_plot.set_xlim(x_min,x_max)
+    ax_plot.set_ylim(y_min,y_max)
+    
+    #Display cbar
+    cbar_MapPlot_label=fig1.colorbar(cbar_MapPlot, cax=axc_plot)
+    
+    if (type_map == 'DEM'):
+        cbar_MapPlot_label.set_label('Elevation [m]',labelpad=15)#labelpad is from https://stackoverflow.com/questions/17475619/how-do-i-adjust-offset-colorbar-title-in-matplotlib
+    elif (type_map == 'NDWI'):
+        cbar_MapPlot_label.set_label('NDWI [-]',labelpad=22.5)
+    else:
+        print('Not known!')
+        pdb.set_trace()
+    
+
+
+    return
 
 import pandas as pd
 import numpy as np
@@ -45,6 +105,7 @@ import os
 import matplotlib as mpl
 from scipy.optimize import curve_fit
 from scipy import stats
+from matplotlib_scalebar.scalebar import ScaleBar
 
 ### Set sizes ###
 # this is from https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
@@ -360,7 +421,7 @@ print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.2
 #Note that in the real world dataset, there are longitudinal transects! But these ones are expected to have an even lower variability if we consider no other influence that melting gradient due to elevation gradient.
 #Note that quantile 0.95 is highly variable at each run, so we do not consider it anymore! On the other han, quantile 0.25, 0.5, 0.75 are stable between the different runs.
 
-pdb.set_trace()
+#pdb.set_trace()
 
 '''
 #Save the figure
@@ -395,13 +456,187 @@ legend_elements = [Line2D([0], [0], color='C0', label='Mean'),
 ax_TransectFig6_second.legend(handles=legend_elements,loc='lower left',fontsize=8,framealpha=0.8).set_zorder(7)
 plt.show()
 
-pdb.set_trace()
-
 '''
 #Save the figure
 plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/Fig6_e.png',dpi=300)#,bbox_inches='tight')
 '''
 ### --------- Perform the same analysis for an hypothetical ice slab --------- ###
+
+#pdb.set_trace()
+
+### --------------------------- Sector B focus --------------------------- ###
+#Display NDWI - this is from CaseStudy_Emax_IceSlabs.py
+
+#Define transformer for coordinates transform from "EPSG:4326" to "EPSG:3413"
+transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
+
+#Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+import rioxarray as rxr
+
+###################### From Tedstone et al., 2022 #####################
+#from plot_map_decadal_change.py
+# Define the CartoPy CRS object.
+crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
+# This can be converted into a `proj4` string/dict compatible with GeoPandas
+crs_proj4 = crs.proj4_init
+###################### From Tedstone et al., 2022 #####################
+
+#Display image
+plt.rcParams.update({'font.size': 8})
+fig1 = plt.figure(figsize=(8.27,5.16))#Nature pdf size = (8.27,10.87)
+gs = gridspec.GridSpec(52, 101)
+gs.update(wspace=0.1)
+gs.update(wspace=0.5)
+ax_NDWI = plt.subplot(gs[1:18, 0:100], projection=crs)
+axc_NDWI = plt.subplot(gs[1:18, 100:101])
+ax_DEM = plt.subplot(gs[18:35, 0:100], projection=crs)
+axc_DEM = plt.subplot(gs[18:35, 100:101])
+ax_StrainRate = plt.subplot(gs[35:52, 0:100], projection=crs)
+axc_StrainRate = plt.subplot(gs[35:52, 100:101])
+
+axc_IceThickness = plt.subplot(gs[0:1, 35:65])
+
+### NDWI ###
+#path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'+'NDWI_p10_'+str(2019)+'.vrt'
+path_NDWI='X:/RT3_jullien/NDWI/'+'NDWI_p10_'+str(2019)+'.vrt'
+vlim_min_NDWI=0
+vlim_max_NDWI=0.6
+cmap_NDWI='Blues'
+#Display
+load_and_diplay_raster(path_NDWI,vlim_min_NDWI,vlim_max_NDWI,cmap_NDWI,ax_NDWI,axc_NDWI,'NDWI')
+### NDWI ###
+
+
+### Local Artic DEM ###
+path_DEM='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/10m_arcticDEM/'+'16_3940_10m_v3.0_reg_dem_ClippedToTransectFig5.tif'
+vlim_min_DEM=1663#1710
+vlim_max_DEM=1890#1810
+cmap_DEM='Spectral'
+#Display
+load_and_diplay_raster(path_DEM,vlim_min_DEM,vlim_max_DEM,cmap_DEM,ax_DEM,axc_DEM,'DEM')
+### Local Artic DEM ###
+
+#Display transect
+cbar_IceThickness=ax_NDWI.scatter(TransectFig6_WithinBounds_reverted.lon_3413,TransectFig6_WithinBounds_reverted.lat_3413,c=TransectFig6_WithinBounds_reverted["20m_ice_content_m"],cmap='gray_r')
+ax_DEM.scatter(TransectFig6_WithinBounds_reverted.lon_3413,TransectFig6_WithinBounds_reverted.lat_3413,c=TransectFig6_WithinBounds_reverted["20m_ice_content_m"],cmap='gray_r')
+ax_StrainRate.scatter(TransectFig6_WithinBounds_reverted.lon_3413,TransectFig6_WithinBounds_reverted.lat_3413,c=TransectFig6_WithinBounds_reverted["20m_ice_content_m"],cmap='gray_r')
+
+'''
+#Display sector B
+ax_NDWI.scatter(TransectFig6_WithinBounds_reverted[np.logical_and(TransectFig6_WithinBounds_reverted.lon>=-47.299504,TransectFig6_WithinBounds_reverted.lon<=-47.232908)]['lon_3413'],
+                TransectFig6_WithinBounds_reverted[np.logical_and(TransectFig6_WithinBounds_reverted.lon>=-47.299504,TransectFig6_WithinBounds_reverted.lon<=-47.232908)]['lat_3413'])
+'''
+#Coordinates of sectors to display
+coord_sectors=[#(67.620575, -47.59745),
+               #(67.622106, -47.566856),
+               (67.626644, -47.414368),
+               (67.628561, -47.33543),
+               (67.629785, -47.299504),
+               (67.632129, -47.232908),
+               #(67.632711, -47.216256),
+               #(67.633521, -47.183796),
+               (67.635528, -47.14),
+               (67.636072, -47.09873)]
+#Display sections on the map
+for indiv_point in coord_sectors:
+    #Transform the coordinates from EPSG:3413 to EPSG:4326
+    #Example from: https://pyproj4.github.io/pyproj/stable/examples.html
+    points=transformer.transform(indiv_point[1],indiv_point[0])
+    ax_NDWI.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
+    ax_DEM.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
+    ax_StrainRate.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
+
+#Display strain rate, from https://ubir.buffalo.edu/xmlui/handle/10477/82127
+import xarray
+GrIS_StrainRate= xarray.open_dataset("C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/10m_arcticDEM/GrISWinterPrincipalStrainrate_0670.nc")
+GrIS_StrainRate.rio.write_crs(3413,inplace=True)
+#Make sure crs is set
+print(GrIS_StrainRate.spatial_ref)
+
+'''
+#Define limits, here case study 2 limits
+x_min=-103459
+x_max=-89614
+y_min=-2454966
+y_max=-2447521
+'''
+x_min=-115968
+x_max=-79143
+y_min=-2454966
+y_max=-2447521
+
+#Extract x and y coordinates of image
+x_coord_GrIS_StrainRate=GrIS_StrainRate.x.data
+y_coord_GrIS_StrainRate=GrIS_StrainRate.y.data
+### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
+
+#Extract coordinates ofcumulative raster within Emaxs bounds
+logical_x_coord_within_bounds=np.logical_and(x_coord_GrIS_StrainRate>=x_min,x_coord_GrIS_StrainRate<=x_max)
+x_coord_within_bounds=x_coord_GrIS_StrainRate[logical_x_coord_within_bounds]
+logical_y_coord_within_bounds=np.logical_and(y_coord_GrIS_StrainRate>=y_min,y_coord_GrIS_StrainRate<=y_max)
+y_coord_within_bounds=y_coord_GrIS_StrainRate[logical_y_coord_within_bounds]
+
+#Define extents based on the bounds
+extent_GrIS_StrainRate = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+
+#Display map
+cbar_StrainRate=ax_StrainRate.imshow(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds],
+                                     extent=extent_GrIS_StrainRate, transform=crs, origin='upper',
+                                     vmin=np.quantile(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds].data,0.01),
+                                     vmax=np.quantile(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds].data,0.99),zorder=0)
+
+#Set lims
+ax_StrainRate.set_xlim(x_min,x_max)
+ax_StrainRate.set_ylim(y_min,y_max)
+
+#Display cbar
+cbar_StrainRate_label=fig1.colorbar(cbar_StrainRate, cax=axc_StrainRate)
+cbar_StrainRate_label.set_label('Principal strain rate [$yr^{-1}$]')
+
+#Display cbar IceThickness
+cbar_IceThickness_label=fig1.colorbar(cbar_IceThickness, cax=axc_IceThickness,orientation='horizontal',ticklocation='top')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
+cbar_IceThickness_label.set_label('Ice slab thickness [m]')
+
+###################### From Tedstone et al., 2022 #####################
+#from plot_map_decadal_change.py
+gl=ax_NDWI.gridlines(draw_labels=True, xlocs=[-46.8,-47.0,-47.2,-47.4,-47.6], ylocs=[67.60,67.625,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+#Customize lat labels
+gl.right_labels = False
+gl.bottom_labels = False
+gl.top_labels = False
+
+gl=ax_DEM.gridlines(draw_labels=True, xlocs=[-46.8,-47.0,-47.2,-47.4,-47.6], ylocs=[67.60,67.625,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+#Customize lat labels
+gl.right_labels = False
+gl.bottom_labels = False
+gl.top_labels = False
+
+gl=ax_StrainRate.gridlines(draw_labels=True, xlocs=[-46.8,-47.0,-47.2,-47.4,-47.6], ylocs=[67.60,67.625,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+#Customize lat labels
+gl.right_labels = False
+gl.top_labels = False
+###################### From Tedstone et al., 2022 #####################
+
+# Display scalebar with GeoPandas
+ax_NDWI.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+ax_DEM.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+ax_StrainRate.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+
+#Display panel label
+ax_NDWI.text(0.01, 0.9,'a',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_DEM.text(0.01, 0.9,'b',ha='center', va='center', transform=ax_DEM.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.01, 0.9,'c',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS4.png',dpi=300,bbox_inches='tight')
+'''
+### --------------------------- Sector B focus --------------------------- ###
+
+pdb.set_trace()
 
 ###############################################################################
 ###                   Ice Thickness spatial heterogeneity                   ###

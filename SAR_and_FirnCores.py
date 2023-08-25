@@ -67,6 +67,8 @@ import rioxarray as rxr
 import os
 from pyproj import Transformer
 import rasterio
+import pickle
+from matplotlib_scalebar.scalebar import ScaleBar
 
 #Define paths where data are stored
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
@@ -79,18 +81,32 @@ path_rignotetal2016_GrIS_drainage_bassins=path_switchdrive+'/backup_Aglaja/worki
 #Load IMBIE drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
-#Open SAR image
-SAR_SW_00_00 = rasterio.open(path_SAR+'ref_IW_HV_2021_2021_32_106_40m_ASCDESC_SW_minnscenes50-0000000000-0000000000.tif')
+#Load Transect data
+path_transect='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/IceSlabs_And_Coordinates/'
+#Open 2013 transect
+f_2013_Transect = open(path_transect+'20130409_01_010_012_IceSlabs.pickle', "rb")
+Transect_2013 = pickle.load(f_2013_Transect)
+f_2013_Transect.close()
+#Open 2018 transect
+f_2018_Transect = open(path_transect+'20180421_01_004_007_IceSlabs.pickle', "rb")
+Transect_2018 = pickle.load(f_2018_Transect)
+f_2018_Transect.close()
+#Convert 0 in NaNs in ice slasb mask
+Transect_2013["IceSlabs_Mask"][Transect_2013["IceSlabs_Mask"]==0]=np.nan
+Transect_2018["IceSlabs_Mask"][Transect_2018["IceSlabs_Mask"]==0]=np.nan
 
-'''
-### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
-#This section of displaying sat data was coding using tips from
-#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
-#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
-#Load SAR data
-SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
-SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
-'''
+#Transform radargram coordinates from WGS84 to EPSG:3413
+transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
+#Transform 2013
+points=transformer.transform(Transect_2013["longitude_EPSG_4326"],
+                             Transect_2013["latitude_EPSG_4326"])
+Transect_2013["longitude_EPSG_3413"]=points[0]
+Transect_2013["latitude_EPSG_3413"]=points[1]
+#Transform 2018
+points=transformer.transform(Transect_2018["longitude_EPSG_4326"],
+                             Transect_2018["latitude_EPSG_4326"])
+Transect_2018["longitude_EPSG_3413"]=points[0]
+Transect_2018["latitude_EPSG_3413"]=points[1]
 
 #Load firn cores data
 firn_cores_pd=pd.read_excel(path_firn_cores+'firn_cores_2021.xlsx',sheet_name=['overview','FS2_12m','FS4_20m','FS4_5m','FS5_20m','FS5_5m'])
@@ -107,6 +123,88 @@ ice_content_percentage_FS2=calculate_ice_content(firn_cores_pd,'FS2_12m',114)
 #Drop FS where no ice content was computed
 firn_cores_overview=firn_cores_pd['overview'][~firn_cores_pd['overview']['ice content %'].isna()].copy()
 
+#Display ice slab transect
+plt.rcParams.update({'font.size': 8})
+fig1 = plt.figure(figsize=(19.09,  2.07))
+gs = gridspec.GridSpec(5, 5)
+ax_iceslab = plt.subplot(gs[0:5, 0:5])
+#Display 2018 ice slab
+cb=ax_iceslab.pcolor(Transect_2018["longitude_EPSG_4326"],Transect_2018["depth"],
+                     Transect_2018["IceSlabs_Mask"],cmap=plt.get_cmap('gray_r'),vmin=0, vmax=0.0001)
+#Display 2013 ice slab
+cb=ax_iceslab.pcolor(Transect_2013["longitude_EPSG_4326"],Transect_2013["depth"],
+                     Transect_2013["IceSlabs_Mask"],cmap=plt.get_cmap('autumn_r'),vmin=0, vmax=0.0001,alpha=0.5,edgecolor='None')
+ax_iceslab.invert_yaxis() #Invert the y axis = avoid using flipud.
+#Display FS location
+ax_iceslab.scatter(firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS2_12m"].E,1)
+ax_iceslab.scatter(firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS4_20m"].E,1)
+ax_iceslab.scatter(firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS5_20m"].E,1)
+
+#Display map to evaluate distance
+###################### From Tedstone et al., 2022 #####################
+#from plot_map_decadal_change.py
+# Define the CartoPy CRS object.
+crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
+# This can be converted into a `proj4` string/dict compatible with GeoPandas
+crs_proj4 = crs.proj4_init
+###################### From Tedstone et al., 2022 #####################
+plt.rcParams.update({'font.size': 8})
+fig_map = plt.figure(figsize=(5,5))
+gs = gridspec.GridSpec(5, 5)
+ax_map = plt.subplot(gs[0:5, 0:5],projection=crs)
+ax_map.scatter(Transect_2013["longitude_EPSG_3413"],Transect_2013["latitude_EPSG_3413"],c='red')
+ax_map.scatter(Transect_2018["longitude_EPSG_3413"],Transect_2018["latitude_EPSG_3413"],c='black',alpha=0.5)
+ax_map.scatter(firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS2_12m"].lon_3413,
+               firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS2_12m"].lat_3413)
+
+ax_map.scatter(firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS4_20m"].lon_3413,
+               firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS4_20m"].lat_3413)
+
+ax_map.scatter(firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS5_20m"].lon_3413,
+               firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS5_20m"].lat_3413)
+ax_map.set_xlim(-139755,-56158)
+ax_map.set_ylim(-2532672,-2517589)
+
+# Display scalebar with GeoPandas
+ax_map.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))
+#Extract ice thickness in the vicinity of the FS location, in the first 10 m firn.
+#The depth of the top of the firn layer in each firn core was already identified
+
+#Set the depth at which starts the firn layer
+firn_cores_overview.loc[0,"depth_firn"]=140#FS4_20m
+firn_cores_overview.loc[2,"depth_firn"]=123#FS5_20m
+firn_cores_overview.loc[4,"depth_firn"]=114#FS2_12m
+
+#Extract the average horizontal resolution of the 2013 and 2018 radargrams
+
+pdb.set_trace()
+
+#perform average ice content over 1 km, i.e. +/- 500 m
+for index, row in firn_cores_overview.iterrows():
+    print(row)
+    #Locate the vicinity of the FS longitude in 2018 transect
+    index_within_bounds_2018=np.logical_and(Transect_2018["longitude_EPSG_3413"]>=(row.lon_3413-500),Transect_2018["longitude_EPSG_3413"]<=(row.lon_3413+500))
+    
+    #Locate the index of the top firn layer and top firn layer + 10 m
+    index_top_firn_2018=np.where(np.abs(Transect_2018["depth"]-row.depth_firn/100)==np.min(np.abs(Transect_2018["depth"]-row.depth_firn/100)))[0][0]
+    index_10m_firn_2018=np.where(np.abs(Transect_2018["depth"]-(10+row.depth_firn/100))==np.min(np.abs(Transect_2018["depth"]-(10+row.depth_firn/100))))[0][0]
+    
+    #Extract the ice thickness in the top 10 m of firn in the vicinity of the transect 
+    Transect_2018["IceSlabs_Mask"][index_top_firn_2018:index_10m_firn_2018,index_within_bounds_2018]
+    
+pdb.set_trace()
+
+#Open SAR image
+SAR_SW_00_00 = rasterio.open(path_SAR+'ref_IW_HV_2021_2021_32_106_40m_ASCDESC_SW_minnscenes50-0000000000-0000000000.tif')
+'''
+### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
+#This section of displaying sat data was coding using tips from
+#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+#Load SAR data
+SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
+SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
+'''
 #Extract SAR data at place where firn core was drilled
 tuple_list=np.array((firn_cores_overview.lon_3413.to_numpy(),firn_cores_overview.lat_3413.to_numpy())).T #from https://stackoverflow.com/questions/35091879/merge-two-arrays-vertically-to-array-of-tuples-using-numpy
 
@@ -118,13 +216,5 @@ for val in SAR_SW_00_00.sample(tuple_list):
 #Store extracted SAR in firn_cores_overview
 firn_cores_overview['SAR']=extracted_SAR
 
-print('End of code')
-
-
-
-
-
-
-
-
+print('End of code')       
 

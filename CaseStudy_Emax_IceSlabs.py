@@ -1367,7 +1367,3 @@ plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/Fig6abcdf.png',dpi=300)#,bbox_
 plt.savefig('C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/Section1/CS2/v2/CS2_NDWI_RadargramsAndEmax_HighestAndClosest_map.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
-
-
-    
-    
