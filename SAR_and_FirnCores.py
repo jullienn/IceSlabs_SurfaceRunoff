@@ -85,6 +85,7 @@ from pyproj import Transformer
 import rasterio
 import pickle
 from matplotlib_scalebar.scalebar import ScaleBar
+import geopandas as gpd
 
 #Define paths where data are stored
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
@@ -197,6 +198,12 @@ firn_cores_overview.loc[0,"depth_firn"]=140#FS4_20m
 firn_cores_overview.loc[2,"depth_firn"]=123#FS5_20m
 firn_cores_overview.loc[4,"depth_firn"]=114#FS2_12m
 
+#Transform firn_cores_overview into a geopandas df for distance calculation
+firn_cores_overview = gpd.GeoDataFrame(firn_cores_overview,
+                                       geometry=gpd.GeoSeries.from_xy(firn_cores_overview['lon_3413'],
+                                                                       firn_cores_overview['lat_3413'],
+                                                                       crs='EPSG:3413'))
+
 #Extract the average horizontal resolution of the 2013 and 2018 radargrams
 
 #perform average ice content over 1 km, i.e. +/- 500 m
@@ -223,8 +230,18 @@ for index, row in firn_cores_overview.iterrows():
         Ice_Thickess_10m_2013=np.append(Ice_Thickess_10m_2013,(For_IceContent_Extraction_2013[:,column]>0).astype(int).sum()*np.mean(np.diff(Transect_2013["depth"])))
     
     #Display 2013 mean ice thickness
-    print('2013',row.core,':',np.round(np.mean(Ice_Thickess_10m_2013),1),'m')
-    print('2013',row.core,':',np.round(np.mean(Ice_Thickess_10m_2013)/10*100,1),'%')
+    print('Total ice thickness in the first 10 m of 2013 radargram',row.core,':',np.round(np.mean(Ice_Thickess_10m_2013),1),'m')
+    print('Total ice content in the first 10 m of 2013 radargram',row.core,':',np.round(np.mean(Ice_Thickess_10m_2013)/10*100,1),'%')
+        
+    #Calculate average distance between 2013 radargram buffer and FS location - use GeoPandas!
+    Transect_2013_within_bounds = pd.DataFrame(data={'longitude_EPSG_3413':Transect_2013["longitude_EPSG_3413"][index_within_bounds_2013],
+                                                     'latitude_EPSG_3413':Transect_2013["latitude_EPSG_3413"][index_within_bounds_2013]})
+                                                       
+    Transect_2013_within_bounds_gpd = gpd.GeoDataFrame(Transect_2013_within_bounds,
+                                                       geometry=gpd.GeoSeries.from_xy(Transect_2013_within_bounds['longitude_EPSG_3413'],
+                                                                                      Transect_2013_within_bounds['latitude_EPSG_3413'],
+                                                                                      crs='EPSG:3413'))
+    print('2013 radargram average distance with',row.core,':',np.round(Transect_2013_within_bounds_gpd.distance(row.geometry).mean()),'m')
     # -------------------------------- 2013 --------------------------------- #
 
     # -------------------------------- 2018 --------------------------------- #
@@ -247,8 +264,18 @@ for index, row in firn_cores_overview.iterrows():
         Ice_Thickess_10m_2018=np.append(Ice_Thickess_10m_2018,(For_IceContent_Extraction_2018[:,column]>0).astype(int).sum()*np.mean(np.diff(Transect_2018["depth"])))
     
     #Display 2018 mean ice thickness
-    print('2018',row.core,':',np.round(np.mean(Ice_Thickess_10m_2018),1),'m')
-    print('2018',row.core,':',np.round(np.mean(Ice_Thickess_10m_2018)/10*100,1),'%')
+    print('Total ice thickness in the first 10 m of 2018 radargram',row.core,':',np.round(np.mean(Ice_Thickess_10m_2018),1),'m')
+    print('Total ice content in the first 10 m of 2018 radargram',row.core,':',np.round(np.mean(Ice_Thickess_10m_2018)/10*100,1),'%')
+    
+    #Calculate average distance between 2018 radargram buffer and FS location - use GeoPandas!
+    Transect_2018_within_bounds = pd.DataFrame(data={'longitude_EPSG_3413':Transect_2018["longitude_EPSG_3413"][index_within_bounds_2018],
+                                                     'latitude_EPSG_3413':Transect_2018["latitude_EPSG_3413"][index_within_bounds_2018]})
+                                                       
+    Transect_2018_within_bounds_gpd = gpd.GeoDataFrame(Transect_2018_within_bounds,
+                                                       geometry=gpd.GeoSeries.from_xy(Transect_2018_within_bounds['longitude_EPSG_3413'],
+                                                                                      Transect_2018_within_bounds['latitude_EPSG_3413'],
+                                                                                      crs='EPSG:3413'))
+    print('2018 radargram average distance with',row.core,':',np.round(Transect_2018_within_bounds_gpd.distance(row.geometry).mean()),'m')
     # -------------------------------- 2018 --------------------------------- #
     
 pdb.set_trace()
