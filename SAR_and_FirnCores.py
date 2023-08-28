@@ -5,6 +5,22 @@ Created on Wed May 10 10:45:00 2023
 @author: jullienn
 """
 
+
+def compute_distances(eastings,northings):
+    #This function is from plot_2002_2003.py, which was originally taken from MacFerrin et al., 2019
+    '''Compute the distance (in m here, not km as written originally) of the traces in the file.'''
+    # C = sqrt(A^2  + B^2)
+    distances = np.power(np.power((eastings[1:] - eastings[:-1]),2) + np.power((northings[1:] - northings[:-1]),2), 0.5)
+
+    #Calculate the cumsum of the distances
+    cumsum_distances=np.nancumsum(distances)
+    #Seeting the first value of the cumsum to be zero as it is the origin
+    return_cumsum_distances=np.zeros(eastings.shape[0])
+    return_cumsum_distances[1:eastings.shape[0]]=cumsum_distances
+
+    return return_cumsum_distances
+
+
 def calculate_ice_content(dfs_firn_core,firn_core,depth_start_firn):
     #Calculate firn ice content within the first 10 m.
     penetration_depth_Cband=1000
@@ -81,7 +97,7 @@ path_rignotetal2016_GrIS_drainage_bassins=path_switchdrive+'/backup_Aglaja/worki
 #Load IMBIE drainage bassins
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
-#Load Transect data
+### -------------------------- Load Transect data ------------------------- ###
 path_transect='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/IceSlabs_And_Coordinates/'
 #Open 2013 transect
 f_2013_Transect = open(path_transect+'20130409_01_010_012_IceSlabs.pickle', "rb")
@@ -108,7 +124,12 @@ points=transformer.transform(Transect_2018["longitude_EPSG_4326"],
 Transect_2018["longitude_EPSG_3413"]=points[0]
 Transect_2018["latitude_EPSG_3413"]=points[1]
 
-#Load firn cores data
+#Compute distances
+Transect_2013["distances"]= compute_distances(Transect_2013["longitude_EPSG_3413"],Transect_2013["latitude_EPSG_3413"])
+Transect_2018["distances"]= compute_distances(Transect_2018["longitude_EPSG_3413"],Transect_2018["latitude_EPSG_3413"])
+### -------------------------- Load Transect data ------------------------- ###
+
+### ------------------------- Load firn cores data ------------------------ ###
 firn_cores_pd=pd.read_excel(path_firn_cores+'firn_cores_2021.xlsx',sheet_name=['overview','FS2_12m','FS4_20m','FS4_5m','FS5_20m','FS5_5m'])
 #Add a column to store ice content
 firn_cores_pd['overview']['ice content %']=[np.nan]*len(firn_cores_pd['overview'])
@@ -122,6 +143,7 @@ ice_content_percentage_FS2=calculate_ice_content(firn_cores_pd,'FS2_12m',114)
 
 #Drop FS where no ice content was computed
 firn_cores_overview=firn_cores_pd['overview'][~firn_cores_pd['overview']['ice content %'].isna()].copy()
+### ------------------------- Load firn cores data ------------------------ ###
 
 #Display ice slab transect
 plt.rcParams.update({'font.size': 8})
@@ -177,11 +199,35 @@ firn_cores_overview.loc[4,"depth_firn"]=114#FS2_12m
 
 #Extract the average horizontal resolution of the 2013 and 2018 radargrams
 
-pdb.set_trace()
-
 #perform average ice content over 1 km, i.e. +/- 500 m
 for index, row in firn_cores_overview.iterrows():
-    print(row)
+    #print(row)
+    
+    # -------------------------------- 2013 --------------------------------- #
+    #Locate the vicinity of the FS longitude in 2013 transect
+    index_within_bounds_2013=np.logical_and(Transect_2013["longitude_EPSG_3413"]>=(row.lon_3413-500),Transect_2013["longitude_EPSG_3413"]<=(row.lon_3413+500))
+    
+    #Locate the index of the top firn layer and top firn layer + 10 m
+    index_top_firn_2013=np.where(np.abs(Transect_2013["depth"]-row.depth_firn/100)==np.min(np.abs(Transect_2013["depth"]-row.depth_firn/100)))[0][0]
+    index_10m_firn_2013=np.where(np.abs(Transect_2013["depth"]-(10+row.depth_firn/100))==np.min(np.abs(Transect_2013["depth"]-(10+row.depth_firn/100))))[0][0]
+    
+    #Display extracted sector on the map
+    ax_iceslab.axvline(Transect_2013["longitude_EPSG_4326"][index_within_bounds_2013][0],c='orange')
+    ax_iceslab.axvline(Transect_2013["longitude_EPSG_4326"][index_within_bounds_2013][-1],c='orange')
+    
+    #Extract the ice thickness in the top 10 m of firn in the vicinity of the transect 
+    For_IceContent_Extraction_2013 = Transect_2013["IceSlabs_Mask"][index_top_firn_2013:index_10m_firn_2013,index_within_bounds_2013]
+        
+    Ice_Thickess_10m_2013=[]
+    for column in range(0,For_IceContent_Extraction_2013.shape[1]):
+        Ice_Thickess_10m_2013=np.append(Ice_Thickess_10m_2013,(For_IceContent_Extraction_2013[:,column]>0).astype(int).sum()*np.mean(np.diff(Transect_2013["depth"])))
+    
+    #Display 2013 mean ice thickness
+    print('2013',row.core,':',np.round(np.mean(Ice_Thickess_10m_2013),1),'m')
+    print('2013',row.core,':',np.round(np.mean(Ice_Thickess_10m_2013)/10*100,1),'%')
+    # -------------------------------- 2013 --------------------------------- #
+
+    # -------------------------------- 2018 --------------------------------- #
     #Locate the vicinity of the FS longitude in 2018 transect
     index_within_bounds_2018=np.logical_and(Transect_2018["longitude_EPSG_3413"]>=(row.lon_3413-500),Transect_2018["longitude_EPSG_3413"]<=(row.lon_3413+500))
     
@@ -189,8 +235,21 @@ for index, row in firn_cores_overview.iterrows():
     index_top_firn_2018=np.where(np.abs(Transect_2018["depth"]-row.depth_firn/100)==np.min(np.abs(Transect_2018["depth"]-row.depth_firn/100)))[0][0]
     index_10m_firn_2018=np.where(np.abs(Transect_2018["depth"]-(10+row.depth_firn/100))==np.min(np.abs(Transect_2018["depth"]-(10+row.depth_firn/100))))[0][0]
     
+    #Display extracted sector on the map
+    ax_iceslab.axvline(Transect_2018["longitude_EPSG_4326"][index_within_bounds_2018][0],c='grey')
+    ax_iceslab.axvline(Transect_2018["longitude_EPSG_4326"][index_within_bounds_2018][-1],c='grey')
+    
     #Extract the ice thickness in the top 10 m of firn in the vicinity of the transect 
-    Transect_2018["IceSlabs_Mask"][index_top_firn_2018:index_10m_firn_2018,index_within_bounds_2018]
+    For_IceContent_Extraction_2018 = Transect_2018["IceSlabs_Mask"][index_top_firn_2018:index_10m_firn_2018,index_within_bounds_2018]
+        
+    Ice_Thickess_10m_2018=[]
+    for column in range(0,For_IceContent_Extraction_2018.shape[1]):
+        Ice_Thickess_10m_2018=np.append(Ice_Thickess_10m_2018,(For_IceContent_Extraction_2018[:,column]>0).astype(int).sum()*np.mean(np.diff(Transect_2018["depth"])))
+    
+    #Display 2018 mean ice thickness
+    print('2018',row.core,':',np.round(np.mean(Ice_Thickess_10m_2018),1),'m')
+    print('2018',row.core,':',np.round(np.mean(Ice_Thickess_10m_2018)/10*100,1),'%')
+    # -------------------------------- 2018 --------------------------------- #
     
 pdb.set_trace()
 
