@@ -584,9 +584,10 @@ extent_GrIS_StrainRate = [np.min(x_coord_within_bounds), np.max(x_coord_within_b
 
 #Display map
 cbar_StrainRate=ax_StrainRate.imshow(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds],
-                                     extent=extent_GrIS_StrainRate, transform=crs, origin='upper',
-                                     vmin=np.quantile(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds].data,0.01),
-                                     vmax=np.quantile(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds].data,0.99),zorder=0)
+                                     extent=extent_GrIS_StrainRate, transform=crs, origin='upper', cmap='RdBu_r',
+                                     vmin=-0.0015, vmax=0.0015,zorder=0)
+                                     #vmin=np.quantile(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds].data,0.01),
+                                     #vmax=np.quantile(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds].data,0.99),zorder=0)
 
 #Set lims
 ax_StrainRate.set_xlim(x_min,x_max)
@@ -632,7 +633,7 @@ ax_StrainRate.text(0.01, 0.9,'c',ha='center', va='center', transform=ax_StrainRa
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS4.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS4_new.png',dpi=300,bbox_inches='tight')
 '''
 ### --------------------------- Sector B focus --------------------------- ###
 

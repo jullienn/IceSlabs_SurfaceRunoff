@@ -86,6 +86,8 @@ import rasterio
 import pickle
 from matplotlib_scalebar.scalebar import ScaleBar
 import geopandas as gpd
+import xarray
+import matplotlib.patches as patches
 
 #Define paths where data are stored
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
@@ -100,6 +102,10 @@ GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'G
 
 ### -------------------------- Load Transect data ------------------------- ###
 path_transect='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/IceSlabs_And_Coordinates/'
+#Open 2012 transect
+f_2012_Transect = open(path_transect+'20120423_01_137_138_IceSlabs.pickle', "rb")
+Transect_2012 = pickle.load(f_2012_Transect)
+f_2012_Transect.close()
 #Open 2013 transect
 f_2013_Transect = open(path_transect+'20130409_01_010_012_IceSlabs.pickle', "rb")
 Transect_2013 = pickle.load(f_2013_Transect)
@@ -114,6 +120,11 @@ Transect_2018["IceSlabs_Mask"][Transect_2018["IceSlabs_Mask"]==0]=np.nan
 
 #Transform radargram coordinates from WGS84 to EPSG:3413
 transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
+#Transform 2012
+points=transformer.transform(Transect_2012["longitude_EPSG_4326"],
+                             Transect_2012["latitude_EPSG_4326"])
+Transect_2012["longitude_EPSG_3413"]=points[0]
+Transect_2012["latitude_EPSG_3413"]=points[1]
 #Transform 2013
 points=transformer.transform(Transect_2013["longitude_EPSG_4326"],
                              Transect_2013["latitude_EPSG_4326"])
@@ -278,6 +289,167 @@ for index, row in firn_cores_overview.iterrows():
     print('2018 radargram average distance with',row.core,':',np.round(Transect_2018_within_bounds_gpd.distance(row.geometry).mean()),'m')
     # -------------------------------- 2018 --------------------------------- #
     
+pdb.set_trace()
+
+### Display strain rate close to FS1 for crevassing potential ###
+
+### --------------------- Load 2012 and 2018 radargrams ------------------- ###
+path_depth_corrected='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/i_out_from_IceBridgeGPR_Manager_v2.py/pickles_and_images/Depth_Corrected_Picklefiles/'
+#Open 2012 transect
+f_2012_DepthCorrected = open(path_depth_corrected+'20120423_01_137_138_DEPTH_CORRECTED.pickle', "rb")
+DepthCorrected_2012 = pickle.load(f_2012_DepthCorrected)
+f_2012_DepthCorrected.close()
+#Open 2018 transect
+f_2018_DepthCorrected = open(path_depth_corrected+'20180421_01_004_007_DEPTH_CORRECTED.pickle', "rb")
+DepthCorrected_2018 = pickle.load(f_2018_DepthCorrected)
+f_2018_DepthCorrected.close()
+### --------------------- Load 2012 and 2018 radargrams ------------------- ###
+
+### ----------------- Load Wintertine Principal Strain Rates -------------- ###
+#Display strain rate, from https://ubir.buffalo.edu/xmlui/handle/10477/82127
+GrIS_StrainRate= xarray.open_dataset("C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/10m_arcticDEM/GrISWinterPrincipalStrainrate_0670.nc")
+GrIS_StrainRate.rio.write_crs(3413,inplace=True)
+#Make sure crs is set
+print(GrIS_StrainRate.spatial_ref)
+
+#Set x and y lims of the plot, and to use for GrIS Strain Rate load and display
+west_lim = -47.42
+east_lim = -46.9
+
+x_min=Transect_2012["longitude_EPSG_3413"][np.argmin(np.abs(Transect_2012["longitude_EPSG_4326"]-west_lim))]
+x_max=Transect_2012["longitude_EPSG_3413"][np.argmin(np.abs(Transect_2012["longitude_EPSG_4326"]-east_lim))]
+y_min=-2532672.0
+y_max=-2517589.0
+
+#Extract x and y coordinates of image
+x_coord_GrIS_StrainRate=GrIS_StrainRate.x.data
+y_coord_GrIS_StrainRate=GrIS_StrainRate.y.data
+
+#Extract coordinates ofcumulative raster within Emaxs bounds
+logical_x_coord_within_bounds=np.logical_and(x_coord_GrIS_StrainRate>=x_min,x_coord_GrIS_StrainRate<=x_max)
+x_coord_within_bounds=x_coord_GrIS_StrainRate[logical_x_coord_within_bounds]
+logical_y_coord_within_bounds=np.logical_and(y_coord_GrIS_StrainRate>=y_min,y_coord_GrIS_StrainRate<=y_max)
+y_coord_within_bounds=y_coord_GrIS_StrainRate[logical_y_coord_within_bounds]
+
+#Define extents based on the bounds
+extent_GrIS_StrainRate = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+### ----------------- Load Wintertine Principal Strain Rates -------------- ###
+
+### ----------------- Load Worldview image July 2023 ----------------- ###
+path_WorldView="C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/WorldView/015914996010_01_P001_PAN/"
+WorldView = rxr.open_rasterio(path_WorldView+'23AUG02150555-P2AS-015914996010_01_P001.tif',
+                              masked=True).squeeze() #No need to reproject satelite image
+#Define crs of the WorldView image
+crs_WorldView=ccrs.UTM(32)
+
+#Define focus limits
+x_min_WorldView = 398220
+x_max_WorldView = 398651
+y_min_WorldView = 7431365
+y_max_WorldView = 7431751
+
+#Extract x and y coordinates of WorldView image
+x_coord_GrIS_WorldView=WorldView.x.data
+y_coord_GrIS_WorldView=WorldView.y.data
+
+#Extract coordinates ofcumulative raster within Emaxs bounds
+logical_x_coord_within_bounds_WorldView=np.logical_and(x_coord_GrIS_WorldView>=x_min_WorldView,x_coord_GrIS_WorldView<=x_max_WorldView)
+x_coord_within_bounds_WorldView=x_coord_GrIS_WorldView[logical_x_coord_within_bounds_WorldView]
+logical_y_coord_within_bounds_WorldView=np.logical_and(y_coord_GrIS_WorldView>=y_min_WorldView,y_coord_GrIS_WorldView<=y_max_WorldView)
+y_coord_within_bounds_WorldView=y_coord_GrIS_WorldView[logical_y_coord_within_bounds_WorldView]
+
+#Define extents based on the bounds
+extent_WorldView = [np.min(x_coord_within_bounds_WorldView), np.max(x_coord_within_bounds_WorldView), np.min(y_coord_within_bounds_WorldView), np.max(y_coord_within_bounds_WorldView)]#[west limit, east limit., south limit, north limit]
+### ----------------- Load Worldview image July 2023 ----------------- ###
+
+### --------------------------- Load FS1 location ------------------------- ###
+Spring2021_coordinates=pd.read_csv('C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/'+'actual_site_coordinates_spr21_modified.csv',sep=';')
+FS1_loc=Spring2021_coordinates[Spring2021_coordinates.name=='FS1'].copy()
+#Transform FS1 loc
+points=transformer.transform(FS1_loc["X"],
+                             FS1_loc["Y"])
+FS1_loc["longitude_EPSG_3413"]=points[0]
+FS1_loc["latitude_EPSG_3413"]=points[1]
+### --------------------------- Load FS1 location ------------------------- ###
+
+#Prepare figure
+fig_FS_Transect = plt.figure(figsize=(10.12,18))
+gs = gridspec.GridSpec(30, 101)
+ax_DepthCorrected_2012 = plt.subplot(gs[0:2, 0:100])
+ax_DepthCorrected_2018 = plt.subplot(gs[2:4, 0:100])
+ax_StrainRate = plt.subplot(gs[4:15, 0:100], projection=crs)
+axc_StrainRate = plt.subplot(gs[4:15, 100:101])
+ax_WorldView = plt.subplot(gs[15:30, 0:100], projection=crs_WorldView)
+
+#Display
+cb_2012=ax_DepthCorrected_2012.pcolor(Transect_2012["longitude_EPSG_4326"],Transect_2012["depth"],
+                                      DepthCorrected_2012[np.arange(0,len(Transect_2012["depth"])),:],cmap=plt.get_cmap('gray'))#,vmin=0, vmax=0.0001)
+cb_2018=ax_DepthCorrected_2018.pcolor(Transect_2018["longitude_EPSG_4326"],Transect_2018["depth"],
+                                      DepthCorrected_2018[np.arange(0,len(Transect_2018["depth"])),:],cmap=plt.get_cmap('gray'))#,vmin=0, vmax=0.0001)
+ax_DepthCorrected_2012.invert_yaxis()
+ax_DepthCorrected_2018.invert_yaxis()
+
+#Display FS1 location on the 2012 radargram
+ax_DepthCorrected_2012.scatter(FS1_loc.X,1)
+
+#Set xlims
+ax_DepthCorrected_2012.set_xlim(west_lim,east_lim)
+ax_DepthCorrected_2018.set_xlim(west_lim,east_lim)
+
+#Display GrIS map
+cbar_StrainRate=ax_StrainRate.imshow(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds],
+                                     extent=extent_GrIS_StrainRate, transform=crs, origin='upper', cmap='RdBu_r',
+                                     vmin=-0.0015,
+                                     vmax=0.0015,zorder=0)
+
+#Set lims
+ax_StrainRate.set_xlim(x_min,x_max)
+ax_StrainRate.set_ylim(y_min,y_max)
+
+#Display cbar
+cbar_StrainRate_label=fig_FS_Transect.colorbar(cbar_StrainRate, cax=axc_StrainRate)
+cbar_StrainRate_label.set_label('Principal strain rate [$yr^{-1}$]')
+
+###################### From Tedstone et al., 2022 #####################
+gl=ax_StrainRate.gridlines(draw_labels=True, xlocs=[-47.4,-47.2,-47.0], ylocs=[66.90,66.95,67.00], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+#Customize lat labels
+gl.right_labels = False
+gl.top_labels = False
+###################### From Tedstone et al., 2022 #####################
+
+# Display scalebar with GeoPandas
+ax_StrainRate.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+
+# Display FS1 location on the GrIS strain rate map
+ax_StrainRate.scatter(FS1_loc.longitude_EPSG_3413,FS1_loc.latitude_EPSG_3413)
+
+#Display the ice slabs transect on the GrIS Strain rate map
+ax_StrainRate.scatter(Transect_2012["longitude_EPSG_3413"][np.logical_and(Transect_2012["longitude_EPSG_4326"]>=west_lim,Transect_2012["longitude_EPSG_4326"]<=east_lim)],
+                      Transect_2012["latitude_EPSG_3413"][np.logical_and(Transect_2012["longitude_EPSG_4326"]>=west_lim,Transect_2012["longitude_EPSG_4326"]<=east_lim)],color='black')
+
+#Display Woldview
+ax_WorldView.imshow(WorldView[logical_y_coord_within_bounds_WorldView,logical_x_coord_within_bounds_WorldView],extent=extent_WorldView, transform=crs_WorldView, origin='upper', cmap='Blues_r',zorder=0)
+
+# Display scalebar with GeoPandas
+ax_WorldView.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+
+#Display WorldView image extent on the Strain map
+#Transform WorldView extent coordinates UTM 32N into EPSG 3413
+transformer_EPSG32623_EPSG3413 = Transformer.from_crs("EPSG:32623", "EPSG:3413", always_xy=True)
+points=transformer_EPSG32623_EPSG3413.transform([x_min_WorldView,x_min_WorldView,x_max_WorldView,x_max_WorldView],
+                                                [y_min_WorldView,y_max_WorldView,y_max_WorldView,y_min_WorldView])
+ax_StrainRate.plot(np.append(points[0],points[0][0]),np.append(points[1],points[1][0]),color='black')
+
+#Display WorldView image extent on the radargrams
+#Transform WorldView extent coordinates UTM 32N into EPSG 4326
+transformer_EPSG32623_EPSG4326 = Transformer.from_crs("EPSG:32623", "EPSG:4326", always_xy=True)
+points=transformer_EPSG32623_EPSG4326.transform([x_min_WorldView,x_min_WorldView,x_max_WorldView,x_max_WorldView],
+                                                [y_min_WorldView,y_max_WorldView,y_max_WorldView,y_min_WorldView])
+ax_DepthCorrected_2012.axvline(points[0][0],color='black')
+ax_DepthCorrected_2012.axvline(points[0][-1],color='black')
+ax_DepthCorrected_2018.axvline(points[0][0],color='black')
+ax_DepthCorrected_2018.axvline(points[0][-1],color='black')
+
 pdb.set_trace()
 
 #Open SAR image
