@@ -88,6 +88,7 @@ from matplotlib_scalebar.scalebar import ScaleBar
 import geopandas as gpd
 import xarray
 import matplotlib.patches as patches
+from matplotlib.lines import Line2D
 
 #Define paths where data are stored
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
@@ -115,6 +116,7 @@ f_2018_Transect = open(path_transect+'20180421_01_004_007_IceSlabs.pickle', "rb"
 Transect_2018 = pickle.load(f_2018_Transect)
 f_2018_Transect.close()
 #Convert 0 in NaNs in ice slasb mask
+Transect_2012["IceSlabs_Mask"][Transect_2012["IceSlabs_Mask"]==0]=np.nan
 Transect_2013["IceSlabs_Mask"][Transect_2013["IceSlabs_Mask"]==0]=np.nan
 Transect_2018["IceSlabs_Mask"][Transect_2018["IceSlabs_Mask"]==0]=np.nan
 
@@ -165,9 +167,9 @@ ax_iceslab = plt.subplot(gs[0:5, 0:5])
 #Display 2018 ice slab
 cb=ax_iceslab.pcolor(Transect_2018["longitude_EPSG_4326"],Transect_2018["depth"],
                      Transect_2018["IceSlabs_Mask"],cmap=plt.get_cmap('gray_r'),vmin=0, vmax=0.0001)
-#Display 2013 ice slab
-cb=ax_iceslab.pcolor(Transect_2013["longitude_EPSG_4326"],Transect_2013["depth"],
-                     Transect_2013["IceSlabs_Mask"],cmap=plt.get_cmap('autumn_r'),vmin=0, vmax=0.0001,alpha=0.5,edgecolor='None')
+#Display 2012 ice slab
+cb=ax_iceslab.pcolor(Transect_2012["longitude_EPSG_4326"],Transect_2012["depth"],
+                     Transect_2012["IceSlabs_Mask"],cmap=plt.get_cmap('autumn_r'),vmin=0, vmax=0.0001,alpha=0.5,edgecolor='None')
 ax_iceslab.invert_yaxis() #Invert the y axis = avoid using flipud.
 #Display FS location
 ax_iceslab.scatter(firn_cores_pd["overview"][firn_cores_pd["overview"].core =="FS2_12m"].E,1)
@@ -340,7 +342,7 @@ path_WorldView="C:/Users/jullienn/Documents/working_environment/IceSlabs_Surface
 WorldView = rxr.open_rasterio(path_WorldView+'23AUG02150555-P2AS-015914996010_01_P001.tif',
                               masked=True).squeeze() #No need to reproject satelite image
 #Define crs of the WorldView image
-crs_WorldView=ccrs.UTM(32)
+crs_WorldView=ccrs.UTM(23)
 
 #Define focus limits
 x_min_WorldView = 398220
@@ -373,28 +375,46 @@ FS1_loc["latitude_EPSG_3413"]=points[1]
 ### --------------------------- Load FS1 location ------------------------- ###
 
 #Prepare figure
-fig_FS_Transect = plt.figure(figsize=(10.12,18))
-gs = gridspec.GridSpec(30, 101)
-ax_DepthCorrected_2012 = plt.subplot(gs[0:2, 0:100])
-ax_DepthCorrected_2018 = plt.subplot(gs[2:4, 0:100])
-ax_StrainRate = plt.subplot(gs[4:15, 0:100], projection=crs)
-axc_StrainRate = plt.subplot(gs[4:15, 100:101])
-ax_WorldView = plt.subplot(gs[15:30, 0:100], projection=crs_WorldView)
+plt.rcParams.update({'font.size': 12})
+fig_FS_Transect = plt.figure(figsize=(17.48, 10.15))
+gs = gridspec.GridSpec(30, 121)
+ax_DepthCorrected_2012 = plt.subplot(gs[0:4, 0:60])
+ax_DepthCorrected_2018 = plt.subplot(gs[4:8, 0:60])
+axc_DepthCorrected = plt.subplot(gs[0:8, 60:61])
+ax_StrainRate = plt.subplot(gs[9:28, 0:60], projection=crs)
+axc_StrainRate = plt.subplot(gs[10:27, 60:61])
+ax_WorldView = plt.subplot(gs[0:28, 68:121], projection=crs_WorldView)
 
 #Display
 cb_2012=ax_DepthCorrected_2012.pcolor(Transect_2012["longitude_EPSG_4326"],Transect_2012["depth"],
-                                      DepthCorrected_2012[np.arange(0,len(Transect_2012["depth"])),:],cmap=plt.get_cmap('gray'))#,vmin=0, vmax=0.0001)
+                                      DepthCorrected_2012[np.arange(0,len(Transect_2012["depth"])),:],cmap=plt.get_cmap('gray'),vmin=-5, vmax=4.5)
 cb_2018=ax_DepthCorrected_2018.pcolor(Transect_2018["longitude_EPSG_4326"],Transect_2018["depth"],
-                                      DepthCorrected_2018[np.arange(0,len(Transect_2018["depth"])),:],cmap=plt.get_cmap('gray'))#,vmin=0, vmax=0.0001)
+                                      DepthCorrected_2018[np.arange(0,len(Transect_2018["depth"])),:],cmap=plt.get_cmap('gray'),vmin=-5, vmax=4.5)
 ax_DepthCorrected_2012.invert_yaxis()
 ax_DepthCorrected_2018.invert_yaxis()
 
-#Display FS1 location on the 2012 radargram
-ax_DepthCorrected_2012.scatter(FS1_loc.X,1)
+#Display cbar of DepthCorrected
+cbar_cb_2018_label=fig_FS_Transect.colorbar(cb_2018, cax=axc_DepthCorrected)
+cbar_cb_2018_label.set_label('Signal strength [dB]')
 
 #Set xlims
 ax_DepthCorrected_2012.set_xlim(west_lim,east_lim)
 ax_DepthCorrected_2018.set_xlim(west_lim,east_lim)
+
+#Set xticks
+ax_DepthCorrected_2018.set_xticks(np.arange(west_lim,east_lim,0.1))
+
+#Modify xticks
+distances_to_plot=Transect_2018["distances"]-Transect_2018["distances"][np.argmin(np.abs(Transect_2018["longitude_EPSG_4326"]-west_lim))]
+dist_plot=[]
+for indiv_tick in ax_DepthCorrected_2018.get_xticks():
+    dist_plot = np.append(dist_plot,np.round(distances_to_plot[np.argmin(np.abs(Transect_2018["longitude_EPSG_4326"]-indiv_tick))]/1000,1))
+ax_DepthCorrected_2018.set_xticklabels(dist_plot)
+ax_DepthCorrected_2018.set_xlabel('Distance [km]')
+ax_DepthCorrected_2018.set_ylabel('Depth [m]')
+ax_DepthCorrected_2012.set_yticks(ax_DepthCorrected_2012.get_yticks()[1:-1])
+ax_DepthCorrected_2012.set_yticklabels(['0','10',''])
+ax_DepthCorrected_2012.set_xticks([])
 
 #Display GrIS map
 cbar_StrainRate=ax_StrainRate.imshow(GrIS_StrainRate.ep[logical_y_coord_within_bounds,logical_x_coord_within_bounds],
@@ -408,7 +428,8 @@ ax_StrainRate.set_ylim(y_min,y_max)
 
 #Display cbar
 cbar_StrainRate_label=fig_FS_Transect.colorbar(cbar_StrainRate, cax=axc_StrainRate)
-cbar_StrainRate_label.set_label('Principal strain rate [$yr^{-1}$]')
+cbar_StrainRate.colorbar.set_ticklabels(cbar_StrainRate.colorbar.get_ticks()*1000)#Multiply tick labels by 1000
+cbar_StrainRate_label.set_label('Principal strain rate [$10^{-3} yr^{-1}$]')
 
 ###################### From Tedstone et al., 2022 #####################
 gl=ax_StrainRate.gridlines(draw_labels=True, xlocs=[-47.4,-47.2,-47.0], ylocs=[66.90,66.95,67.00], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
@@ -420,16 +441,25 @@ gl.top_labels = False
 # Display scalebar with GeoPandas
 ax_StrainRate.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
 
-# Display FS1 location on the GrIS strain rate map
-ax_StrainRate.scatter(FS1_loc.longitude_EPSG_3413,FS1_loc.latitude_EPSG_3413)
-
 #Display the ice slabs transect on the GrIS Strain rate map
 ax_StrainRate.scatter(Transect_2012["longitude_EPSG_3413"][np.logical_and(Transect_2012["longitude_EPSG_4326"]>=west_lim,Transect_2012["longitude_EPSG_4326"]<=east_lim)],
-                      Transect_2012["latitude_EPSG_3413"][np.logical_and(Transect_2012["longitude_EPSG_4326"]>=west_lim,Transect_2012["longitude_EPSG_4326"]<=east_lim)],color='black')
+                      Transect_2012["latitude_EPSG_3413"][np.logical_and(Transect_2012["longitude_EPSG_4326"]>=west_lim,Transect_2012["longitude_EPSG_4326"]<=east_lim)],color='grey')
 
-#Display Woldview
-ax_WorldView.imshow(WorldView[logical_y_coord_within_bounds_WorldView,logical_x_coord_within_bounds_WorldView],extent=extent_WorldView, transform=crs_WorldView, origin='upper', cmap='Blues_r',zorder=0)
+#Display Wroldview
+cbar_WorldView=ax_WorldView.imshow(WorldView[logical_y_coord_within_bounds_WorldView,logical_x_coord_within_bounds_WorldView],extent=extent_WorldView, transform=crs_WorldView, origin='upper', cmap='Blues_r',zorder=0)
 
+###################### From Tedstone et al., 2022 #####################
+gl=ax_WorldView.gridlines(draw_labels=True, xlocs=[-47.4,-47.2,-47.0], ylocs=[66.90,66.95,67.00], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+#Customize lat labels
+gl.right_labels = False
+gl.top_labels = False
+###################### From Tedstone et al., 2022 #####################
+
+'''
+#Display cbar
+cbar_WorldView_label=fig_FS_Transect.colorbar(cbar_WorldView, cax=axc_StrainRate)
+cbar_WorldView_label.set_label('')
+'''
 # Display scalebar with GeoPandas
 ax_WorldView.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
 
@@ -439,17 +469,47 @@ transformer_EPSG32623_EPSG3413 = Transformer.from_crs("EPSG:32623", "EPSG:3413",
 points=transformer_EPSG32623_EPSG3413.transform([x_min_WorldView,x_min_WorldView,x_max_WorldView,x_max_WorldView],
                                                 [y_min_WorldView,y_max_WorldView,y_max_WorldView,y_min_WorldView])
 ax_StrainRate.plot(np.append(points[0],points[0][0]),np.append(points[1],points[1][0]),color='black')
-
+#Display lines from square to transect
+ax_StrainRate.plot(np.append(points[0][0],points[0][0]),np.append(points[1][0]-1000,points[1][0]-2000),color='black',linestyle='dashed')
+ax_StrainRate.plot(np.append(points[0][3],points[0][3]),np.append(points[1][3]-1000,points[1][3]-2000),color='black',linestyle='dashed')
+#Display panel d location on panel c
+ax_StrainRate.text(points[0][0]-400,points[1][0]+150,'d',ha='center', va='center', weight='bold',fontsize=15,color='black')#,backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 #Display WorldView image extent on the radargrams
 #Transform WorldView extent coordinates UTM 32N into EPSG 4326
 transformer_EPSG32623_EPSG4326 = Transformer.from_crs("EPSG:32623", "EPSG:4326", always_xy=True)
 points=transformer_EPSG32623_EPSG4326.transform([x_min_WorldView,x_min_WorldView,x_max_WorldView,x_max_WorldView],
                                                 [y_min_WorldView,y_max_WorldView,y_max_WorldView,y_min_WorldView])
-ax_DepthCorrected_2012.axvline(points[0][0],color='black')
-ax_DepthCorrected_2012.axvline(points[0][-1],color='black')
-ax_DepthCorrected_2018.axvline(points[0][0],color='black')
-ax_DepthCorrected_2018.axvline(points[0][-1],color='black')
+ax_DepthCorrected_2012.axvline(points[0][0],color='black',linestyle='dashed')
+ax_DepthCorrected_2012.axvline(points[0][-1],color='black',linestyle='dashed')
+ax_DepthCorrected_2018.axvline(points[0][0],color='black',linestyle='dashed')
+ax_DepthCorrected_2018.axvline(points[0][-1],color='black',linestyle='dashed')
 
+#Display north arrow
+transformer_EPSG4326_EPSG32623 = Transformer.from_crs("EPSG:4326","EPSG:32623", always_xy=True)
+points_arrow=transformer_EPSG4326_EPSG32623.transform([-47.323806,-47.323806],
+                                                      [66.986122,66.985718])
+ax_WorldView.arrow(points_arrow[0][1],points_arrow[1][1],
+                   points_arrow[0][0]-points_arrow[0][1],points_arrow[1][0]-points_arrow[1][1],
+                   head_width=3*(points_arrow[0][0]-points_arrow[0][1]),
+                   zorder=15,color='black',linewidth=2,length_includes_head=True)
+ax_WorldView.text(points_arrow[0][1]-4,points_arrow[1][0]+5,'N',fontsize=15,zorder=15,color='black')
+
+#Add panel labels
+ax_DepthCorrected_2012.text(0.015, 0.85,'a',ha='center', va='center', transform=ax_DepthCorrected_2012.transAxes,weight='bold',fontsize=15,color='black')#,backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_DepthCorrected_2018.text(0.015, 0.85,'b',ha='center', va='center', transform=ax_DepthCorrected_2018.transAxes,weight='bold',fontsize=15,color='black')#,backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.015, 0.975,'c',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=15,color='black')#,backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_WorldView.text(0.015, 0.975,'d',ha='center', va='center', transform=ax_WorldView.transAxes,weight='bold',fontsize=15,color='black')#,backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+#Add transect legend in Strain Rate map - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Line2D([0], [0], color='grey', lw=5, label='Transect')]
+ax_StrainRate.legend(handles=legend_elements,loc='upper right',fontsize=12,framealpha=1).set_zorder(7)
+plt.show()
+
+pdb.set_trace()
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS5.png',dpi=300,bbox_inches='tight')
+'''
 pdb.set_trace()
 
 #Open SAR image
