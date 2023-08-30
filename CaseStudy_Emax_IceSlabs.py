@@ -1342,10 +1342,10 @@ for indiv_point in coord_sectors:
     ax_NDWI.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
     '''
 #Add sector label
-ax_map.text(0.39, 0.05,'A',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_map.text(0.515, 0.05,'B',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_map.text(0.615, 0.05,'C',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_map.text(0.685, 0.05,'D',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_map.text(0.39, 0.05,'i',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_map.text(0.515, 0.05,'ii',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_map.text(0.615, 0.05,'iii',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_map.text(0.685, 0.05,'iv',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 ax_tick_plot.xaxis.set_ticks_position('bottom') 
 ax_tick_plot.set_xticklabels(np.round(plot_dist).astype(int))

@@ -70,9 +70,9 @@ def load_and_diplay_raster(path_data,vlim_min,vlim_max,cmap_raster,ax_plot,axc_p
     cbar_MapPlot_label=fig1.colorbar(cbar_MapPlot, cax=axc_plot)
     
     if (type_map == 'DEM'):
-        cbar_MapPlot_label.set_label('Elevation [m]',labelpad=15)#labelpad is from https://stackoverflow.com/questions/17475619/how-do-i-adjust-offset-colorbar-title-in-matplotlib
+        cbar_MapPlot_label.set_label('Elevation [m]',labelpad=5)#labelpad is from https://stackoverflow.com/questions/17475619/how-do-i-adjust-offset-colorbar-title-in-matplotlib
     elif (type_map == 'NDWI'):
-        cbar_MapPlot_label.set_label('NDWI [-]',labelpad=22.5)
+        cbar_MapPlot_label.set_label('NDWI [-]',labelpad=10.5)
     else:
         print('Not known!')
         pdb.set_trace()
@@ -548,6 +548,12 @@ for indiv_point in coord_sectors:
     ax_NDWI.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
     ax_DEM.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
     ax_StrainRate.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
+    
+#Add sector label
+ax_NDWI.text(0.39, 0.05,'i',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_NDWI.text(0.515, 0.05,'ii',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_NDWI.text(0.615, 0.05,'iii',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_NDWI.text(0.685, 0.05,'iv',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Display strain rate, from https://ubir.buffalo.edu/xmlui/handle/10477/82127
 import xarray
@@ -595,7 +601,8 @@ ax_StrainRate.set_ylim(y_min,y_max)
 
 #Display cbar
 cbar_StrainRate_label=fig1.colorbar(cbar_StrainRate, cax=axc_StrainRate)
-cbar_StrainRate_label.set_label('Principal strain rate [$yr^{-1}$]')
+cbar_StrainRate.colorbar.set_ticklabels(cbar_StrainRate.colorbar.get_ticks()*1000)#Multiply tick labels by 1000
+cbar_StrainRate_label.set_label('Principal strain rate [$10^{-3} yr^{-1}$]',labelpad=8)
 
 #Display cbar IceThickness
 cbar_IceThickness_label=fig1.colorbar(cbar_IceThickness, cax=axc_IceThickness,orientation='horizontal',ticklocation='top')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
@@ -633,7 +640,7 @@ ax_StrainRate.text(0.01, 0.9,'c',ha='center', va='center', transform=ax_StrainRa
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS4_new.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS4.png',dpi=300,bbox_inches='tight')
 '''
 ### --------------------------- Sector B focus --------------------------- ###
 
