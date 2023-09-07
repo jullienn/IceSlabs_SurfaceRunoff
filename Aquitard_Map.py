@@ -59,11 +59,18 @@ def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display
     SAR_intersected.data = apply_MinMax_nornalisation(SAR_intersected.data,vmin_bassin,vmax_bassin)
     
     #Display SAR image
-    axis_display_NO.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+    cbar_Runoff=axis_display_NO.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     axis_display_SW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     axis_display_NW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     axis_display_CW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     axis_SW_zoom_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+    
+    #Display colorbar
+    if (name_save == 'aquitard_NO_1'):        
+        #Display cbar Runoff and Retention
+        cbar_Runoff_label=fig.colorbar(cbar_Runoff, cax=axis_display_NO,orientation='horizontal',ticklocation='top')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
+        cbar_Runoff_label.set_label('Runoff likelihood [-]')
+
     
     if (save_aquitard=='TRUE'):
         print('Saving raster',name_save)
@@ -105,7 +112,8 @@ path_jullienetal2023=path_switchdrive+'RT1/final_dataset_2002_2018/'
 path_data=path_switchdrive+'RT3/data/'
 
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
-path_SAR=path_local+'data/SAR/HV_2017_2018/'
+#path_SAR=path_local+'data/SAR/HV_2017_2018/'
+path_SAR='X:/RT3_jullien/SAR/HV_2017_2018/'
 
 ### -------------------------- Load shapefiles --------------------------- ###
 #Load Rignot et al., 2016 Greenland drainage bassins
@@ -303,6 +311,8 @@ intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,a
 intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-6.329797,-5.715943,'aquitard_NE_1',save_aquitard_true)
 intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-6.329797,-5.715943,'aquitard_NE_2',save_aquitard_true)
 
+pdb.set_trace()
+
 #Display dry snow zone mask
 DrySnowZoneMask.plot(ax=ax_NO,facecolor='#f7fbff',edgecolor='none')
 DrySnowZoneMask.plot(ax=ax_NW,facecolor='#f7fbff',edgecolor='none')
@@ -338,12 +348,14 @@ iceslabs_20102018_jullienetal2023.plot(ax=ax_CW,facecolor='none',edgecolor='#ba2
 iceslabs_20102018_jullienetal2023.plot(ax=ax_SW,facecolor='none',edgecolor='#ba2b2b')
 iceslabs_20102018_jullienetal2023.plot(ax=ax_SW_zoom,facecolor='none',edgecolor='#ba2b2b')
 
+'''
 #Display firn aquifers Miège et al., 2016
 ax_NO.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=2)
 ax_NW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
 ax_CW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
 ax_SW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
 ax_SW_zoom.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=5,zorder=2)
+'''
 
 #Set limits
 #NO
@@ -438,7 +450,6 @@ ax_SW.text(ax_SW_zoom.get_xlim()[1]+5000, (ax_SW_zoom.get_ylim()[0]+ax_SW_zoom.g
 legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Runoff areas'),
                    Patch(facecolor='none',edgecolor='#ba2b2b',label='2010-2018 ice slabs'),
                    Line2D([0], [0], color='#fed976', lw=2, label='2013-2020 runoff limit'),
-                   Line2D([0], [0], color='#238b45', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
                    Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
 ax_NO.legend(handles=legend_elements,loc='lower center',fontsize=12,framealpha=1, bbox_to_anchor=(0.65, 0)).set_zorder(7)
 

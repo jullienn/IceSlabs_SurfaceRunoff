@@ -320,14 +320,14 @@ elif (investigation_year==CaseStudy2):
     axc = plt.subplot(gs[4:32, 100:101])
     '''
     #Fig. 6 paper
-    ax2 = plt.subplot(gs[0:4, 0:99])
-    ax3 = plt.subplot(gs[4:8, 0:99])
-    ax7 = plt.subplot(gs[8:12, 0:99])
-    ax9 = plt.subplot(gs[12:16, 0:99])
-    axc = plt.subplot(gs[4:16, 99:101])
+    ax2 = plt.subplot(gs[12:16, 0:99])
+    ax3 = plt.subplot(gs[16:20, 0:99])
+    ax7 = plt.subplot(gs[20:24, 0:99])
+    ax9 = plt.subplot(gs[24:28, 0:99])
+    axc = plt.subplot(gs[16:28, 99:101])
     #Display map on the same figure
-    ax_map = plt.subplot(gs[18:30, 0:99], projection=crs)
-    axc_map = plt.subplot(gs[20:28, 99:101])
+    ax_map = plt.subplot(gs[0:12, 0:99], projection=crs)
+    axc_map = plt.subplot(gs[2:10, 99:101])
     '''
     #Display NDWI map below
     ax_NDWI = plt.subplot(gs[40:54, 0:99], projection=crs)
@@ -1123,9 +1123,10 @@ elif (investigation_year==CaseStudy2):
     '''
     ###################### From Tedstone et al., 2022 #####################
     #from plot_map_decadal_change.py
-    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-46.5], ylocs=[67.60,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+    gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.6,-47.4,-47.2,-47], ylocs=[67.65,67.625,67.6], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
     #Customize lat labels
     gl.right_labels = False
+    gl.bottom_labels = False
     gl.top_labels = False
     ax_map.axis('off')
     ###################### From Tedstone et al., 2022 #####################
@@ -1299,11 +1300,11 @@ if (investigation_year==CaseStudy2):
     ax_NDWI.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
     '''
     #Display panel label
-    ax2.text(0.01, 0.70,'a',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax3.text(0.01, 0.85,'b',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax7.text(0.01, 0.85,'c',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax9.text(0.01, 0.85,'d',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax_map.text(0.01, 0.925,'f',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax2.text(0.01, 0.70,'c',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax3.text(0.01, 0.85,'d',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax7.text(0.01, 0.85,'e',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax9.text(0.01, 0.85,'f',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax_map.text(0.01, 0.925,'b',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     '''
     ax_NDWI.text(0.01, 0.925,'g',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     '''
@@ -1360,7 +1361,7 @@ plt.show()
 pdb.set_trace()
 
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/Fig6abcdf.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig6bcdef.png',dpi=300)#,bbox_inches='tight')
 
 '''
 #Save the figure

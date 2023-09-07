@@ -512,6 +512,39 @@ plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS5.png',dpi=300,bbox_inches
 '''
 pdb.set_trace()
 
+### --- Calculate distance between the upper end ice slabs in 2013 and 2018 at transect E in Jullien et al., 2023 --- ###
+#Display ice slab transect
+plt.rcParams.update({'font.size': 8})
+fig1 = plt.figure(figsize=(19.09,  2.07))
+gs = gridspec.GridSpec(5, 5)
+ax_iceslab = plt.subplot(gs[0:5, 0:5])
+#Display 2018 ice slab
+cb=ax_iceslab.pcolor(Transect_2018["longitude_EPSG_4326"],Transect_2018["depth"],
+                     Transect_2018["IceSlabs_Mask"],cmap=plt.get_cmap('gray_r'),vmin=0, vmax=0.0001)
+#Display 2012 ice slab
+cb=ax_iceslab.pcolor(Transect_2013["longitude_EPSG_4326"],Transect_2013["depth"],
+                     Transect_2013["IceSlabs_Mask"],cmap=plt.get_cmap('autumn_r'),vmin=0, vmax=0.0001,alpha=0.5,edgecolor='None')
+ax_iceslab.invert_yaxis() #Invert the y axis = avoid using flipud.
+
+
+#Extract the last index where there is an ice slab
+last_index_where_slab_2018=np.where(np.sum((Transect_2018["IceSlabs_Mask"]>0).astype(int),axis=0)>0)[0][-1]
+last_index_where_slab_2013=np.where(np.sum((Transect_2013["IceSlabs_Mask"]>0).astype(int),axis=0)>0)[0][-1]
+
+#Extract the corresponding coordinates
+
+#Calculate distance with geopandas
+
+#2013 and 2018 are from low to high elevations
+
+#lowest EPSG:4326 longitude = upper end of ice slab
+
+
+
+### --- Calculate distance between the upper end ice slabs in 2013 and 2018 at transect E in Jullien et al., 2023 --- ###
+
+pdb.set_trace()
+
 #Open SAR image
 SAR_SW_00_00 = rasterio.open(path_SAR+'ref_IW_HV_2021_2021_32_106_40m_ASCDESC_SW_minnscenes50-0000000000-0000000000.tif')
 '''

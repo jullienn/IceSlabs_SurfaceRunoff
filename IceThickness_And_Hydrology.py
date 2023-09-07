@@ -260,6 +260,7 @@ TransectFig6_WithinBounds_reverted=TransectFig6_WithinBounds.reindex(index=Trans
 #Calculate new distances
 TransectFig6_WithinBounds_reverted['distances_reverted']=compute_distances(TransectFig6_WithinBounds_reverted['lon_3413'].to_numpy(),TransectFig6_WithinBounds_reverted['lat_3413'].to_numpy())
 
+pdb.set_trace()
 
 #Display the transect in Fig.6
 fig = plt.figure(figsize=(8.27,5.5))#Nature pdf size = (8.27,10.87)
@@ -274,11 +275,11 @@ ax_TransectFig6.fill_between(TransectFig6_WithinBounds_reverted.distances_revert
                              alpha=0.5)
 ax_TransectFig6.plot(TransectFig6_WithinBounds_reverted.distances_reverted,TransectFig6_WithinBounds_reverted["rolling_mean_ice_thickness"])
 ax_TransectFig6_second=ax_TransectFig6.twinx()
-ax_TransectFig6_second.plot(TransectFig6_WithinBounds_reverted.distances_reverted,TransectFig6_WithinBounds_reverted["rolling_CV_ice_thickness"],color='C1')
+ax_TransectFig6_second.plot(TransectFig6_WithinBounds_reverted.distances_reverted,TransectFig6_WithinBounds_reverted["rolling_CV_ice_thickness"],color='black')
 #Change color of axis to match color of line, this is from https://stackoverflow.com/questions/1982770/changing-the-color-of-an-axis
 ax_TransectFig6.tick_params(axis='y', colors='C0')
 #ax_TransectFig6_second.spines['right'].set_color('C1')
-ax_TransectFig6_second.tick_params(axis='y', colors='C1')
+ax_TransectFig6_second.tick_params(axis='y')
 
 #Coordinates of sectors to display
 coord_sectors=[#(67.620575, -47.59745),
@@ -303,7 +304,7 @@ ax_TransectFig6.set_xticklabels((ax_TransectFig6.get_xticks()/1000).astype(int))
 #add labels
 ax_TransectFig6.set_xlabel('Distance [km]')
 ax_TransectFig6.set_ylabel('Ice thickness [m]',color='C0')
-ax_TransectFig6_second.set_ylabel('Coefficient of variation [ ]',color='C1')
+ax_TransectFig6_second.set_ylabel('Coefficient of variation [ ]')
 ax_TransectFig6.set_xlim(0,36836)
 ax_TransectFig6_second.set_ylim(-0.15,TransectFig6_WithinBounds_reverted.rolling_CV_ice_thickness.max()+0.025)
 ax_TransectFig6_second.set_yticks(np.arange(0,ax_TransectFig6_second.get_ylim()[1],0.1))
@@ -313,9 +314,10 @@ ax_TransectFig6_second.set_yticks(np.arange(0,ax_TransectFig6_second.get_ylim()[
 
 #Add which transect is displayed
 #ax_TransectFig6.text(0.97, 0.95,'2018',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_TransectFig6.text(0.010, 0.95,'e',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
+ax_TransectFig6.text(0.010, 0.95,'a',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ### --- Perform the same analysis for the 2018 transect displayed in Fig. 6 --- ###
+
+pdb.set_trace()
 
 ### --------- Perform the same analysis for an hypothetical ice slab --------- ###
 #The hypothetical ice slab is based on the spacing in Fig. 6
@@ -391,7 +393,6 @@ ax_Hypothetical_plot_second=ax_Hypothetical_plot.twinx()
 ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["rolling_CV_ice_thickness"],color='C1')
 #Change color of axis to match color of line, this is from https://stackoverflow.com/questions/1982770/changing-the-color-of-an-axis
 ax_Hypothetical_plot.tick_params(axis='y', colors='C0')
-#ax_TransectFig6_second.spines['right'].set_color('C1')
 ax_Hypothetical_plot_second.tick_params(axis='y', colors='C1')
 
 #Custom labels
@@ -421,11 +422,11 @@ print(Hypothetical_IceSlabs_Transect.rolling_CV_ice_thickness.quantile([0.05,0.2
 #Note that in the real world dataset, there are longitudinal transects! But these ones are expected to have an even lower variability if we consider no other influence that melting gradient due to elevation gradient.
 #Note that quantile 0.95 is highly variable at each run, so we do not consider it anymore! On the other han, quantile 0.25, 0.5, 0.75 are stable between the different runs.
 
-#pdb.set_trace()
+pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/Fig_hypothetical_slab.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig_hypothetical_slab.png',dpi=300,bbox_inches='tight')
 '''
 plt.close()
 
@@ -446,23 +447,23 @@ PickUp_df.dropna(inplace=True)
 #Store the corresponding hypothetical Cv
 TransectFig6_WithinBounds_reverted.loc[PickUp_df.index,'Hypothetical_Cv']=Hypothetical_IceSlabs_Transect.loc[PickUp_df.to_pickup,'rolling_CV_ice_thickness'].to_numpy()
 #Display in Fig. transect 6 the place where the coefficient of variation cannot be interpreted, i.e. where the Cv is larger than idealised Cv for a specific ice thickness
-ax_TransectFig6_second.plot(TransectFig6_WithinBounds_reverted.distances_reverted,TransectFig6_WithinBounds_reverted["Hypothetical_Cv"],color='black')
+ax_TransectFig6_second.plot(TransectFig6_WithinBounds_reverted.distances_reverted,TransectFig6_WithinBounds_reverted["Hypothetical_Cv"],color='C1')
 
 #Custom legend myself - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Line2D([0], [0], color='C0', label='Mean'),
                    Patch(facecolor='C0',alpha=0.5,label='Mean +/- standard deviation'),
-                   Line2D([0], [0], color='C1', label='Coefficient of variation'),
-                   Line2D([0], [0], color='black', label='Idealised coefficient of variation')]
+                   Line2D([0], [0], color='black', label='Coefficient of variation'),
+                   Line2D([0], [0], color='C1', label='Idealised coefficient of variation')]
 ax_TransectFig6_second.legend(handles=legend_elements,loc='lower left',fontsize=8,framealpha=0.8).set_zorder(7)
 plt.show()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/Fig6_e.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig6_a.png',dpi=300)#,bbox_inches='tight')
 '''
 ### --------- Perform the same analysis for an hypothetical ice slab --------- ###
 
-#pdb.set_trace()
+pdb.set_trace()
 
 ### --------------------------- Sector B focus --------------------------- ###
 #Display NDWI - this is from CaseStudy_Emax_IceSlabs.py
@@ -490,14 +491,14 @@ fig1 = plt.figure(figsize=(8.27,5.16))#Nature pdf size = (8.27,10.87)
 gs = gridspec.GridSpec(52, 101)
 gs.update(wspace=0.1)
 gs.update(wspace=0.5)
-ax_NDWI = plt.subplot(gs[1:18, 0:100], projection=crs)
-axc_NDWI = plt.subplot(gs[1:18, 100:101])
-ax_DEM = plt.subplot(gs[18:35, 0:100], projection=crs)
-axc_DEM = plt.subplot(gs[18:35, 100:101])
-ax_StrainRate = plt.subplot(gs[35:52, 0:100], projection=crs)
-axc_StrainRate = plt.subplot(gs[35:52, 100:101])
+ax_NDWI = plt.subplot(gs[1:10, 0:100], projection=crs)
+axc_NDWI = plt.subplot(gs[1:10, 100:101])
+ax_DEM = plt.subplot(gs[17:34, 0:100], projection=crs)
+axc_DEM = plt.subplot(gs[17:34, 100:101])
+ax_StrainRate = plt.subplot(gs[34:51, 0:100], projection=crs)
+axc_StrainRate = plt.subplot(gs[34:51, 100:101])
 
-axc_IceThickness = plt.subplot(gs[0:1, 35:65])
+axc_IceThickness = plt.subplot(gs[51:52, 35:65])
 
 ### NDWI ###
 #path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'+'NDWI_p10_'+str(2019)+'.vrt'
@@ -550,10 +551,10 @@ for indiv_point in coord_sectors:
     ax_StrainRate.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
     
 #Add sector label
-ax_NDWI.text(0.39, 0.05,'i',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_NDWI.text(0.515, 0.05,'ii',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_NDWI.text(0.615, 0.05,'iii',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_NDWI.text(0.685, 0.05,'iv',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.39, 0.05,'i',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.515, 0.05,'ii',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.615, 0.05,'iii',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.685, 0.05,'iv',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Display strain rate, from https://ubir.buffalo.edu/xmlui/handle/10477/82127
 import xarray
@@ -605,7 +606,7 @@ cbar_StrainRate.colorbar.set_ticklabels(cbar_StrainRate.colorbar.get_ticks()*100
 cbar_StrainRate_label.set_label('Principal strain rate [$10^{-3} yr^{-1}$]',labelpad=8)
 
 #Display cbar IceThickness
-cbar_IceThickness_label=fig1.colorbar(cbar_IceThickness, cax=axc_IceThickness,orientation='horizontal',ticklocation='top')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
+cbar_IceThickness_label=fig1.colorbar(cbar_IceThickness, cax=axc_IceThickness,orientation='horizontal',ticklocation='bottom')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
 cbar_IceThickness_label.set_label('Ice slab thickness [m]')
 
 ###################### From Tedstone et al., 2022 #####################
@@ -622,10 +623,18 @@ gl.right_labels = False
 gl.bottom_labels = False
 gl.top_labels = False
 
-gl=ax_StrainRate.gridlines(draw_labels=True, xlocs=[-46.8,-47.0,-47.2,-47.4,-47.6], ylocs=[67.60,67.625,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+gl=ax_StrainRate.gridlines(draw_labels=True, xlocs=[-46.8,-47.0,-47.4,-47.6], ylocs=[67.60,67.625,67.65], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
 #Customize lat labels
 gl.right_labels = False
 gl.top_labels = False
+
+#For ice slabs thickness colorbar display
+gl_1=ax_StrainRate.gridlines(draw_labels=True, xlocs=[-47.2], ylocs=[], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+#Customize lat labels
+gl_1.right_labels = False
+gl_1.left_labels = False
+gl_1.bottom_labels = False
+gl_1.top_labels = False
 ###################### From Tedstone et al., 2022 #####################
 
 # Display scalebar with GeoPandas
@@ -635,12 +644,12 @@ ax_StrainRate.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color
 
 #Display panel label
 ax_NDWI.text(0.01, 0.9,'a',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_DEM.text(0.01, 0.9,'b',ha='center', va='center', transform=ax_DEM.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_StrainRate.text(0.01, 0.9,'c',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_DEM.text(0.01, 0.9,'g',ha='center', va='center', transform=ax_DEM.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.01, 0.9,'h',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v4/FigS4.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig6gh.png',dpi=300)
 '''
 ### --------------------------- Sector B focus --------------------------- ###
 

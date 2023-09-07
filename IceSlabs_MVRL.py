@@ -743,7 +743,7 @@ path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRuno
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
 my_pal = {'SW': "#9e9ac8", 'CW': "#9e9ac8", 'NW': "#9e9ac8", 'NO': "#9e9ac8", 'NE': "#9e9ac8"}
-pal_year= {2012 : "#2171b5", 2019 : "#fcbba1"}
+pal_year= {2012 : "#6baed6", 2019 : "#fcbba1"}
 
 ### -------------------------- Load shapefiles --------------------------- ###
 #Load Rignot et al., 2016 Greenland drainage bassins
@@ -1028,10 +1028,10 @@ iceslabs_20102018_jullienetal2023.plot(ax=ax_NW,facecolor='#ba2b2b',edgecolor='#
 iceslabs_20102018_jullienetal2023.plot(ax=ax_CW,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 
 #Display 2010-2012 high end ice slabs jullien et al., 2023
-iceslabs_20102012_jullienetal2023.plot(ax=ax_north,facecolor='#6baed6',edgecolor='#6baed6')
-iceslabs_20102012_jullienetal2023.plot(ax=ax_SW,facecolor='#6baed6',edgecolor='#6baed6')
-iceslabs_20102012_jullienetal2023.plot(ax=ax_NW,facecolor='#6baed6',edgecolor='#6baed6')
-iceslabs_20102012_jullienetal2023.plot(ax=ax_CW,facecolor='#6baed6',edgecolor='#6baed6')
+iceslabs_20102012_jullienetal2023.plot(ax=ax_north,facecolor='#045a8d',edgecolor='#045a8d')
+iceslabs_20102012_jullienetal2023.plot(ax=ax_SW,facecolor='#045a8d',edgecolor='#045a8d')
+iceslabs_20102012_jullienetal2023.plot(ax=ax_NW,facecolor='#045a8d',edgecolor='#045a8d')
+iceslabs_20102012_jullienetal2023.plot(ax=ax_CW,facecolor='#045a8d',edgecolor='#045a8d')
 
 #Treat the follwing boxes together
 list_together_2012=np.array([[4,6],[7,9],[10,13],[14,14],[16,19],[21,21],[22,27],[28,30],[31,31]])
@@ -1119,11 +1119,13 @@ GrIS_drainage_bassins.plot(ax=ax_SW,facecolor='none',edgecolor='black',zorder=5,
 GrIS_drainage_bassins.plot(ax=ax_NW,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
 GrIS_drainage_bassins.plot(ax=ax_CW,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
 
+'''
 #Display firn aquifers Miège et al., 2016
 ax_north.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
 ax_SW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
 ax_NW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
 ax_CW.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#238b45',s=1,zorder=4)
+'''
 
 ax_inset_map.set_xlim(-642397, 1005201)
 ax_inset_map.set_ylim(-3366273, -784280)
@@ -1162,9 +1164,8 @@ gl.right_labels = False
 #gl.bottom_labels = False
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#6baed6',edgecolor='none',label='2010-2012 ice slabs'),
+legend_elements = [Patch(facecolor='#045a8d',edgecolor='none',label='2010-2012 ice slabs'),
                    Patch(facecolor='#ba2b2b',edgecolor='none',label='2010-2018 ice slabs'),
-                   Line2D([0], [0], color='#238b45', lw=2, marker='o',linestyle='None', label='2010-2014 firn aquifers'),
                    Line2D([0], [0], color=pal_year[2012], lw=2, label='2012 runoff limit'),
                    Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
                    Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
@@ -1271,11 +1272,11 @@ df_plot_IceSlabs_RL.reset_index(inplace=True)
 df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL=df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL/1000
 
 #Display elevation difference
-sns.boxplot(data=df_plot_IceSlabs_RL,x="Elev_diff_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_elev,orient='h',palette=pal_year)
+sns.boxplot(data=df_plot_IceSlabs_RL,x="Elev_diff_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_elev,orient='h',palette=pal_year,fliersize=0)
 axsummary_elev.set_xlabel('Elevation difference [m]')
 axsummary_elev.set_ylabel('Region',labelpad=10)
 axsummary_elev.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=True, labelleft=True, right=False, labelright=False)
-axsummary_elev.set_xlim(-350,350)
+axsummary_elev.set_xlim(-310,310)
 axsummary_elev.text(0.025, 0.9,'e',ha='center', va='center', transform=axsummary_elev.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #This is from https://stackoverflow.com/questions/1726391/matplotlib-draw-grid-lines-behind-other-graph-elements
@@ -1286,7 +1287,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v6/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v7/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
