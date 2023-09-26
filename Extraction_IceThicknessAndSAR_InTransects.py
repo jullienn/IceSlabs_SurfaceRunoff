@@ -428,7 +428,7 @@ f_20102018_high_cleaned = open(path_switchdrive+'RT3/data/export_RT1_for_RT3/df_
 df_20102018_high_cleaned = pickle.load(f_20102018_high_cleaned)
 f_20102018_high_cleaned.close
 ### ------------------------- Load df_2010_2018 --------------------------- ###
-
+'''
 #Open SAR image
 ### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
 #This section of displaying sat data was coding using tips from
@@ -442,7 +442,7 @@ SAR_NW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 SAR_NW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_NW_manual-0000000000-0000023296.tif',masked=True).squeeze()
 SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
 SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
-
+'''
 #Open regional cumulative hydrology rasters
 master_SW_mean = rxr.open_rasterio(path_local+'data/master_maps/merge_sw/master_SW_mean.vrt',masked=True).squeeze()
 master_NW_mean = rxr.open_rasterio(path_local+'data/master_maps/merge_nw/master_NW_mean.vrt',masked=True).squeeze()
@@ -451,12 +451,11 @@ master_NE_mean = rxr.open_rasterio(path_local+'data/master_maps/merge_ne/master_
 #Generate the csv files and figures of individual relationship    
 if (generate_data=='TRUE'):
     #Loop over all the 2018 transects
-    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2018].Track_name.unique()):
+    for IceSlabsTransect_name in list(df_20102018_high_cleaned[df_20102018_high_cleaned.year==2017].Track_name.unique()):
         print('Treating',IceSlabsTransect_name)
-        
         '''
         #Partial clipping case
-        if (IceSlabsTransect_name=='20180419_02_123_126'):
+        if (IceSlabsTransect_name=='20180423_01_056_056'):
             pdb.set_trace()
         else:
             continue

@@ -106,7 +106,7 @@ def keep_sectorial(df_input,indiv_trackname_tokeep):
     return df_output
 
 def sector_association(indiv_df_SAR_IceThickness,indiv_df_sectors,sector):
-        
+            
     #Perform match between indiv_df_SAR_IceThickness and indiv_IceThickness_sectors 
     indiv_df_SAR_IceThickness_sector = indiv_df_SAR_IceThickness.merge(indiv_df_sectors, how="left",on=['lat','lon'],suffixes=('','_droite'))
         
@@ -342,7 +342,7 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     pdb.set_trace()
     
     #SAve figure
-    plt.savefig(path_switchdrive+'RT3/figures/Fig4/v1/Fig4.png',dpi=300,bbox_inches='tight')
+    plt.savefig(path_switchdrive+'RT3/figures/Fig4/v2/Fig4.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
     '''
@@ -1113,6 +1113,8 @@ for indiv_file in list_composite:
     ax_check_csv_sectors.scatter(indiv_IceThickness_in_between.lon_3413,indiv_IceThickness_in_between.lat_3413,s=1,color='yellow')
     ax_check_csv_sectors.scatter(indiv_IceThickness_within.lon_3413,indiv_IceThickness_within.lat_3413,s=1,color='red')
     ax_check_csv_sectors.scatter(indiv_IceThickness_below.lon_3413,indiv_IceThickness_below.lat_3413,s=1,color='green')
+    
+    pdb.set_trace()
     
     #Associate the sector to the dataframe where ice thickness and SAR data are present by joining the two following dataframes
     #indiv_csv is the dataframe holding ice content and SAR signal NOT upsampled, but no info on the sector

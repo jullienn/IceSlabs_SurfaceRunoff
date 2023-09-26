@@ -6,6 +6,37 @@ Created on Mon Aug  7 11:14:20 2023
 """
 
 
+def keep_sectorial(df_input,indiv_trackname_tokeep):    
+    df_output=df_input[df_input.Track_name==indiv_trackname_tokeep].copy()
+    return df_output
+
+def sector_association(indiv_df_CumHydro_IceThickness,indiv_df_sectors,sector):
+        
+    #Perform match between indiv_df_CumHydro_IceThickness and indiv_IceThickness_sectors 
+    indiv_df_CumHydro_IceThickness_sector = indiv_df_CumHydro_IceThickness.merge(indiv_df_sectors, how="left",on=['lat','lon'],suffixes=('','_droite'))
+        
+    #drop useless columns
+    indiv_df_CumHydro_IceThickness_sector=indiv_df_CumHydro_IceThickness_sector.drop(columns=['Unnamed: 0', 'Track_name_droite', 'Tracenumber',
+                                                                                              'alongtrack_distance_m', '20m_ice_content_m_droite',
+                                                                                              'likelihood_droite', 'lat_3413_droite', 'lon_3413_droite',
+                                                                                              'key_shp_droite', 'elevation_droite', 'year_droite', 'geometry',
+                                                                                              'index_right_polygon', 'FID', 'rev_subs', 'index_right_droite'])
+                                        
+    #Get rid of data points which do not intersect with sector
+    indiv_df_CumHydro_IceThickness_sector_noNaN=indiv_df_CumHydro_IceThickness_sector[~indiv_df_CumHydro_IceThickness_sector.type.isna()]
+    
+    if (len(indiv_df_CumHydro_IceThickness_sector_noNaN)>0):
+        #Upsample data: where index_right is identical (i.e. for each CumHydro cell), keep a single value of radar signal and average the ice content
+        indiv_upsampled_CumHydro_and_IceSlabs_sector=indiv_df_CumHydro_IceThickness_sector_noNaN.groupby('index_right').mean()
+        #Add column of sector
+        indiv_upsampled_CumHydro_and_IceSlabs_sector['sector']=[sector]*len(indiv_upsampled_CumHydro_and_IceSlabs_sector)
+    else:
+        indiv_upsampled_CumHydro_and_IceSlabs_sector=indiv_df_CumHydro_IceThickness_sector_noNaN
+    
+    return indiv_upsampled_CumHydro_and_IceSlabs_sector
+
+
+
 def compute_distances(eastings,northings):
     #This function is from plot_2002_2003.py, which was originally taken from MacFerrin et al., 2019
     '''Compute the distance (in m here, not km as written originally) of the traces in the file.'''
@@ -109,19 +140,27 @@ from matplotlib_scalebar.scalebar import ScaleBar
 
 ### Set sizes ###
 # this is from https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
-plt.rc('font', size=8)          # controls default text sizes
-plt.rc('axes', titlesize=8)     # fontsize of the axes title
-plt.rc('axes', labelsize=8)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=8)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=8)    # fontsize of the tick labels
-plt.rc('legend', fontsize=8)    # legend fontsize
+plt.rc('font', size=12)          # controls default text sizes
+plt.rc('axes', titlesize=12)     # fontsize of the axes title
+plt.rc('axes', labelsize=12)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=12)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=12)    # fontsize of the tick labels
+plt.rc('legend', fontsize=12)    # legend fontsize
 plt.rc('figure', titlesize=12)  # fontsize of the figure title
 plt.rc('axes',linewidth = 0.75)  #https://stackoverflow.com/questions/1639463/how-to-change-border-width-of-a-matplotlib-graph
 plt.rc('xtick.major',width=0.75)
 plt.rc('ytick.major',width=0.75)
 ### Set sizes ###
 
-path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
+###################### From Tedstone et al., 2022 #####################
+#from plot_map_decadal_change.py
+# Define the CartoPy CRS object.
+crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
+# This can be converted into a `proj4` string/dict compatible with GeoPandas
+crs_proj4 = crs.proj4_init
+###################### From Tedstone et al., 2022 #####################
+
+path_data_SAR_and_IceThickness='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
 
 #Load IMBIE drainage bassins
@@ -129,12 +168,67 @@ path_rignotetal2016_GrIS_drainage_bassins=path_switchdrive+'/backup_Aglaja/worki
 GrIS_drainage_bassins=gpd.read_file(path_rignotetal2016_GrIS_drainage_bassins+'GRE_Basins_IMBIE2_v1.3_EPSG_3413.shp')
 
 ###############################################################################
-################## Load ice slabs with Cumulative hydro dataset ###############
+###         Load Ice Slabs Thickness data in the different sectors          ###
+###############################################################################
+#Define empty dataframe
+IceThickness_above=pd.DataFrame()
+IceThickness_in_between=pd.DataFrame()
+IceThickness_within=pd.DataFrame()
+IceThickness_below=pd.DataFrame()
+
+for indiv_box in range(4,32):
+    print(indiv_box)
+    #open above
+    try:
+        above = pd.read_csv(path_data_SAR_and_IceThickness+'SAR_sectors/above/IceSlabs_above_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(above)>0):
+            #Append data
+            IceThickness_above=pd.concat([IceThickness_above,above])
+    except FileNotFoundError:
+        print('No above')
+    
+    #open InBetween
+    try:
+        in_between = pd.read_csv(path_data_SAR_and_IceThickness+'SAR_sectors/in_between/IceSlabs_in_between_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(in_between)>0):
+            #Append data
+            IceThickness_in_between=pd.concat([IceThickness_in_between,in_between])
+    except FileNotFoundError:
+        print('No in_between')
+    
+    #open within
+    try:
+        within = pd.read_csv(path_data_SAR_and_IceThickness+'SAR_sectors/within/IceSlabs_within_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(within)>0):
+            #Append data
+            IceThickness_within=pd.concat([IceThickness_within,within])
+    except FileNotFoundError:
+        print('No within')
+    
+    #open below
+    try:
+        below = pd.read_csv(path_data_SAR_and_IceThickness+'SAR_sectors/below/IceSlabs_below_box_'+str(indiv_box)+'_year_2019.csv')
+        if (len(below)>0):
+            #Append data
+            IceThickness_below=pd.concat([IceThickness_below,below])
+    except FileNotFoundError:
+        print('No below')
+###############################################################################
+###         Load Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
+#Aggregate data together and store type
+IceThickness_above['type']=['Above']*len(IceThickness_above)
+IceThickness_in_between['type']=['In_Between']*len(IceThickness_in_between)
+IceThickness_within['type']=['Within']*len(IceThickness_within)
+IceThickness_below['type']=['Below']*len(IceThickness_below)
+
+###############################################################################
+################## Load ice slabs with Cumulative hydro dataset ###############
+###############################################################################
 #Path to data
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
-path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/'
+path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/NotClipped_With0mSlabs/'
 #List all the files in the folder
 list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
 
@@ -142,8 +236,12 @@ list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from
 window_distance=3000
 
 #Define empty dataframes
-upsampled_CumHydro_and_IceSlabs = pd.DataFrame()
 Transects_2017_2018 = pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs = pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_above=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_in_between=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_within=pd.DataFrame()
+upsampled_CumHydro_and_IceSlabs_below=pd.DataFrame()
 
 #Loop over all the files
 for indiv_file in list_composite:
@@ -158,40 +256,231 @@ for indiv_file in list_composite:
     #Drop Unnamed: 0 columns
     indiv_csv.drop(columns=['Unnamed: 0'],inplace=True)
     
-    ### -------------------------- Upsample data -------------------------- ###
+    ### ----------------------------- All data ---------------------------- ###
     #Upsample data: where index_right is identical (i.e. for each CumHydro cell), keep a single value of CumHydro and average the ice content
     indiv_upsampled_CumHydro_and_IceSlabs=indiv_csv.groupby('index_right').mean()
     #Append the data to each other
     upsampled_CumHydro_and_IceSlabs=pd.concat([upsampled_CumHydro_and_IceSlabs,indiv_upsampled_CumHydro_and_IceSlabs])
-    ### -------------------------- Upsample data -------------------------- ###
+    ### ----------------------------- All data ---------------------------- ###
+        
+    ### ----------------------- Sector identificaton ---------------------- ###
+    #Create a sectorial index to make sure the data are not put randomly together before the spatial heterogeneity calculation
+    indiv_csv['sectorial_index']=np.arange(0,len(indiv_csv))
+    
+    #In the sectorial dataframes, keep only data corresponding to the current TrackName
+    indiv_IceThickness_above=keep_sectorial(IceThickness_above,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_in_between=keep_sectorial(IceThickness_in_between,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_within=keep_sectorial(IceThickness_within,indiv_csv.Track_name.unique()[0])
+    indiv_IceThickness_below=keep_sectorial(IceThickness_below,indiv_csv.Track_name.unique()[0])
+    
+    #Prepare figure to display
+    fig = plt.figure()
+    gs = gridspec.GridSpec(5, 5)
+    ax_check_csv_sectors = plt.subplot(gs[0:5, 0:5],projection=crs)
+    ax_check_csv_sectors.scatter(indiv_csv.lon_3413,indiv_csv.lat_3413,s=5,color='black')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_above.lon_3413,indiv_IceThickness_above.lat_3413,s=1,color='blue')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_in_between.lon_3413,indiv_IceThickness_in_between.lat_3413,s=1,color='yellow')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_within.lon_3413,indiv_IceThickness_within.lat_3413,s=1,color='red')
+    ax_check_csv_sectors.scatter(indiv_IceThickness_below.lon_3413,indiv_IceThickness_below.lat_3413,s=1,color='green')
+    plt.close()
+
+    #Associate the sector to the dataframe where ice thickness and CumHydro data are present by joining the two following dataframes
+    #indiv_csv is the dataframe holding ice content and CumHydro signal NOT upsampled, but no info on the sector
+    #indiv_IceThickness_above/in_between/within/below are the dataframe holding the ice content in the sector NOT upsampled, but no info on CumHydro.
+    indiv_upsampled_CumHydro_and_IceSlabs_above=sector_association(indiv_csv,indiv_IceThickness_above,'above')
+    indiv_upsampled_CumHydro_and_IceSlabs_in_between=sector_association(indiv_csv,indiv_IceThickness_in_between,'InBetween')
+    indiv_upsampled_CumHydro_and_IceSlabs_within=sector_association(indiv_csv,indiv_IceThickness_within,'within')
+    indiv_upsampled_CumHydro_and_IceSlabs_below=sector_association(indiv_csv,indiv_IceThickness_below,'below')
+    
+    #Append data to obtain one dataframe per sector
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_above)>0):
+        upsampled_CumHydro_and_IceSlabs_above=pd.concat([upsampled_CumHydro_and_IceSlabs_above,indiv_upsampled_CumHydro_and_IceSlabs_above])
+    
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_in_between)>0):
+        upsampled_CumHydro_and_IceSlabs_in_between=pd.concat([upsampled_CumHydro_and_IceSlabs_in_between,indiv_upsampled_CumHydro_and_IceSlabs_in_between])
+        
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_within)>0):
+        upsampled_CumHydro_and_IceSlabs_within=pd.concat([upsampled_CumHydro_and_IceSlabs_within,indiv_upsampled_CumHydro_and_IceSlabs_within])
+        
+    if (len(indiv_upsampled_CumHydro_and_IceSlabs_below)>0):
+        upsampled_CumHydro_and_IceSlabs_below=pd.concat([upsampled_CumHydro_and_IceSlabs_below,indiv_upsampled_CumHydro_and_IceSlabs_below])
+    ### ----------------------- Sector identificaton ---------------------- ###
     
     ### -------------- Spatial heterogeneity in ice thickness ------------- ###
-    #1. Calculate the distance between each sampling point
-    indiv_csv['distances']=compute_distances(indiv_csv['lon_3413'].to_numpy(),indiv_csv['lat_3413'].to_numpy())
-
-    #2. Calculate rolling window
-    #Define the minimum number of data to have for average window calculation
-    min_periods_for_rolling=int(window_distance/int(indiv_csv["distances"].diff().abs().median())/3)#Here, the min number of data required to compute the window is 1/3 of maximum sampling data point in the window
+    #We now perform the spatial heterogeneity calculation using data located only in the different zones (from below to above)
+    indiv_csv_zones=pd.concat([indiv_upsampled_CumHydro_and_IceSlabs_above,
+                               indiv_upsampled_CumHydro_and_IceSlabs_in_between,
+                               indiv_upsampled_CumHydro_and_IceSlabs_within,
+                               indiv_upsampled_CumHydro_and_IceSlabs_below])
     
-    #For adaptive window size (because sometimes data is missing along the transect), convert the distance into a timestamp, and calculate the rolling window on this timestamp. That works as expected!
-    #The distance represent the seconds after and arbitrary time. Here, 1 meter = 1 second. The default is 01/01/1970
-    #This idea was probably inspired while looking at this https://stackoverflow.com/questions/24337499/pandas-rolling-apply-with-variable-window-length
-    indiv_csv['time_distance']=pd.to_datetime(indiv_csv['distances'].round(2),unit='s')
-    #Set the time_distance to the index
-    indiv_csv.set_index('time_distance',inplace=True)
-    #Apply rolling window by translating the distance into second equivalent.
-    indiv_csv['rolling_mean_ice_thickness'] = indiv_csv.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["20m_ice_content_m"].mean()
-    indiv_csv['rolling_std_ice_thickness'] = indiv_csv.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["20m_ice_content_m"].std() 
-    indiv_csv['rolling_CV_ice_thickness'] = indiv_csv['rolling_std_ice_thickness']/indiv_csv['rolling_mean_ice_thickness']
-    indiv_csv['ice_thickness_MINUS_rolling_mean_ice_thickness'] = indiv_csv['20m_ice_content_m']-indiv_csv['rolling_mean_ice_thickness']
+    #If sectorial dataset is not empty, calculate the spatial heterogeneity
+    if (len(indiv_csv_zones)>0):
+        #Sort indiv_csv_zones using the sectorial index to make sure the order of dataset arrangement is preserved
+        indiv_csv_zones.sort_values(by='sectorial_index',ascending=True,inplace=True)
+        
+        #1. Calculate the distance between each sampling point
+        indiv_csv_zones['distances']=compute_distances(indiv_csv_zones['lon_3413'].to_numpy(),indiv_csv_zones['lat_3413'].to_numpy())
     
-    #3. Concatenate data
-    Transects_2017_2018=pd.concat([Transects_2017_2018,indiv_csv])
+        #2. Calculate rolling window
+        #Define the minimum number of data to have for average window calculation
+        min_periods_for_rolling=int(window_distance/int(indiv_csv_zones["distances"].diff().abs().median())/3)#Here, the min number of data required to compute the window is 1/3 of maximum sampling data point in the window
+        
+        #For adaptive window size (because sometimes data is missing along the transect), convert the distance into a timestamp, and calculate the rolling window on this timestamp. That works as expected!
+        #The distance represent the seconds after and arbitrary time. Here, 1 meter = 1 second. The default is 01/01/1970
+        #This idea was probably inspired while looking at this https://stackoverflow.com/questions/24337499/pandas-rolling-apply-with-variable-window-length
+        indiv_csv_zones['time_distance']=pd.to_datetime(indiv_csv_zones['distances'].round(2),unit='s')
+        #Set the time_distance to the index
+        indiv_csv_zones.set_index('time_distance',inplace=True)
+        #Apply rolling window by translating the distance into second equivalent.
+        indiv_csv_zones['rolling_mean_ice_thickness'] = indiv_csv_zones.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["20m_ice_content_m"].mean()
+        indiv_csv_zones['rolling_std_ice_thickness'] = indiv_csv_zones.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["20m_ice_content_m"].std() 
+        indiv_csv_zones['rolling_CV_ice_thickness'] = indiv_csv_zones['rolling_std_ice_thickness']/indiv_csv_zones['rolling_mean_ice_thickness']
+        indiv_csv_zones['ice_thickness_MINUS_rolling_mean_ice_thickness'] = indiv_csv_zones['20m_ice_content_m']-indiv_csv_zones['rolling_mean_ice_thickness']
+        
+        #3. Concatenate data
+        Transects_2017_2018=pd.concat([Transects_2017_2018,indiv_csv_zones])
     ### -------------- Spatial heterogeneity in ice thickness ------------- ###
 
 ###############################################################################
 ################## Load ice slabs with Cumulative hydro dataset ###############
 ###############################################################################
+
+###############################################################################
+###                       CumHydro and Ice Thickness                        ###
+###############################################################################
+
+### ------ CumHydro and Ice slabs thickness dataset in sectors only ------- ###
+
+#Append data to each other
+upsampled_CumHydro_and_IceSlabs_OnlySectors=pd.concat([upsampled_CumHydro_and_IceSlabs_above,upsampled_CumHydro_and_IceSlabs_in_between,upsampled_CumHydro_and_IceSlabs_within,upsampled_CumHydro_and_IceSlabs_below])
+
+#Reset a new index to this upsampled dataset
+upsampled_CumHydro_and_IceSlabs_OnlySectors["index"]=np.arange(0,len(upsampled_CumHydro_and_IceSlabs_OnlySectors))
+upsampled_CumHydro_and_IceSlabs_OnlySectors.set_index('index',inplace=True)
+#Transform upsampled_CumHydro_and_IceSlabs as a geopandas dataframe
+upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp = gpd.GeoDataFrame(upsampled_CumHydro_and_IceSlabs_OnlySectors,
+                                                                   geometry=gpd.GeoSeries.from_xy(upsampled_CumHydro_and_IceSlabs_OnlySectors['lon_3413'],
+                                                                                                  upsampled_CumHydro_and_IceSlabs_OnlySectors['lat_3413'],
+                                                                                                  crs='EPSG:3413'))
+#Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
+upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions = gpd.sjoin(upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp, GrIS_drainage_bassins, predicate='within')
+#Drop data belonging to ice cap
+upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions=upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions[~(upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions.SUBREGION1=="ICE_CAP")]
+
+#Full ice slabs dataset
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_CumHydro_Thickness = plt.subplot(gs[0:10, 0:6])
+ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions.raster_values,
+                             upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions['20m_ice_content_m'],cmap='magma_r',
+                             bins=[np.arange(0,300,5),np.arange(0,20,0.5)],norm=mpl.colors.LogNorm())#,cmax=upsampled_CumHydro_and_IceSlabs.raster_values.quantile(0.5))
+
+#Prepare empty dataframe
+upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.DataFrame()
+
+#Display per region
+fig_CumHydro_IceThickness = plt.figure(figsize=(14, 7))
+gs = gridspec.GridSpec(4, 6)
+gs.update(hspace=0.8)
+gs.update(wspace=0.8)
+ax_SW = plt.subplot(gs[0:2, 0:2])
+ax_CW = plt.subplot(gs[0:2, 2:4])
+ax_NW = plt.subplot(gs[0:2, 4:6])
+ax_NO = plt.subplot(gs[2:4, 0:2])
+ax_NE = plt.subplot(gs[2:4, 2:4])
+ax_hist = plt.subplot(gs[2:4, 4:6])
+
+for indiv_region in list(['SW','CW','NW','NO','NE']):
+    
+    #Remove the floor(min) in each region - floor of the min to allow fo log axis display in distribution plot
+    regional_df=upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions[upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions.SUBREGION1==indiv_region].copy()
+    regional_df["raster_values_minus_min"]=regional_df.raster_values-np.floor(regional_df.raster_values.min())
+    
+    #Concatenate
+    upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.concat([upsampled_CumHydro_and_IceSlabs_ForAnalysis,regional_df])
+    
+    #Display
+    if (indiv_region == 'SW'):
+        axis_plot=ax_SW
+    elif (indiv_region == 'CW'):
+        axis_plot=ax_CW
+    elif (indiv_region == 'NW'):
+        axis_plot=ax_NW
+    elif (indiv_region == 'NO'):
+        axis_plot=ax_NO
+    elif (indiv_region == 'NE'):
+        axis_plot=ax_NE
+    else:
+        pdb.set_trace()
+        
+    cbar_region = axis_plot.hist2d(data=regional_df,
+                                   x="raster_values_minus_min",
+                                   y="20m_ice_content_m",cmap='magma_r',
+                                   bins=[np.arange(0,80,5),np.arange(0,17,1)],norm=mpl.colors.LogNorm())
+    
+    #Display colorbar
+    if (indiv_region == 'NO'):
+        fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+    else:
+        fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+
+    #Display region name
+    axis_plot.set_title(indiv_region)
+
+#Display regional CumHydro distributions
+distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_values_minus_min", hue="SUBREGION1",element="poly",
+                      stat="count",log_scale=[False,True],bins=np.arange(0,80,5),ax=ax_hist)
+sns.move_legend(distribs,"upper right",title="")
+ax_hist.set_xlim(0,75)
+ax_hist.set_xlabel('Hydrological occurrence')
+
+
+### Finalise plot ###
+#Set labels
+ax_NO.set_xlabel('Hydrological occurrence')
+ax_NO.set_ylabel('Ice thickness [m]')
+
+#Add backgound to display panel label
+ax_SW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
+ax_CW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
+ax_NW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
+ax_NO.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
+ax_NE.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_NE.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
+#Add panel labels
+ax_SW.text(0.04, 0.925,'a',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_CW.text(0.04, 0.925,'b',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+ax_NW.text(0.04, 0.925,'c',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+ax_NO.text(0.04, 0.925,'d',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+ax_NE.text(0.04, 0.925,'e',ha='center', va='center', transform=ax_NE.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+ax_hist.text(0.04, 0.925,'f',ha='center', va='center', transform=ax_hist.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
+### Finalise plot ###
+
+### ------ CumHydro and Ice slabs thickness dataset in sectors only ------- ###
+
+pdb.set_trace()
+'''
+#Save figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig5/v2/Fig5.png',dpi=300,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
+###############################################################################
+###                       CumHydro and Ice Thickness                        ###
+###############################################################################
+
+#Update for idealised ice slab plotting
+### Set sizes ###
+# this is from https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
+plt.rc('font', size=8)          # controls default text sizes
+plt.rc('axes', titlesize=8)     # fontsize of the axes title
+plt.rc('axes', labelsize=8)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=8)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=8)    # fontsize of the tick labels
+plt.rc('legend', fontsize=8)    # legend fontsize
+plt.rc('figure', titlesize=12)  # fontsize of the figure title
+plt.rc('axes',linewidth = 0.75)  #https://stackoverflow.com/questions/1639463/how-to-change-border-width-of-a-matplotlib-graph
+plt.rc('xtick.major',width=0.75)
+plt.rc('ytick.major',width=0.75)
+### Set sizes ###
 
 ###############################################################################
 ###                   Ice Thickness spatial heterogeneity                   ###
@@ -200,6 +489,7 @@ for indiv_file in list_composite:
 Transects_2017_2018["index"]=np.arange(0,len(Transects_2017_2018))
 Transects_2017_2018.set_index('index',inplace=True)
 
+'''
 #Display
 fig = plt.figure(figsize=(12,5))
 gs = gridspec.GridSpec(2, 6)
@@ -218,7 +508,12 @@ sns.histplot(Transects_2017_2018, x="rolling_std_ice_thickness",element="poly",
 sns.histplot(Transects_2017_2018, x="rolling_CV_ice_thickness",element="poly",
              stat="density",ax=ax3)
 fig.suptitle('Rolling window: '+str(window_distance)+' m')
+'''
 
+### -------- Display the distribution of 2017-2018 Cv in the zones -------- ###
+#Get rid of Cv where the mean ice thickness is lower than 0 to avoid erroneous large Cv
+Transects_2017_2018.loc[Transects_2017_2018.rolling_mean_ice_thickness<1,'rolling_CV_ice_thickness']=np.nan
+        
 print('--- 2017-2018 dataset ---')
 print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75]).round(2))
 
@@ -477,14 +772,6 @@ transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
 import rioxarray as rxr
 
-###################### From Tedstone et al., 2022 #####################
-#from plot_map_decadal_change.py
-# Define the CartoPy CRS object.
-crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
-# This can be converted into a `proj4` string/dict compatible with GeoPandas
-crs_proj4 = crs.proj4_init
-###################### From Tedstone et al., 2022 #####################
-
 #Display image
 plt.rcParams.update({'font.size': 8})
 fig1 = plt.figure(figsize=(8.27,5.16))#Nature pdf size = (8.27,10.87)
@@ -653,162 +940,30 @@ plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig6gh.png',dpi=300)
 '''
 ### --------------------------- Sector B focus --------------------------- ###
 
-pdb.set_trace()
-
 ###############################################################################
 ###                   Ice Thickness spatial heterogeneity                   ###
 ###############################################################################
 
 #Should apply a noise so that the resulting rolling_std_ice_thickness in the idealised transect equals that:
 TransectFig6_WithinBounds_reverted["rolling_std_ice_thickness"].median()
+TransectFig6_WithinBounds_reverted["rolling_std_ice_thickness"].mean()
+Hypothetical_IceSlabs_Transect["rolling_std_ice_thickness"].median()
+Hypothetical_IceSlabs_Transect["rolling_std_ice_thickness"].mean()
 
-pdb.set_trace()
-
-#Display the hypothetical ice slab
+#For info, display the hypothetical ice slab and transect 6 ice slab aside
 fig = plt.figure(figsize=(8.27,3.55))#Nature pdf size = (8.27,10.87)
 gs = gridspec.GridSpec(8, 101)
 ax_Hypothetical_radargram = plt.subplot(gs[4:8, 0:99])
 ax_radargram_Fig6 = plt.subplot(gs[0:4, 0:99])
-
 #Radargram Fig. 6
 ax_radargram_Fig6.fill_between(TransectFig6_WithinBounds_reverted.distances_reverted,
                                TransectFig6_WithinBounds_reverted["20m_ice_content_m"])
 ax_radargram_Fig6.set_ylim(20,0)
 ax_radargram_Fig6.set_xlim(0,35000)
-TransectFig6_WithinBounds_reverted["rolling_std_ice_thickness"].mean()
-
 #Hypothetical radargram
-ax_Hypothetical_radargram.fill_between(Hypothetical_IceSlabs_Transect["distance"],Hypothetical_IceSlabs_Transect["underlying_data"]-offset,color='grey')
+ax_Hypothetical_radargram.fill_between(Hypothetical_IceSlabs_Transect["distances"],Hypothetical_IceSlabs_Transect["ice_thickness"]-offset,color='grey')
 ax_Hypothetical_radargram.set_ylim(20,0)
-ax_Hypothetical_radargram.set_xlim(0,35)
-Hypothetical_IceSlabs_Transect["rolling_std_ice_thickness"].mean()
-
-
-
-
-fig = plt.figure(figsize=(8.27,3.55))#Nature pdf size = (8.27,10.87)
-gs = gridspec.GridSpec(8, 101)
-ax1 = plt.subplot(gs[0:8, 0:99])
-#Radargram Fig. 6
-ax1.plot(TransectFig6_WithinBounds_reverted.distances_reverted,
-         TransectFig6_WithinBounds_reverted["20m_ice_content_m"])
-ax1.set_ylim(20,0)
-ax1.set_xlim(0,35000)
-
-###############################################################################
-###                       CumHydro and Ice Thickness                        ###
-###############################################################################
-
-#Reset a new index to this upsampled dataset
-upsampled_CumHydro_and_IceSlabs["index"]=np.arange(0,len(upsampled_CumHydro_and_IceSlabs))
-upsampled_CumHydro_and_IceSlabs.set_index('index',inplace=True)
-#Transform upsampled_CumHydro_and_IceSlabs as a geopandas dataframe
-upsampled_CumHydro_and_IceSlabs_gdp = gpd.GeoDataFrame(upsampled_CumHydro_and_IceSlabs,
-                                                       geometry=gpd.GeoSeries.from_xy(upsampled_CumHydro_and_IceSlabs['lon_3413'],
-                                                                                      upsampled_CumHydro_and_IceSlabs['lat_3413'],
-                                                                                      crs='EPSG:3413'))
-#Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
-upsampled_CumHydro_and_IceSlabs_gdp_with_regions = gpd.sjoin(upsampled_CumHydro_and_IceSlabs_gdp, GrIS_drainage_bassins, predicate='within')
-#Drop data belonging to ice cap
-upsampled_CumHydro_and_IceSlabs_gdp_with_regions=upsampled_CumHydro_and_IceSlabs_gdp_with_regions[~(upsampled_CumHydro_and_IceSlabs_gdp_with_regions.SUBREGION1=="ICE_CAP")]
-
-#Full ice slabs dataset
-fig = plt.figure(figsize=(10,6))
-gs = gridspec.GridSpec(10, 6)
-ax_CumHydro_Thickness = plt.subplot(gs[0:10, 0:6])
-ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs_gdp_with_regions.raster_values,
-                             upsampled_CumHydro_and_IceSlabs_gdp_with_regions['20m_ice_content_m'],cmap='magma_r',
-                             bins=[np.arange(0,300,5),np.arange(0,20,0.5)],norm=mpl.colors.LogNorm())#,cmax=upsampled_CumHydro_and_IceSlabs.raster_values.quantile(0.5))
-
-#Prepare empty dataframe
-upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.DataFrame()
-
-#Display per region
-fig_CumHydro_IceThickness = plt.figure(figsize=(14, 7))
-gs = gridspec.GridSpec(4, 6)
-gs.update(hspace=0.8)
-gs.update(wspace=0.8)
-ax_SW = plt.subplot(gs[0:2, 0:2])
-ax_CW = plt.subplot(gs[0:2, 2:4])
-ax_NW = plt.subplot(gs[0:2, 4:6])
-ax_NO = plt.subplot(gs[2:4, 0:2])
-ax_NE = plt.subplot(gs[2:4, 2:4])
-ax_hist = plt.subplot(gs[2:4, 4:6])
-
-for indiv_region in list(['SW','CW','NW','NO','NE']):
-    
-    #Remove the floor(min) in each region - floor of the min to allow fo log axis display in distribution plot
-    regional_df=upsampled_CumHydro_and_IceSlabs_gdp_with_regions[upsampled_CumHydro_and_IceSlabs_gdp_with_regions.SUBREGION1==indiv_region].copy()
-    regional_df["raster_values_minus_min"]=regional_df.raster_values-np.floor(regional_df.raster_values.min())
-    
-    #Concatenate
-    upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.concat([upsampled_CumHydro_and_IceSlabs_ForAnalysis,regional_df])
-    
-    #Display
-    if (indiv_region == 'SW'):
-        axis_plot=ax_SW
-    elif (indiv_region == 'CW'):
-        axis_plot=ax_CW
-    elif (indiv_region == 'NW'):
-        axis_plot=ax_NW
-    elif (indiv_region == 'NO'):
-        axis_plot=ax_NO
-    elif (indiv_region == 'NE'):
-        axis_plot=ax_NE
-    else:
-        pdb.set_trace()
-        
-    cbar_region = axis_plot.hist2d(data=regional_df,
-                                   x="raster_values_minus_min",
-                                   y="20m_ice_content_m",cmap='magma_r',
-                                   bins=[np.arange(0,100,5),np.arange(0,17,1)],norm=mpl.colors.LogNorm())
-    
-    #Display colorbar
-    if (indiv_region == 'NO'):
-        fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='Occurrence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-    else:
-        fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-
-    #Display region name
-    axis_plot.set_title(indiv_region)
-
-#Display regional CumHydro distributions
-distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_values_minus_min", hue="SUBREGION1",element="poly",
-                      stat="count",log_scale=[False,True],bins=np.arange(0,100,5),ax=ax_hist)
-sns.move_legend(distribs,"upper right",title="")
-ax_hist.set_xlim(0,95)
-ax_hist.set_xlabel('Hydrological occurrence')
-
-
-### Finalise plot ###
-#Set labels
-ax_NO.set_xlabel('Hydrological occurrence')
-ax_NO.set_ylabel('Ice thickness [m]')
-
-#Add backgound to display panel label
-ax_SW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
-ax_CW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
-ax_NW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
-ax_NO.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
-ax_NE.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_NE.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
-#Add panel labels
-ax_SW.text(0.04, 0.925,'a',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_CW.text(0.04, 0.925,'b',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
-ax_NW.text(0.04, 0.925,'c',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
-ax_NO.text(0.04, 0.925,'d',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
-ax_NE.text(0.04, 0.925,'e',ha='center', va='center', transform=ax_NE.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
-ax_hist.text(0.04, 0.925,'f',ha='center', va='center', transform=ax_hist.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
-### Finalise plot ###
+ax_Hypothetical_radargram.set_xlim(0,35000)
+plt.close()
 
 pdb.set_trace()
-
-#SAve figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig5/v1/Fig5.png',dpi=300,bbox_inches='tight')
-#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-
-
-###############################################################################
-###                       CumHydro and Ice Thickness                        ###
-###############################################################################
-
-
