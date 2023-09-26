@@ -654,6 +654,17 @@ Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness'] = Hypothetical_IceSl
 Hypothetical_IceSlabs_Transect['rolling_CV_ice_thickness'] = Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
 Hypothetical_IceSlabs_Transect['ice_thickness_MINUS_rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect['ice_thickness']-Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
 
+### IN TEST ###
+Hypothetical_IceSlabs_Transect['rolling_median_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["ice_thickness"].median()
+Hypothetical_IceSlabs_Transect['abs(ice_thickness-rolling_median)'] = abs(Hypothetical_IceSlabs_Transect['ice_thickness']-Hypothetical_IceSlabs_Transect['rolling_median_ice_thickness'])
+Hypothetical_IceSlabs_Transect['rolling_MAD_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)['abs(ice_thickness-rolling_median)'].median()
+Hypothetical_IceSlabs_Transect['rolling_MAD/median_ice_thickness'] = Hypothetical_IceSlabs_Transect['rolling_MAD_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_median_ice_thickness']
+
+from scipy.stats import median_abs_deviation
+Hypothetical_IceSlabs_Transect['scipy_rolling_MAD_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["ice_thickness"].apply(median_abs_deviation)#This is from https://datagy.io/mean-absolute-deviation-python/
+Hypothetical_IceSlabs_Transect['scipy_rolling_MAD/median_ice_thickness'] = Hypothetical_IceSlabs_Transect['scipy_rolling_MAD_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_median_ice_thickness']
+### IN TEST ###
+
 #Remove the offset
 Hypothetical_IceSlabs_Transect['ice_thickness']=Hypothetical_IceSlabs_Transect['ice_thickness']-offset
 Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']=Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']-offset
@@ -686,6 +697,13 @@ ax_Hypothetical_plot.fill_between(Hypothetical_IceSlabs_Transect.distances,
 ax_Hypothetical_plot.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"])
 ax_Hypothetical_plot_second=ax_Hypothetical_plot.twinx()
 ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["rolling_CV_ice_thickness"],color='C1')
+
+### IN TEST ###
+pdb.set_trace()
+ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["scipy_rolling_MAD/median_ice_thickness"],color='C2')
+ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["rolling_MAD/median_ice_thickness"],color='C3')
+### IN TEST ###
+
 #Change color of axis to match color of line, this is from https://stackoverflow.com/questions/1982770/changing-the-color-of-an-axis
 ax_Hypothetical_plot.tick_params(axis='y', colors='C0')
 ax_Hypothetical_plot_second.tick_params(axis='y', colors='C1')
