@@ -798,12 +798,12 @@ gs.update(wspace=0.1)
 gs.update(wspace=0.5)
 ax_NDWI = plt.subplot(gs[1:10, 0:100], projection=crs)
 axc_NDWI = plt.subplot(gs[1:10, 100:101])
-ax_DEM = plt.subplot(gs[17:34, 0:100], projection=crs)
-axc_DEM = plt.subplot(gs[17:34, 100:101])
-ax_StrainRate = plt.subplot(gs[34:51, 0:100], projection=crs)
-axc_StrainRate = plt.subplot(gs[34:51, 100:101])
+ax_DEM = plt.subplot(gs[17:34, 0:99], projection=crs)
+axc_DEM = plt.subplot(gs[17:34, 99:101])
+ax_StrainRate = plt.subplot(gs[34:51, 0:99], projection=crs)
+axc_StrainRate = plt.subplot(gs[34:51, 99:101])
 
-axc_IceThickness = plt.subplot(gs[51:52, 35:65])
+axc_IceThickness = plt.subplot(gs[51:52, 35:65])    
 
 ### NDWI ###
 #path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'+'NDWI_p10_'+str(2019)+'.vrt'

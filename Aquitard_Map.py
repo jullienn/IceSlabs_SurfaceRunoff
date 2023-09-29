@@ -48,7 +48,7 @@ def apply_MinMax_nornalisation(raster_to_rescale,lower_bound,upper_bound):
     
     return raster_to_rescale
 
-def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display_NO,axis_display_SW,axis_display_NW,axis_display_CW,axis_SW_zoom_display,vmin_bassin,vmax_bassin,name_save,save_aquitard):
+def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display_NO,axis_display_SW,axis_display_NW,axis_display_CW,axis_SW_zoom_display,axis_cbar,vmin_bassin,vmax_bassin,name_save,save_aquitard):
     #Perform clip between SAR with region - this is inspired from https://corteva.github.io/rioxarray/stable/examples/clip_geom.html    
     SAR_intersected = SAR_to_intersect.rio.clip(individual_bassin.geometry.values, individual_bassin.crs, drop=True, invert=False)
     #Determine extent of SAR_SW_00_00_SW
@@ -57,18 +57,26 @@ def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display
     
     #Perform normalisation
     SAR_intersected.data = apply_MinMax_nornalisation(SAR_intersected.data,vmin_bassin,vmax_bassin)
-    
+        
     #Display SAR image
-    cbar_Runoff=axis_display_NO.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
-    axis_display_SW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
-    axis_display_NW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
-    axis_display_CW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
-    axis_SW_zoom_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+    if (name_save[0:11] in list(['aquitard_NW','aquitard_NO','aquitard_NE'])):
+        cbar_Runoff=axis_display_NO.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
     
+    if (name_save[0:11] in list(['aquitard_NW'])):
+        axis_display_NW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+
+    if (name_save[0:11] in list(['aquitard_CW'])):
+        axis_display_CW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+        axis_display_SW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+
+    if (name_save[0:11] in list(['aquitard_SW'])):
+        axis_display_SW.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+        axis_SW_zoom_display.imshow(SAR_intersected, extent=extent_SAR_intersected, transform=crs, origin='upper', cmap='Blues',zorder=1)
+            
     #Display colorbar
     if (name_save == 'aquitard_NO_1'):        
-        #Display cbar Runoff and Retention
-        cbar_Runoff_label=fig.colorbar(cbar_Runoff, cax=axis_display_NO,orientation='horizontal',ticklocation='top')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
+        #Display cbar Runoff and Retention        
+        cbar_Runoff_label=fig.colorbar(cbar_Runoff, cax=axis_cbar,orientation='horizontal',ticklocation='top')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
         cbar_Runoff_label.set_label('Runoff likelihood [-]')
 
     
@@ -200,9 +208,10 @@ SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 #Prepare plot
 plt.rcParams.update({'font.size': 12})
 fig = plt.figure()
-fig.set_size_inches(12, 14) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(12, 12.25) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
 
+'''
 gs = gridspec.GridSpec(14, 12)
 gs.update(hspace=0.1)
 gs.update(wspace=0.1)
@@ -211,6 +220,17 @@ ax_NW = plt.subplot(gs[5:14, 0:3],projection=crs)
 ax_CW = plt.subplot(gs[5:14, 3:6],projection=crs)
 ax_SW = plt.subplot(gs[5:14, 6:9],projection=crs)
 ax_SW_zoom = plt.subplot(gs[5:14, 9:12],projection=crs)
+'''
+
+gs = gridspec.GridSpec(76, 12)
+gs.update(hspace=0.1)
+gs.update(wspace=0.1)
+ax_cbar = plt.subplot(gs[0:1, 4:8])
+ax_NO = plt.subplot(gs[6:31, 0:12],projection=crs)
+ax_NW = plt.subplot(gs[31:76, 0:3],projection=crs)
+ax_CW = plt.subplot(gs[31:76, 3:6],projection=crs)
+ax_SW = plt.subplot(gs[31:76, 6:9],projection=crs)
+ax_SW_zoom = plt.subplot(gs[31:76, 9:12],projection=crs)
 
 #Display coastlines
 ax_NO.coastlines(edgecolor='black',linewidth=0.075)
@@ -300,18 +320,16 @@ GrIS_drainage_bassins.plot(ax=ax_SW_zoom,facecolor='#f7fbff',edgecolor='none')
 pdb.set_trace()
 
 #quantile 0.75 of below to quantile 0.75 of within
-intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-9.110144,-8.638897,'aquitard_SW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-9.110144,-8.638897,'aquitard_SW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.82364,-7.038067,'aquitard_CW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.82364,-7.038067,'aquitard_CW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-8.982688,-8.266375,'aquitard_NW_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-8.982688,-8.266375,'aquitard_NW_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NO_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.194321,-6.104299,'aquitard_NO_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-7.194321,-6.104299,'aquitard_NO_2',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-6.329797,-5.715943,'aquitard_NE_1',save_aquitard_true)
-intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,-6.329797,-5.715943,'aquitard_NE_2',save_aquitard_true)
-
-pdb.set_trace()
+intersection_SAR_GrIS_bassin(SAR_SW_00_23,SW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-9.110144,-8.638897,'aquitard_SW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,SW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-9.110144,-8.638897,'aquitard_SW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_SW_00_00,CW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-7.82364,-7.038067,'aquitard_CW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,CW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-7.82364,-7.038067,'aquitard_CW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_NW_00_00,NW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-8.982688,-8.266375,'aquitard_NW_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NW_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-8.982688,-8.266375,'aquitard_NW_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NO_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-7.194321,-6.104299,'aquitard_NO_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NO_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-7.194321,-6.104299,'aquitard_NO_2',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_00_EW,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-6.329797,-5.715943,'aquitard_NE_1',save_aquitard_true)
+intersection_SAR_GrIS_bassin(SAR_N_00_23,NE_rignotetal,ax_NO,ax_SW,ax_NW,ax_CW,ax_SW_zoom,ax_cbar,-6.329797,-5.715943,'aquitard_NE_2',save_aquitard_true)
 
 #Display dry snow zone mask
 DrySnowZoneMask.plot(ax=ax_NO,facecolor='#f7fbff',edgecolor='none')
@@ -447,7 +465,7 @@ ax_SW.add_patch(patches.Rectangle(([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim
 ax_SW.text(ax_SW_zoom.get_xlim()[1]+5000, (ax_SW_zoom.get_ylim()[0]+ax_SW_zoom.get_ylim()[1])/2-35000,'e',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Runoff areas'),
+legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Supporting runoff areas'),
                    Patch(facecolor='none',edgecolor='#ba2b2b',label='2010-2018 ice slabs'),
                    Line2D([0], [0], color='#fed976', lw=2, label='2013-2020 runoff limit'),
                    Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
@@ -464,8 +482,19 @@ plt.show()
 pdb.set_trace()
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig3/v3/Fig3_abcde.png',dpi=300)
+plt.savefig(path_switchdrive+'RT3/figures/Fig3/v4/Fig3_abcde.png',dpi=300)
 '''
+
+#Display 2019 RL in panel e
+RL_v3=pd.read_csv(path_switchdrive+'/RT3/data/Emax/xytpd_NDWI_cleaned_2019_v3.csv')
+RL2019_v3=RL_v3[RL_v3.year==2019].copy()
+ax_SW_zoom.scatter(RL2019_v3.x,RL2019_v3.y,s=5,c='#f46d43',label='2019 runoff limits')
+ax_SW_zoom.legend(fontsize=10,loc='upper center' ,bbox_to_anchor=(0.95, 0))
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig3/v4/Fig3_abcde_2019RL.png',dpi=300)
+'''
+pdb.set_trace()
 
 ############################################################################
 ########################### Aquitard properties ###########################

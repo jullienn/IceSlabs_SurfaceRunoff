@@ -201,6 +201,8 @@ def extract_regional_normalised_SAR(df_for_normalization,SAR_to_normalize,region
 
 def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_in_func):
     
+    pdb.set_trace()
+    
     #Create empty datafrme to store regional nornalised SAR dataframes
     df_to_display_normalised=pd.DataFrame()
     
@@ -235,9 +237,8 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
         cbar_region[3].set_clim(vmin=np.quantile(np.arange(np.nanmin(occurrence_matrix),np.nanmax(occurrence_matrix),1),0.05), vmax=np.nanmax(occurrence_matrix))#from https://stackoverflow.com/questions/15282189/setting-matplotlib-colorbar-range
         #For ice thickness at SAR threshold extraction, set quantile to 0.5
         
-        
         #Display colorbar
-        fig_heatmap.colorbar(cbar_region[3], ax=ax_plot,label='Occurrence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+        fig_heatmap.colorbar(cbar_region[3], ax=ax_plot,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
         #Display runoff thresholds
         ax_plot.axvline(x=thresholds_dictionnary_in_func[region]['SAR'][0],linestyle='dashed',color='green')
@@ -305,24 +306,32 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     ax_GrIS.set_xlim(0,1)
     ax_GrIS.set_title('All')
     ax_GrIS.set_xlabel('Normalised signal strength [-]')
-    fig_heatmap.colorbar(cbar_GrIS[3], ax=ax_GrIS,label='Occurrence') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
+    fig_heatmap.colorbar(cbar_GrIS[3], ax=ax_GrIS,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
+    '''
     ### Display manual fit function to data ###
+    #sort df_to_display_normalised
+    df_to_display_normalised.sort_values(by=['normalized_raster'],inplace=True)
+    #prepare data for fit        
+    xdata = np.array(df_to_display_normalised['normalized_raster'])
+    ydata = np.array(df_to_display_normalised['20m_ice_content_m'])  
+    
     ax_GrIS.plot(xdata, exponential_func(xdata, 30,-2.5,-3),color='blue',label='y = 2*exp(-0.3*x)-12')
     legend_elements = [Line2D([0], [0], color='blue', lw=2, label='Manual fit')]
     ax_GrIS.legend(handles=legend_elements,loc='best',fontsize=10,framealpha=0.5).set_zorder(7)
-    
     ### Display manual fit function to data ###
+    '''
     
     ### Finalise plot ###
     #Set labels
     ax_NO.set_xlabel('Signal strength [dB]')
     ax_NO.set_ylabel('Ice thickness [m]')
+    '''
     #Display firn cores ice content and SAR on SW plot
     ax_SW.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='black',marker='x')
     legend_elements = [Line2D([0], [0], color='black', marker='x',linestyle='none', label='Firn station')]
     ax_SW.legend(handles=legend_elements,loc='lower left',fontsize=10,framealpha=0.5).set_zorder(7)
-    
+    '''
     #Custom legend myself for ax_SW - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
     legend_elements = [Line2D([0], [0], color='red', lw=2 ,linestyle='dashed', label='Upper threshold'),
                        Line2D([0], [0], color='green', lw=2 ,linestyle='dashed', label='Lower threshold'),
@@ -341,7 +350,7 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     
     pdb.set_trace()
     
-    #SAve figure
+    #Save figure
     plt.savefig(path_switchdrive+'RT3/figures/Fig4/v2/Fig4.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
@@ -1113,9 +1122,7 @@ for indiv_file in list_composite:
     ax_check_csv_sectors.scatter(indiv_IceThickness_in_between.lon_3413,indiv_IceThickness_in_between.lat_3413,s=1,color='yellow')
     ax_check_csv_sectors.scatter(indiv_IceThickness_within.lon_3413,indiv_IceThickness_within.lat_3413,s=1,color='red')
     ax_check_csv_sectors.scatter(indiv_IceThickness_below.lon_3413,indiv_IceThickness_below.lat_3413,s=1,color='green')
-    
-    pdb.set_trace()
-    
+        
     #Associate the sector to the dataframe where ice thickness and SAR data are present by joining the two following dataframes
     #indiv_csv is the dataframe holding ice content and SAR signal NOT upsampled, but no info on the sector
     #indiv_IceThickness_above/in_between/within/below are the dataframe holding the ice content in the sector NOT upsampled, but no info on SAR.
