@@ -282,7 +282,7 @@ def extract_IceSlabs_UpperEnd(iceslabs_boundary_gpd,polygon_for_intersection_gpd
 
 
 def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_func,iceslabs_20102018_jullienetal2023_in_func,iceslabs_20102012_jullienetal2023_in_func,GrIS_DEM_in_func,box_nb):
-            
+        
     #Create an overall summary dataframe for this box
     RL_IceSlabs_box = pd.DataFrame()
     
@@ -297,11 +297,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     #Display coastlines
     ax_box.coastlines(edgecolor='black',linewidth=0.075)
     #Display 2010-2018 high end ice slabs jullien et al., 2023
-    iceslabs_20102018_jullienetal2023_in_func.plot(ax=ax_box,facecolor='#ba2b2b',edgecolor='#ba2b2b')
-    #Display 2010-2012 high end ice slabs jullien et al., 2023
-    iceslabs_20102012_jullienetal2023_in_func.plot(ax=ax_box,facecolor='#6baed6',edgecolor='#6baed6')
-    #Display firn aquifers Miège et al., 2016
-    ax_box.scatter(df_firn_aquifer_all['lon_3413'],df_firn_aquifer_all['lat_3413'],c='#74c476',s=1,zorder=2)
+    iceslabs_20102018_jullienetal2023_in_func.plot(ax=ax_box,facecolor='#ba2b2b',edgecolor='#ba2b2b',zorder=1)
     
     #Display MVRL
     poly_2012_in_func.plot(ax=ax_box,facecolor='none',edgecolor='#dadaeb',linewidth=1,zorder=3)
@@ -325,7 +321,39 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     ax_box.add_artist(ScaleBar(1))
 
     #Display box on map
-    indiv_Boxes_Tedstone2022.plot(ax=ax_box,color='none',edgecolor='red',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+    indiv_Boxes_Tedstone2022.plot(ax=ax_box,color='none',edgecolor='red',zorder=4)
+    
+    #Clip, and display the box of interest with ice sheet to keep only data on the GrIS
+    indiv_Boxes_Tedstone2022_GrIS = indiv_Boxes_Tedstone2022.intersection(GrIS_mask,align=False)
+    indiv_Boxes_Tedstone2022_GrIS.plot(ax=ax_box,color='blue',edgecolor='blue',zorder=4)
+
+    #Load and clip Sigma0HV ice slabs mapping to indiv_Boxes_Tedstone2022_GrIS
+    raster_clipped = rxr.open_rasterio('X:/RT3_jullien/SAR/HV_2017_2018/aquitard/aquitard_GrIS.vrt',
+                                       masked=True).rio.clip(indiv_Boxes_Tedstone2022_GrIS.geometry, from_disk=True)
+    
+    #Clip to extract only the data within the indiv_polygon
+    raster_clipped_DropOutside = raster_clipped.rio.clip(indiv_Boxes_Tedstone2022_GrIS.geometry.values, indiv_Boxes_Tedstone2022_GrIS.crs, drop=True, invert=False)
+    
+    #Extract the extent of the clipped raster 
+    extent_raster_clipped_DropOutside = [np.min(np.asarray(raster_clipped_DropOutside.x)), np.max(np.asarray(raster_clipped_DropOutside.x)),
+                                         np.min(np.asarray(raster_clipped_DropOutside.y)), np.max(np.asarray(raster_clipped_DropOutside.y))]#[west limit, east limit., south limit, north limit]
+    
+    #Display the clipped aquitard to make sure exraction performed well
+    ax_box.imshow(raster_clipped_DropOutside[0,:,:], extent=extent_raster_clipped_DropOutside, transform=crs, origin='upper', cmap='Greys',zorder=20,vmin=0,vmax=1)
+        
+    #Consider where midway aquitard - this can be changed
+    raster_for_smoothing = raster_clipped_DropOutside[0,:,:] >= 0.5
+    #Extract where NaNs for filled holes function
+    where_NaNs = np.isnan(raster_clipped_DropOutside[0,:,:])
+    filled = ndimage.binary_fill_holes(raster_for_smoothing).astype(float)
+    #Reset NaNs
+    filled[where_NaNs] = np.nan
+    
+    #Reset values in raster_clipped_DropOutside[0,:,:] rather than creating a new matrix!
+    raster_clipped_DropOutside[0,:,:] = filled
+    
+    #Display to make sure it worked well
+    ax_box.imshow(raster_clipped_DropOutside[0,:,:], extent=extent_raster_clipped_DropOutside, transform=crs, origin='upper', cmap='Blues',zorder=24,vmin=0,vmax=1,alpha=0.5)
     
     #Extract coordinates of vertice
     xcoords=indiv_Boxes_Tedstone2022.boundary.iloc[0].coords.xy[0]
@@ -433,7 +461,10 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
                                    'RL2019Region' : [np.nan],
                                    'Distance_IceSlabsBoundary20102012_2012_RL' : [np.nan],
                                    'Distance_IceSlabsBoundary20102018_2019_RL' : [np.nan],
-                                   'Distance_2012_2019_RL' : [np.nan]},
+                                   'Distance_2012_2019_RL' : [np.nan],
+                                   'Point_Sigma0HV_20172018' : [np.nan],
+                                   'ELevation_Point_Sigma0HV_20172018' : [np.nan],
+                                   'Region_Point_Sigma0HV_20172018' : [np.nan]},
                                    index=[0])
         
         #Store slice id
@@ -452,7 +483,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         polygon_for_intersection_gpd = gpd.GeoDataFrame(pd.DataFrame({"slide_id": [slice_id]}), geometry=polygon_for_intersection, crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
         
         #Display polygon_for_intersection
-        polygon_for_intersection_gpd.plot(ax=ax_box,color='green',edgecolor='black',alpha=0.5)
+        polygon_for_intersection_gpd.plot(ax=ax_box,color='green',edgecolor='black',alpha=0.5,zorder=8)
         
         #For box 21, clip slice with inclusion polygon to keep inside inclusion
         if (box_nb == '21'):
@@ -482,82 +513,52 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
             polygon_for_intersection_gpd=gpd.clip(polygon_for_intersection_gpd,box_22_east)
         
         #Display polygon_for_intersection
-        polygon_for_intersection_gpd.plot(ax=ax_box,color='yellow',edgecolor='black',alpha=0.5)
-        
-        #2. In each slice, extract RL line and ice slabs
-        #Intersect with runoff limit line
-        intersection_slice_2012_RL=polygon_for_intersection_gpd.intersection(poly_2012_in_func)
-        intersection_slice_2019_RL=polygon_for_intersection_gpd.intersection(poly_2019_in_func)
-        
-        #3. In each slice, extract cendroid coordinates of each line
-        #If there is 2012 RL in this slice
-        if (~intersection_slice_2012_RL.is_empty[0]):
-            #Display extracted 2012 RL line
-            intersection_slice_2012_RL.plot(ax=ax_box,color='green',zorder=20)
-            #Display its centroid
-            intersection_slice_2012_RL.centroid.plot(ax=ax_box)
-            #Store RL data into RL_IceSlabs dataframe
-            RL_IceSlabs['Point_2012_RL']=intersection_slice_2012_RL.centroid
-            #Extract elevation of RL centroids
-            RL_IceSlabs['Elevation_2012_RL']=GrIS_DEM_in_func.value_at_coords(intersection_slice_2012_RL.centroid[0].x, intersection_slice_2012_RL.centroid[0].y)
-
-        #If there is 2019 RL in this slice
-        if (~intersection_slice_2019_RL.is_empty[0]):
-            #Display extracted 2019 RL line
-            intersection_slice_2019_RL.plot(ax=ax_box,color='cyan',zorder=20)
-            #Display its centroid
-            intersection_slice_2019_RL.centroid.plot(ax=ax_box)
-            #Store RL data into RL_IceSlabs dataframe
-            RL_IceSlabs['Point_2019_RL']=intersection_slice_2019_RL.centroid
-            #Extract elevation of RL centroids
-            RL_IceSlabs['Elevation_2019_RL']=GrIS_DEM_in_func.value_at_coords(intersection_slice_2019_RL.centroid[0].x, intersection_slice_2019_RL.centroid[0].y)
-        
-        #If both 2012 RL and 2019 RL exist in this slice
-        if ((~(intersection_slice_2019_RL.is_empty[0]))&(~(intersection_slice_2019_RL.is_empty[0]))):
-            #Calculate distance between 2012 and 2019 runoff limit
-            RL_IceSlabs['Distance_2012_2019_RL'] = intersection_slice_2012_RL.centroid[0].distance(intersection_slice_2019_RL.centroid[0])
-        
-        ### --------- Extract 2010-2018 ice slabs upper end point --------- ###
-        #Make iceslabs_20102018_jullienetal2023_in_func.boundary as a gpd
-        iceslabs_20102018_jullienetal2023_boundary_gpd = gpd.GeoDataFrame(geometry=iceslabs_20102018_jullienetal2023_in_func.boundary,
-                                                                          crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
-        
-        #Extract highest 2010-2018 ice slabs point in the current slice
-        highest_20102018_IceSlabs_point = extract_IceSlabs_UpperEnd(iceslabs_20102018_jullienetal2023_boundary_gpd,polygon_for_intersection_gpd,ax_box,GrIS_DEM_in_func,box_nb,slice_id)
+        polygon_for_intersection_gpd.plot(ax=ax_box,color='yellow',edgecolor='black',alpha=0.5,zorder=9)
                 
-        if (len(highest_20102018_IceSlabs_point)>0):
-            #Store and display the kept centroid of intersection betwwen ice slabs and slice
-            RL_IceSlabs['Point_IceSlabsBoundary20102018']=highest_20102018_IceSlabs_point.geometry.iloc[0]
-            ax_box.scatter(highest_20102018_IceSlabs_point.geometry.iloc[0].x,highest_20102018_IceSlabs_point.geometry.iloc[0].y,color='red',s=50)
-            
-            #Extract elevation
-            RL_IceSlabs['Elevation_IceSlabsBoundary20102018']=highest_20102018_IceSlabs_point.elevation.iloc[0]
-            
-            #4. Calculate distances between centroids
-            if (~intersection_slice_2019_RL.is_empty[0]):
-                RL_IceSlabs['Distance_IceSlabsBoundary20102018_2019_RL'] = highest_20102018_IceSlabs_point.geometry.iloc[0].distance(intersection_slice_2019_RL.centroid[0])
-        ### --------- Extract 2010-2018 ice slabs upper end point --------- ###
+        #2. In each slice, extract ice slabs from sigma0HV
+                
+        ### --------- Extract sigma0HV ice slabs upper end point --------- ###
+        #1. Extract raster in the of slice of interest
+        raster_ClippedToSlice_DropOutside = raster_clipped_DropOutside.rio.clip(polygon_for_intersection_gpd.geometry.values, polygon_for_intersection_gpd.crs, drop=True, invert=False)
+        
+        #Check extraction is correct - yes it is!
+        #Extract the extent of the clipped raster 
+        extent_raster_ClippedToSlice_DropOutside = [np.min(np.asarray(raster_ClippedToSlice_DropOutside.x)), np.max(np.asarray(raster_ClippedToSlice_DropOutside.x)),
+                                                    np.min(np.asarray(raster_ClippedToSlice_DropOutside.y)), np.max(np.asarray(raster_ClippedToSlice_DropOutside.y))]#[west limit, east limit., south limit, north limit]
+        ax_box.imshow(raster_ClippedToSlice_DropOutside[0,:,:], extent=extent_raster_ClippedToSlice_DropOutside, transform=crs, origin='upper', cmap='Blues',zorder=23,vmin=0,vmax=1)
+        
+        pdb.set_trace()
+        
+        #2. Extract the runoff contours in the slice of interest
+        ci = ax_box.contour(raster_ClippedToSlice_DropOutside.x.to_numpy(),
+                            raster_ClippedToSlice_DropOutside.y.to_numpy(),
+                            raster_ClippedToSlice_DropOutside.values[0,:,:],
+                            levels=[1],cmap='Spectral',zorder=65)
+        
+        #3. Retrieve all indivual points constituing the contours
+        x_coord_sigma0HV = []
+        y_coord_sigma0HV = []
+        
+        for i in range(0,len(ci.allsegs[0])):
+            x_coord_sigma0HV = np.append(x_coord_sigma0HV, ci.allsegs[0][i][:,0])
+            y_coord_sigma0HV = np.append(y_coord_sigma0HV, ci.allsegs[0][i][:,1])
+        
+        #4. Keep a single point of sigma0HV ice slabs upper end
 
-        ### --------- Extract 2010-2012 ice slabs upper end point --------- ###
-        #Make iceslabs_20102012_jullienetal2023_in_func.boundary as a gpd
-        iceslabs_20102012_jullienetal2023_boundary_gpd = gpd.GeoDataFrame(geometry=iceslabs_20102012_jullienetal2023_in_func.boundary,
-                                                                          crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
-        #Extract highest 2010-2012 ice slabs point in the curren slice
-        highest_20102012_IceSlabs_point = extract_IceSlabs_UpperEnd(iceslabs_20102012_jullienetal2023_boundary_gpd,polygon_for_intersection_gpd,ax_box,GrIS_DEM_in_func,box_nb,slice_id)
-        
-        if (len(highest_20102012_IceSlabs_point)>0):
-            #Store and display the kept centroid of intersection betwwen ice slabs and slice
-            RL_IceSlabs['Point_IceSlabsBoundary20102012']=highest_20102012_IceSlabs_point.geometry.iloc[0]
-            ax_box.scatter(highest_20102012_IceSlabs_point.geometry.iloc[0].x,highest_20102012_IceSlabs_point.geometry.iloc[0].y,color='orange',s=50)
-            
-            #Extract elevation
-            RL_IceSlabs['Elevation_IceSlabsBoundary20102012']=highest_20102012_IceSlabs_point.elevation.iloc[0]
-            
-            #4. Calculate distances between centroids
-            if (~intersection_slice_2012_RL.is_empty[0]):
-                RL_IceSlabs['Distance_IceSlabsBoundary20102012_2012_RL'] = highest_20102012_IceSlabs_point.geometry.iloc[0].distance(intersection_slice_2012_RL.centroid[0])
-        ### --------- Extract 2010-2012 ice slabs upper end point --------- ###
-        
+        #As a first guess, extract the average of all the coordinates and set this as the sigma0HV point of this slice
+        #Source of improvement: keep the contour which is continuous throughout and take the centroid of this line?#This does not work well so far, find a better method!
+        ax_box.scatter(x_coord_sigma0HV.mean(),y_coord_sigma0HV.mean(),zorder=70)
+                
+        #Transform this point into a geometry
+        single_sigma0HV_20172018 = gpd.GeoDataFrame(geometry=[Point(x_coord_sigma0HV.mean(),y_coord_sigma0HV.mean())],crs="EPSG:3413")#This is from https://gis.stackexchange.com/questions/294206/%d0%a1reating-polygon-from-coordinates-in-geopandas
+
+        #5. Append data for final save
+        #Save the point geometry
+        RL_IceSlabs['Point_Sigma0HV_20172018'] = single_sigma0HV_20172018.geometry.iloc[0]
+        #Extract the elevation of this point
+        RL_IceSlabs['ELevation_Point_Sigma0HV_20172018'] = GrIS_DEM_in_func.value_at_coords(x_coord_sigma0HV.mean(), y_coord_sigma0HV.mean())
+        ### --------- Extract sigma0HV ice slabs upper end point --------- ###
+
         ### Where ice slabs extent regional transition (CW VS SW), might need to include some filtering to get rid of falsely too high ice slabs extent at the low end? It should not be the case, but check that!
         
         #Concat to have a summary dataframe
@@ -578,10 +579,18 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         #Update slice id
         slice_id=slice_id+1
     
+    #Check how it performed up to now
+    pdb.set_trace()
+    print('The remaining of the function from here onwards needs to be adapted')
+    print('Get rid of all useless things computed such as the the RL??')
+    
+    '''
+    ######### SAVE SIGMA0HV FIGURE #########
     #pdb.set_trace()
     #Save figure
     plt.savefig(path_switchdrive+'RT3/figures/Fig1/IceSlabs_and_RL_extraction/ExtractionSlabs_and_RL_box_'+box_nb+'_cleanedxytpdV3_final.png',dpi=500,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    '''
     plt.close()
     
     ### Save data as csv files ###
@@ -658,12 +667,19 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
     RL_IceSlabs_box_2019RLPoints=gpd.GeoDataFrame(RL_IceSlabs_box_2019RLPoints, geometry=RL_IceSlabs_box_2019RLPoints.Point_2019_RL, crs="EPSG:3413")
     RL_IceSlabs_box_2019RLPoints_Regions = gpd.sjoin(RL_IceSlabs_box_2019RLPoints, GrIS_drainage_bassins, predicate='within')   
     RL_IceSlabs_box['RL2019Region']=RL_IceSlabs_box_2019RLPoints_Regions.SUBREGION1    
-    ### --- Extract region for ice slabs and RL independantly from each other --- ###
     
+    #4. Extract sigma0HV ice slabs region
+    pdb.set_trace()
+    #RL_IceSlabs['Region_Point_Sigma0HV_20172018'] = 
+
+    
+    ### --- Extract region for ice slabs and RL independantly from each other --- ###
+    '''
     #Export RL_IceSlabs_box into a single csv file
     RL_IceSlabs_box.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/whole/RL_IceSlabs_box_'+box_save+'_cleanedxytpdV3.csv')
-    ### Save data as csv files ###
-    
+    sigma0HV_upper_end
+    Save data as csv files ###
+    '''
     return RL_IceSlabs_box
 
 
@@ -730,8 +746,9 @@ from shapely.geometry import Point, LineString, MultiLineString, Polygon
 import geoutils as gu
 from matplotlib_scalebar.scalebar import ScaleBar
 import matplotlib.patches as patches
+from scipy import ndimage
 
-extract_data_in_boxes='FALSE'
+extract_data_in_boxes='TRUE'
 
 #Define paths
 path_switchdrive='C:/Users/jullienn/switchdrive/Private/research/'
@@ -768,17 +785,12 @@ iceslabs_20102012_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefile
 #load 2010-2018 ice slabs high end from Jullien et al., (2023)
 iceslabs_20102018_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefiles/iceslabs_jullien_highend_20102018.shp')
 
-#Load MVRL in 2012, 2012, 2016, 2019
-poly_2010=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2010.shp')
+#Load MVRL in 2012, 2019
 poly_2012=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2012.shp')
-poly_2016=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2016.shp')
 poly_2019=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2019.shp')
 ### -------------------------- Load shapefiles --------------------------- ###
 
 ### ---------------------------- Load xytpd ------------------------------ ###
-'''
-df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd.csv',delimiter=',',decimal='.')
-'''
 df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd_NDWI_cleaned_2019_v3.csv',delimiter=',',decimal='.')
 ### ---------------------------- Load xytpd ------------------------------ ###
 
@@ -793,22 +805,6 @@ CumHydro = rxr.open_rasterio(path_local+'data/master_maps/'+'master_map_GrIS_mea
 x_coord_CumHydro=np.asarray(CumHydro.x)
 y_coord_CumHydro=np.asarray(CumHydro.y)
 ### -------------------------- Load CumHydro ----------------------------- ###
-
-### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
-path_aquifers=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/firn_aquifers_miege/'
-df_firn_aquifer_all=pd.DataFrame()
-df_firn_aquifer_all=df_firn_aquifer_all.append(pd.read_csv(path_aquifers+'MiegeFirnAquiferDetections2010.csv',delimiter=',',decimal='.'))
-df_firn_aquifer_all=df_firn_aquifer_all.append(pd.read_csv(path_aquifers+'MiegeFirnAquiferDetections2011.csv',delimiter=',',decimal='.'))
-df_firn_aquifer_all=df_firn_aquifer_all.append(pd.read_csv(path_aquifers+'MiegeFirnAquiferDetections2012.csv',delimiter=',',decimal='.'))
-df_firn_aquifer_all=df_firn_aquifer_all.append(pd.read_csv(path_aquifers+'MiegeFirnAquiferDetections2013.csv',delimiter=',',decimal='.'))
-df_firn_aquifer_all=df_firn_aquifer_all.append(pd.read_csv(path_aquifers+'MiegeFirnAquiferDetections2014.csv',delimiter=',',decimal='.'))
-
-#Transform miege coordinates from WGS84 to EPSG:3413
-transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
-points=transformer.transform(np.asarray(df_firn_aquifer_all["LONG"]),np.asarray(df_firn_aquifer_all["LAT"]))
-df_firn_aquifer_all['lon_3413']=points[0]
-df_firn_aquifer_all['lat_3413']=points[1]
-### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
 
 #Open Boxes from Tedstone and Machguth (2022)
 Boxes_Tedstone2022=gpd.read_file(path_data+'Boxes_Tedstone2022/boxes.shp')
@@ -845,12 +841,11 @@ if (extract_data_in_boxes == 'TRUE'):
 
     for indiv_box_nb in Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].FID:
         print(indiv_box_nb)
-        '''
-        if (indiv_box_nb == 5):
-            pdb.set_trace()
-        else:
+        
+        if (indiv_box_nb <12):
             continue
-        '''
+        
+        pdb.set_trace()
         #Extract the RL lines
         RL_line_2012_indiv_box,RL_line_2019_indiv_box = extract_RL_line_from_xytpd(df_xytpd_2012,df_xytpd_2019)
                 
@@ -858,10 +853,10 @@ if (extract_data_in_boxes == 'TRUE'):
         RL2012_coordinates=pd.DataFrame()
         RL2012_coordinates['x']=np.array(RL_line_2012_indiv_box.geometry.iloc[0].coords.xy[0])
         RL2012_coordinates['y']=np.array(RL_line_2012_indiv_box.geometry.iloc[0].coords.xy[1])
-        
+        '''
         #Save the 2012 RL line
         RL2012_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2012/RL_line_2012_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
-        
+        '''
         #Store 2019 data as points coordinates rather than line to save
         if (indiv_box_nb==25):
             #Box 25 in 2019 has a multistring, explode multistring into line strings and save
@@ -874,19 +869,21 @@ if (extract_data_in_boxes == 'TRUE'):
                 RL2019_coordinates=pd.DataFrame()
                 RL2019_coordinates['x']=np.array(indiv_line.coords.xy[0])
                 RL2019_coordinates['y']=np.array(indiv_line.coords.xy[1])
-                
+                '''
                 #Save the RL lines
                 RL2019_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_'+str(count)+'_cleanedxytpdV3.csv')
+                '''
                 #update count
                 count=count+1
         else:
             RL2019_coordinates=pd.DataFrame()
             RL2019_coordinates['x']=np.array(RL_line_2019_indiv_box.geometry.iloc[0].coords.xy[0])
             RL2019_coordinates['y']=np.array(RL_line_2019_indiv_box.geometry.iloc[0].coords.xy[1])
-            
+            '''
             #Save the RL lines
             RL2019_coordinates.to_csv(path_switchdrive+'RT3/data/outputs/IceSlabs_and_RL_extraction/RL_2019/RL_line_2019_box_'+str(indiv_box_nb)+'_cleanedxytpdV3.csv')
-            
+            '''
+
         #Perform extraction: generate figure and datasets
         if (indiv_box_nb==22):            
             #Perform analysis in the west side of the box

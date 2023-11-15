@@ -84,7 +84,7 @@ def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display
         print('Saving raster',name_save)
         #Save the resulting aquitard map - this is from https://corteva.github.io/rioxarray/stable/examples/convert_to_raster.html
         SAR_intersected.rio.to_raster(
-            "C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/aquitard/"+name_save+".tif",
+            path_SAR+"binary_runoff_retention/aquitard/"+name_save+".tif",
             tiled=True,  # GDAL: By default striped TIFF files are created. This option can be used to force creation of tiled TIFF files.
             windowed=True,  # rioxarray: read & write one window at a time
             )
