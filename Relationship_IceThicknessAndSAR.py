@@ -325,7 +325,7 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     ### Finalise plot ###
     #Set labels
     ax_NO.set_xlabel('Signal strength [dB]')
-    ax_NO.set_ylabel('Ice thickness [m]')
+    ax_NO.set_ylabel('Ice slab thickness [m]')
     '''
     #Display firn cores ice content and SAR on SW plot
     ax_SW.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='black',marker='x')
