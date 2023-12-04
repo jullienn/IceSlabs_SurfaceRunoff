@@ -206,11 +206,11 @@ SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 ### --- This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
 
 #Prepare plot
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 8})
 fig = plt.figure()
-fig.set_size_inches(13.71, 13.65) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(8.27,8.62)#(13.1, 13.65) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-#Nature pdf size = (8.27,10.87)
+#Nature pdf size = (8.27,9)
 
 '''
 gs = gridspec.GridSpec(14, 12)
@@ -223,15 +223,15 @@ ax_SW = plt.subplot(gs[5:14, 6:9],projection=crs)
 ax_SW_zoom = plt.subplot(gs[5:14, 9:12],projection=crs)
 '''
 
-gs = gridspec.GridSpec(76, 12)
+gs = gridspec.GridSpec(76, 120)
 gs.update(hspace=0.1)
 gs.update(wspace=0.1)
-ax_cbar = plt.subplot(gs[0:1, 4:8])
-ax_NO = plt.subplot(gs[6:31, 0:12],projection=crs)
-ax_NW = plt.subplot(gs[31:76, 0:3],projection=crs)
-ax_CW = plt.subplot(gs[31:76, 3:6],projection=crs)
-ax_SW = plt.subplot(gs[31:76, 6:9],projection=crs)
-ax_SW_zoom = plt.subplot(gs[31:76, 9:12],projection=crs)
+ax_cbar = plt.subplot(gs[0:1, 40:80])
+ax_NO = plt.subplot(gs[6:31, 3:117],projection=crs)
+ax_NW = plt.subplot(gs[31:76, 0:30],projection=crs)
+ax_CW = plt.subplot(gs[31:76, 30:60],projection=crs)
+ax_SW = plt.subplot(gs[31:76, 60:90],projection=crs)
+ax_SW_zoom = plt.subplot(gs[31:76, 90:120],projection=crs)
 
 #Display coastlines
 ax_NO.coastlines(edgecolor='black',linewidth=0.075)
@@ -450,7 +450,7 @@ gl.right_labels = False
 gl.top_labels = False
 
 #SW zoom
-gl=ax_SW_zoom.gridlines(draw_labels=True, xlocs=[-47.25,-47.50,-47.75], ylocs=[66.00,66.25,66.5], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
+gl=ax_SW_zoom.gridlines(draw_labels=True, xlocs=[-47.50], ylocs=[66.00], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed',zorder=8)
 gl.right_labels = False
 gl.top_labels = False
 ###################### From Tedstone et al., 2022 #####################
@@ -470,7 +470,7 @@ legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Areas suppo
                    Patch(facecolor='none',edgecolor='#ba2b2b',label='2010-2018 ice slabs'),
                    Line2D([0], [0], color='#fed976', lw=2, label='2013-2020 runoff limit'),
                    Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
-ax_NO.legend(handles=legend_elements,loc='lower center',fontsize=12,framealpha=1, bbox_to_anchor=(0.65, 0)).set_zorder(7)
+ax_NO.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=1, bbox_to_anchor=(0.65, 0)).set_zorder(7)
 
 # Display scalebar with GeoPandas
 ax_NO.add_artist(ScaleBar(1,location='upper left',box_alpha=0,box_color=None)).set_pad(2)
@@ -490,7 +490,7 @@ plt.savefig(path_switchdrive+'RT3/figures/Fig3/v4/Fig3_abcde.png',dpi=300)
 RL_v3=pd.read_csv(path_switchdrive+'/RT3/data/Emax/xytpd_NDWI_cleaned_2019_v3.csv')
 RL2019_v3=RL_v3[RL_v3.year==2019].copy()
 ax_SW_zoom.scatter(RL2019_v3.x,RL2019_v3.y,s=5,c='#f46d43',label='2019 runoff limits')
-ax_SW_zoom.legend(fontsize=10,loc='upper center' ,bbox_to_anchor=(0.5, 0.95))
+ax_SW_zoom.legend(fontsize=8,loc='upper center' ,bbox_to_anchor=(0.5, 0.95),handletextpad=0)#handletextpad is from https://stackoverflow.com/questions/41827406/how-to-adjust-space-between-legend-markers-and-labels
 '''
 #Save the figure
 plt.savefig(path_switchdrive+'RT3/figures/Fig3/v4/Fig3_abcde_2019RL.png',dpi=300)

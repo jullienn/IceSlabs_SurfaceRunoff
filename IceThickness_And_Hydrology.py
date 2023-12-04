@@ -717,7 +717,7 @@ ax_Hypothetical_plot_second.tick_params(axis='y', colors='C1')
 
 #Custom labels
 ax_Hypothetical_plot.set_xlabel('Distance [km]')
-ax_Hypothetical_plot.set_ylabel('Ice thickness [m]',color='C0')
+ax_Hypothetical_plot.set_ylabel('Ice slab thickness [m]',color='C0')
 ax_Hypothetical_plot_second.set_ylabel('Coefficient of variation [ ]',color='C1',)
 ax_Hypothetical_plot.set_ylim(ax_TransectFig6.get_ylim())
 ax_Hypothetical_plot_second.set_ylim(0,TransectFig6_WithinBounds_reverted.rolling_CV_ice_thickness.max()+0.025)
