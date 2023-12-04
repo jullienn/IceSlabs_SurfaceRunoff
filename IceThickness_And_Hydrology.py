@@ -395,7 +395,7 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
     #Remove the floor(min) in each region - floor of the min to allow fo log axis display in distribution plot
     regional_df=upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions[upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions.SUBREGION1==indiv_region].copy()
     #regional_df["raster_values_minus_min"]=regional_df.raster_values-np.floor(regional_df.raster_values.min())
-    
+        
     #Min-max normalisation
     regional_df["raster_normalised"] = (regional_df.raster_values-regional_df.raster_values.min())/(regional_df.raster_values.max()-regional_df.raster_values.min())
     
@@ -562,7 +562,7 @@ pdb.set_trace()
 
 plt.rcParams.update({'font.size': 8})
 #Display the transect in Fig.6
-fig = plt.figure(figsize=(8.27,5.5))#Nature pdf size = (8.27,10.87)
+fig = plt.figure(figsize=(8.27,5.16))#Nature pdf size = (8.27,10.87)
 gs = gridspec.GridSpec(8, 101)
 ax_TransectFig6 = plt.subplot(gs[2:6, 0:99])
 
@@ -612,8 +612,9 @@ ax_TransectFig6_second.set_yticks(np.arange(0,ax_TransectFig6_second.get_ylim()[
 #gives 36.836142729833256
 
 #Add which transect is displayed
+#Display panel label
 #ax_TransectFig6.text(0.97, 0.95,'2018',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_TransectFig6.text(0.010, 0.95,'a',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_TransectFig6.text(0.015, 0.95,'a',ha='center', va='center', transform=ax_TransectFig6.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ### --- Perform the same analysis for the 2018 transect displayed in Fig. 6 --- ###
 
 pdb.set_trace()
@@ -747,7 +748,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig_hypothetical_slab.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v6/Fig_hypothetical_slab.png',dpi=300,bbox_inches='tight')
 '''
 plt.close()
 
@@ -780,7 +781,7 @@ plt.show()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig6_a.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v6/Fig6_a.png',dpi=300)#,bbox_inches='tight')
 '''
 ### --------- Perform the same analysis for an hypothetical ice slab --------- ###
 
@@ -807,11 +808,10 @@ gs.update(wspace=0.5)
 ax_NDWI = plt.subplot(gs[1:10, 0:100], projection=crs)
 axc_NDWI = plt.subplot(gs[1:10, 100:101])
 ax_DEM = plt.subplot(gs[17:34, 0:99], projection=crs)
-axc_DEM = plt.subplot(gs[17:34, 99:101])
+axc_DEM = plt.subplot(gs[18:33, 99:101])
 ax_StrainRate = plt.subplot(gs[34:51, 0:99], projection=crs)
-axc_StrainRate = plt.subplot(gs[34:51, 99:101])
-
-axc_IceThickness = plt.subplot(gs[51:52, 35:65])    
+axc_StrainRate = plt.subplot(gs[35:50, 99:101])
+axc_IceThickness = plt.subplot(gs[51:52, 37:63])    
 
 ### NDWI ###
 #path_NDWI='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/NDWI/'+'NDWI_p10_'+str(2019)+'.vrt'
@@ -916,7 +916,7 @@ ax_StrainRate.set_ylim(y_min,y_max)
 #Display cbar
 cbar_StrainRate_label=fig1.colorbar(cbar_StrainRate, cax=axc_StrainRate)
 cbar_StrainRate.colorbar.set_ticklabels(cbar_StrainRate.colorbar.get_ticks()*1000)#Multiply tick labels by 1000
-cbar_StrainRate_label.set_label('Principal strain rate [$10^{-3} yr^{-1}$]',labelpad=8)
+cbar_StrainRate_label.set_label('Principal strain \n rate [$10^{-3} yr^{-1}$]',labelpad=8)
 
 #Display cbar IceThickness
 cbar_IceThickness_label=fig1.colorbar(cbar_IceThickness, cax=axc_IceThickness,orientation='horizontal',ticklocation='bottom')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
@@ -952,17 +952,21 @@ gl_1.top_labels = False
 
 # Display scalebar with GeoPandas
 ax_NDWI.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
-ax_DEM.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+#ax_DEM.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
 ax_StrainRate.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
 
+#Add backgound to display panel label
+ax_DEM.text(0.0165, 0.9,' ',ha='center', va='center', transform=ax_DEM.transAxes,weight='bold',fontsize=8,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=9)
+ax_StrainRate.text(0.0165, 0.9,' ',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=8,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=9)
+    
 #Display panel label
 ax_NDWI.text(0.01, 0.9,'a',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_DEM.text(0.01, 0.9,'g',ha='center', va='center', transform=ax_DEM.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_StrainRate.text(0.01, 0.9,'h',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
+ax_DEM.text(0.015, 0.9,'g',ha='center', va='center', transform=ax_DEM.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_StrainRate.text(0.015, 0.9,'h',ha='center', va='center', transform=ax_StrainRate.transAxes,weight='bold',fontsize=12,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig6gh.png',dpi=300)
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v6/Fig6gh.png',dpi=300)
 '''
 ### --------------------------- Sector B focus --------------------------- ###
 

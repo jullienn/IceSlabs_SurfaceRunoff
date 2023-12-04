@@ -208,8 +208,9 @@ SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDES
 #Prepare plot
 plt.rcParams.update({'font.size': 12})
 fig = plt.figure()
-fig.set_size_inches(12, 12.25) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+fig.set_size_inches(13.71, 13.65) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+#Nature pdf size = (8.27,10.87)
 
 '''
 gs = gridspec.GridSpec(14, 12)

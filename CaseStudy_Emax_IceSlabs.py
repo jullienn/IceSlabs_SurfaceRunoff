@@ -57,8 +57,6 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.gridspec as gridspec
 from pyproj import Transformer
-import seaborn as sns
-sns.set_theme(style="whitegrid")
 import matplotlib.image as mpimg
 from pyproj import Transformer
 import cartopy.crs as ccrs
@@ -274,11 +272,26 @@ CaseStudyFS={2002:'empty',
 #Define the panel to study
 investigation_year=CaseStudy2
 
-#Create figures
-plt.rcParams.update({'font.size': 20})
-fig2 = plt.figure()
-ax_map = plt.subplot(projection=crs)
-GrIS_drainage_bassins.plot(ax=ax_map,facecolor='none',edgecolor='black')
+### Set sizes ###
+# this is from https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
+plt.rc('font', size=8)          # controls default text sizes
+plt.rc('axes', titlesize=8)     # fontsize of the axes title
+plt.rc('axes', labelsize=8)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=8)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=8)    # fontsize of the tick labels
+plt.rc('legend', fontsize=8)    # legend fontsize
+plt.rc('figure', titlesize=12)  # fontsize of the figure title
+plt.rc('axes',linewidth = 0.75)  #https://stackoverflow.com/questions/1639463/how-to-change-border-width-of-a-matplotlib-graph
+plt.rc('xtick.major',width=0.75)
+plt.rc('ytick.major',width=0.75)
+plt.rc('axes',edgecolor='black') #from https://stackoverflow.com/questions/1982770/changing-the-color-of-an-axis
+
+'''
+#Find the actual font police, this is from https://stackoverflow.com/questions/27817912/find-out-which-font-matplotlib-uses
+from matplotlib.font_manager import findfont, FontProperties
+font = findfont(FontProperties())
+'''
+### Set sizes ###
 
 plt.rcParams.update({'font.size': 8})
 #fig1 = plt.figure(figsize=(8.27,5.435))#Nature pdf size = (8.27,10.87)
@@ -779,11 +792,14 @@ for single_year in investigation_year.keys():
     #Get rid of xticklabels
     ax_plot.set_xticklabels([])
     
+    #Set axis frame to be black
     #Display year
     if (single_year<2004):
-        ax_plot.text(0.98, 0.6,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.text(0.9725, 0.625,'                     ',ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=2,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+        ax_plot.text(0.9725, 0.6,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     else:
-        ax_plot.text(0.98, 0.875,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.text(0.9725, 0.825,'                     ',ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=2,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+        ax_plot.text(0.9725, 0.825,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
@@ -875,13 +891,15 @@ if (desired_map=='NDWI'):
 elif (desired_map=='master_map'):
     #Load hydrological master map from Tedstone and Machuguth (2022)
     path_CumHydroMap='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/master_maps/'
-    #Load master_maps data for display
+    #Load master map
     MapPlot = rxr.open_rasterio(path_CumHydroMap+'master_map_GrIS_mean.vrt',
                                   masked=True).squeeze() #No need to reproject satelite image
-    vlim_min=50
-    vlim_max=150
+    
+    #Define vlims
+    vlim_min=0
+    vlim_max=1
     cmap_raster='viridis_r'#'magma_r'
-
+    
 else:
     print('Enter a correct map name!')
     pdb.set_trace()
@@ -900,8 +918,19 @@ y_coord_within_bounds=y_coord_MapPlot[logical_y_coord_within_bounds]
 
 #Define extents based on the bounds
 extent_MapPlot = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+
+#Normalise the raster map such as in Fig. 7. a) clip to SW Greenland, then apply a min/max normalisation
+'''
+#From Fig. 7, regional_df being the SW in the runoff limit-defines zones:
+regional_df.raster_values.min() = 49.2973
+regional_df.raster_values.max() = 188.79410999999996
+'''
+#Min-max normalisation using min and max bounds from Fig. 7
+MapPlotFrequency = MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds]
+MapPlotFrequency = (MapPlotFrequency-49.2973)/(188.79410999999996-49.2973)
+
 #Display image
-cbar=ax_map.imshow(MapPlot[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_MapPlot, transform=crs, origin='upper', cmap=cmap_raster,vmin=vlim_min,vmax=vlim_max,zorder=0)
+cbar=ax_map.imshow(MapPlotFrequency, extent=extent_MapPlot, transform=crs, origin='upper', cmap=cmap_raster,vmin=vlim_min,vmax=vlim_max,zorder=0)
 
 #Set xlims
 ax_map.set_xlim(x_min,x_max)
@@ -1111,7 +1140,7 @@ if (investigation_year==CaseStudy1):
     gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[66.05,66.10], x_inline=False, y_inline=False,linewidth=0.5)
     ###################### From Tedstone et al., 2022 #####################
 elif (investigation_year==CaseStudy2):
-    ax9.set_ylabel('Depth [m]')
+    ax7.set_ylabel('                    Depth [m]')
     ax9.set_yticklabels(['0','10','20'])
     ticks_through=ax9.get_xticks()
     year_ticks=2018
@@ -1128,7 +1157,7 @@ elif (investigation_year==CaseStudy2):
     gl.right_labels = False
     gl.bottom_labels = False
     gl.top_labels = False
-    ax_map.axis('off')
+    #ax_map.axis('off')
     ###################### From Tedstone et al., 2022 #####################
 elif (investigation_year==CaseStudy3):
     ax4.set_ylabel('Depth [m]')
@@ -1228,10 +1257,7 @@ cbar_depth=fig1.colorbar(cb, cax=axc, aspect=5)#aspect is from https://stackover
 cbar_depth.set_label('Radar signal strength [dB]')
 
 cbar_CumHydro=fig1.colorbar(cbar, cax=axc_map)
-cbar_CumHydro.set_label('Hydrological occurence')
-#Modify colorbar ticks according to vmin and vmax
-cbar_CumHydro.set_ticks(np.arange(vlim_min,vlim_max,20)+10)
-cbar_CumHydro.set_ticklabels(np.arange(vlim_min,vlim_max,20)+10-vlim_min)
+cbar_CumHydro.set_label('Frequency of surface \n hydrology [-]')
 
 plot_dist=[]
 for indiv_tick in ticks_through:
@@ -1299,19 +1325,28 @@ if (investigation_year==CaseStudy2):
     '''
     ax_NDWI.legend(handles=legend_elements,loc='lower right',ncol=5,framealpha=1)#from https://stackoverflow.com/questions/42103144/how-to-align-rows-in-matplotlib-legend-with-2-columns
     '''
+        
+    #Add backgound to display panel label
+    ax2.text(0.015, 0.8,' ',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+    ax3.text(0.015, 0.8,' ',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+    ax7.text(0.015, 0.8,' ',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+    ax9.text(0.015, 0.8,' ',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+    ax_map.text(0.015, 0.9,' ',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=6,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+
     #Display panel label
-    ax2.text(0.01, 0.70,'c',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax3.text(0.01, 0.85,'d',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax7.text(0.01, 0.85,'e',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax9.text(0.01, 0.85,'f',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax_map.text(0.01, 0.925,'b',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax2.text(0.0125, 0.75,'c',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax3.text(0.0125, 0.75,'d',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax7.text(0.0125, 0.75,'e',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax9.text(0.0125, 0.75,'f',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax_map.text(0.015, 0.90,'b',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    
     '''
     ax_NDWI.text(0.01, 0.925,'g',ha='center', va='center', transform=ax_NDWI.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     '''
     plt.show()
 
 # Display scalebar with GeoPandas
-ax_map.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))#.set_pad(2)
+#ax_map.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))#.set_pad(2)
 '''
 ax_NDWI.add_artist(ScaleBar(1,location='upper right',box_alpha=0,box_color=None))#.set_pad(2)
 '''
@@ -1361,7 +1396,7 @@ plt.show()
 pdb.set_trace()
 
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v5/Fig6bcdef.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v6/Fig6bcdef.png',dpi=300)#,bbox_inches='tight')
 
 '''
 #Save the figure
