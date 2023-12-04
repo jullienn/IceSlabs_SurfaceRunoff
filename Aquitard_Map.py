@@ -77,7 +77,7 @@ def intersection_SAR_GrIS_bassin(SAR_to_intersect,individual_bassin,axis_display
     if (name_save == 'aquitard_NO_1'):        
         #Display cbar Runoff and Retention        
         cbar_Runoff_label=fig.colorbar(cbar_Runoff, cax=axis_cbar,orientation='horizontal',ticklocation='top')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
-        cbar_Runoff_label.set_label('Runoff likelihood [-]')
+        cbar_Runoff_label.set_label('Supporting runoff likelihood [-]')
 
     
     if (save_aquitard=='TRUE'):
@@ -465,7 +465,7 @@ ax_SW.add_patch(patches.Rectangle(([ax_SW_zoom.get_xlim()[0],ax_SW_zoom.get_ylim
 ax_SW.text(ax_SW_zoom.get_xlim()[1]+5000, (ax_SW_zoom.get_ylim()[0]+ax_SW_zoom.get_ylim()[1])/2-35000,'e',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Supporting runoff areas'),
+legend_elements = [Patch(facecolor='#072f6b',edgecolor='none',label='Areas supporting runoff'),
                    Patch(facecolor='none',edgecolor='#ba2b2b',label='2010-2018 ice slabs'),
                    Line2D([0], [0], color='#fed976', lw=2, label='2013-2020 runoff limit'),
                    Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
@@ -489,7 +489,7 @@ plt.savefig(path_switchdrive+'RT3/figures/Fig3/v4/Fig3_abcde.png',dpi=300)
 RL_v3=pd.read_csv(path_switchdrive+'/RT3/data/Emax/xytpd_NDWI_cleaned_2019_v3.csv')
 RL2019_v3=RL_v3[RL_v3.year==2019].copy()
 ax_SW_zoom.scatter(RL2019_v3.x,RL2019_v3.y,s=5,c='#f46d43',label='2019 runoff limits')
-ax_SW_zoom.legend(fontsize=10,loc='upper center' ,bbox_to_anchor=(0.95, 0))
+ax_SW_zoom.legend(fontsize=10,loc='upper center' ,bbox_to_anchor=(0.5, 0.95))
 '''
 #Save the figure
 plt.savefig(path_switchdrive+'RT3/figures/Fig3/v4/Fig3_abcde_2019RL.png',dpi=300)

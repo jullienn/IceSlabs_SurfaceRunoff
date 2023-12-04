@@ -241,8 +241,8 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
         fig_heatmap.colorbar(cbar_region[3], ax=ax_plot,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
         #Display runoff thresholds
-        ax_plot.axvline(x=thresholds_dictionnary_in_func[region]['SAR'][0],linestyle='dashed',color='green')
-        ax_plot.axvline(x=thresholds_dictionnary_in_func[region]['SAR'][1],linestyle='dashed',color='red')
+        ax_plot.axvline(x=thresholds_dictionnary_in_func[region]['SAR'][0],linestyle='dashed',color='#005AB5')
+        ax_plot.axvline(x=thresholds_dictionnary_in_func[region]['SAR'][1],linestyle='dashed',color='#DC3220')
         ax_plot.set_ylim(0,16)
         ax_plot.set_xlim(-16,-3.5)
         ax_plot.set_title(region)
@@ -305,7 +305,7 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     ax_GrIS.set_ylim(0,16)
     ax_GrIS.set_xlim(0,1)
     ax_GrIS.set_title('All')
-    ax_GrIS.set_xlabel('Normalised signal strength [-]')
+    ax_GrIS.set_xlabel('Normalised $\sigma_{0}^{HV}$ [-]')
     fig_heatmap.colorbar(cbar_GrIS[3], ax=ax_GrIS,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
     '''
@@ -324,7 +324,7 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     
     ### Finalise plot ###
     #Set labels
-    ax_NO.set_xlabel('Signal strength [dB]')
+    ax_NO.set_xlabel('$\sigma_{0}^{HV}$ [dB]')
     ax_NO.set_ylabel('Ice slab thickness [m]')
     '''
     #Display firn cores ice content and SAR on SW plot
@@ -333,8 +333,8 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     ax_SW.legend(handles=legend_elements,loc='lower left',fontsize=10,framealpha=0.5).set_zorder(7)
     '''
     #Custom legend myself for ax_SW - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-    legend_elements = [Line2D([0], [0], color='red', lw=2 ,linestyle='dashed', label='Upper threshold'),
-                       Line2D([0], [0], color='green', lw=2 ,linestyle='dashed', label='Lower threshold'),
+    legend_elements = [Line2D([0], [0], color='#DC3220', lw=2 ,linestyle='dashed', label='Upper threshold'),
+                       Line2D([0], [0], color='#005AB5', lw=2 ,linestyle='dashed', label='Lower threshold'),
                        Line2D([0], [0], color='black', lw=2 ,linestyle='dashed', label='Ice thickness retrieval')]
     ax_NE.legend(handles=legend_elements,loc='upper center',fontsize=10,framealpha=0.5).set_zorder(7)
     
@@ -349,11 +349,11 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     ### Finalise plot ###
     
     pdb.set_trace()
-    
+    '''
     #Save figure
-    plt.savefig(path_switchdrive+'RT3/figures/Fig4/v2/Fig4.png',dpi=300,bbox_inches='tight')
+    plt.savefig(path_switchdrive+'RT3/figures/Fig4/v3/Fig4.png',dpi=300,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-
+    '''
     '''
     #sort df_to_display_normalised
     df_to_display_normalised.sort_values(by=['normalized_raster'],inplace=True)
@@ -467,7 +467,7 @@ from scipy import stats
 
 composite='TRUE'
 radius=500
-SAR_quantiles_extraction='TRUE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
+SAR_quantiles_extraction='FALSE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
 
 #Define projection
 ###################### From Tedstone et al., 2022 #####################
@@ -1209,7 +1209,7 @@ gs.update(wspace=0.1)
 ax_filtered_regions_SAR = plt.subplot(gs[0:5, 5:10])
 sns.violinplot(data=final_df_SAR_IceThickness,
                y="SUBREGION1", x="raster_values",hue="aquitard",ax=ax_filtered_regions_SAR,scale="width",palette=pal_zones,cut=0)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
-ax_filtered_regions_SAR.set_xlabel('Signal strenght [dB]',labelpad=10)
+ax_filtered_regions_SAR.set_xlabel('$\sigma_{0}^{HV}$ [dB]',labelpad=10)
 ax_filtered_regions_SAR.set_ylabel('')
 ax_filtered_regions_SAR.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
 ax_filtered_regions_SAR.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
@@ -1222,20 +1222,22 @@ ax_filtered_regions_SAR.text(0.03, 0.95,'g',ha='center', va='center', transform=
 ax_filtered_regions_IceThickness = plt.subplot(gs[0:5,0:5])
 sns.violinplot(data=final_df_SAR_IceThickness,
                y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_filtered_regions_IceThickness,scale="width",palette=pal_zones,cut=0)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
-ax_filtered_regions_IceThickness.set_xlabel('Ice Thickness [m]',labelpad=10)
+ax_filtered_regions_IceThickness.set_xlabel('Ice slab thickness [m]',labelpad=10)
 ax_filtered_regions_IceThickness.set_ylabel('Region',labelpad=10)
 ax_filtered_regions_IceThickness.grid(linestyle='dashed')
+ax_filtered_regions_IceThickness.get_legend().remove()
+
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#0a4aaa',edgecolor='black',label='Lateral runoff'),
+legend_elements = [Patch(facecolor='#0a4aaa',edgecolor='black',label='Supporting runoff'),
                    Patch(facecolor='#e7f1ff',edgecolor='black',label='Retention')]
-ax_filtered_regions_IceThickness.legend(handles=legend_elements,loc='lower right',fontsize=15,framealpha=0.8).set_zorder(7)
+ax_filtered_regions_SAR.legend(handles=legend_elements,loc='lower left',fontsize=15,framealpha=0.8).set_zorder(7)
 ax_filtered_regions_IceThickness.text(0.03, 0.95,'f',ha='center', va='center', transform=ax_filtered_regions_IceThickness.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig3/v3/Fig3_fg.png',dpi=300)
+plt.savefig(path_switchdrive+'RT3/figures/Fig3/v4/Fig3_fg.png',dpi=300)
 '''
 
 

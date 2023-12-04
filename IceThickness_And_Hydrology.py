@@ -394,7 +394,10 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
     
     #Remove the floor(min) in each region - floor of the min to allow fo log axis display in distribution plot
     regional_df=upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions[upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_with_regions.SUBREGION1==indiv_region].copy()
-    regional_df["raster_values_minus_min"]=regional_df.raster_values-np.floor(regional_df.raster_values.min())
+    #regional_df["raster_values_minus_min"]=regional_df.raster_values-np.floor(regional_df.raster_values.min())
+    
+    #Min-max normalisation
+    regional_df["raster_normalised"] = (regional_df.raster_values-regional_df.raster_values.min())/(regional_df.raster_values.max()-regional_df.raster_values.min())
     
     #Concatenate
     upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.concat([upsampled_CumHydro_and_IceSlabs_ForAnalysis,regional_df])
@@ -414,9 +417,9 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
         pdb.set_trace()
         
     cbar_region = axis_plot.hist2d(data=regional_df,
-                                   x="raster_values_minus_min",
+                                   x="raster_normalised",
                                    y="20m_ice_content_m",cmap='magma_r',
-                                   bins=[np.arange(0,80,5),np.arange(0,17,1)],norm=mpl.colors.LogNorm())
+                                   bins=[np.arange(0,1.05,0.05),np.arange(0,17,1)],norm=mpl.colors.LogNorm())
     
     #Display colorbar
     if (indiv_region == 'NO'):
@@ -428,17 +431,17 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
     axis_plot.set_title(indiv_region)
 
 #Display regional CumHydro distributions
-distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_values_minus_min", hue="SUBREGION1",element="poly",
-                      stat="count",log_scale=[False,True],bins=np.arange(0,80,5),ax=ax_hist)
+distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_normalised", hue="SUBREGION1",element="poly",
+                      stat="count",log_scale=[False,True],bins=np.arange(0,1.05,0.05),ax=ax_hist)
 sns.move_legend(distribs,"upper right",title="")
-ax_hist.set_xlim(0,75)
-ax_hist.set_xlabel('Hydrological occurrence')
+ax_hist.set_xlim(0,1)
+ax_hist.set_xlabel('Frequency of surface hydrology [-]')
 
 
 ### Finalise plot ###
 #Set labels
-ax_NO.set_xlabel('Hydrological occurrence')
-ax_NO.set_ylabel('Ice thickness [m]')
+ax_NO.set_xlabel('Frequency of surface hydrology [-]')
+ax_NO.set_ylabel('Ice slab thickness [m]')
 
 #Add backgound to display panel label
 ax_SW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
@@ -460,7 +463,7 @@ ax_hist.text(0.04, 0.925,'f',ha='center', va='center', transform=ax_hist.transAx
 pdb.set_trace()
 '''
 #Save figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig5/v2/Fig5.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig5/v3/Fig5.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 ###############################################################################
@@ -557,6 +560,7 @@ TransectFig6_WithinBounds_reverted['distances_reverted']=compute_distances(Trans
 
 pdb.set_trace()
 
+plt.rcParams.update({'font.size': 8})
 #Display the transect in Fig.6
 fig = plt.figure(figsize=(8.27,5.5))#Nature pdf size = (8.27,10.87)
 gs = gridspec.GridSpec(8, 101)
@@ -598,7 +602,7 @@ ax_TransectFig6.set_xticks(ax_TransectFig6.get_xticks())
 ax_TransectFig6.set_xticklabels((ax_TransectFig6.get_xticks()/1000).astype(int))
 #add labels
 ax_TransectFig6.set_xlabel('Distance [km]')
-ax_TransectFig6.set_ylabel('Ice thickness [m]',color='C0')
+ax_TransectFig6.set_ylabel('Ice slab thickness [m]',color='C0')
 ax_TransectFig6_second.set_ylabel('Coefficient of variation [ ]')
 ax_TransectFig6.set_xlim(0,36836)
 ax_TransectFig6_second.set_ylim(-0.15,TransectFig6_WithinBounds_reverted.rolling_CV_ice_thickness.max()+0.025)
@@ -653,7 +657,7 @@ Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness'] = Hypothetical_IceS
 Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["ice_thickness"].std()
 Hypothetical_IceSlabs_Transect['rolling_CV_ice_thickness'] = Hypothetical_IceSlabs_Transect['rolling_std_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
 Hypothetical_IceSlabs_Transect['ice_thickness_MINUS_rolling_mean_ice_thickness'] = Hypothetical_IceSlabs_Transect['ice_thickness']-Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']
-
+'''
 ### IN TEST ###
 Hypothetical_IceSlabs_Transect['rolling_median_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["ice_thickness"].median()
 Hypothetical_IceSlabs_Transect['abs(ice_thickness-rolling_median)'] = abs(Hypothetical_IceSlabs_Transect['ice_thickness']-Hypothetical_IceSlabs_Transect['rolling_median_ice_thickness'])
@@ -664,7 +668,7 @@ from scipy.stats import median_abs_deviation
 Hypothetical_IceSlabs_Transect['scipy_rolling_MAD_ice_thickness'] = Hypothetical_IceSlabs_Transect.rolling(str(window_distance)+'s',center=True,closed="both",min_periods=min_periods_for_rolling)["ice_thickness"].apply(median_abs_deviation)#This is from https://datagy.io/mean-absolute-deviation-python/
 Hypothetical_IceSlabs_Transect['scipy_rolling_MAD/median_ice_thickness'] = Hypothetical_IceSlabs_Transect['scipy_rolling_MAD_ice_thickness']/Hypothetical_IceSlabs_Transect['rolling_median_ice_thickness']
 ### IN TEST ###
-
+'''
 #Remove the offset
 Hypothetical_IceSlabs_Transect['ice_thickness']=Hypothetical_IceSlabs_Transect['ice_thickness']-offset
 Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']=Hypothetical_IceSlabs_Transect['rolling_mean_ice_thickness']-offset
@@ -682,7 +686,9 @@ ax_Hypothetical_plot = plt.subplot(gs[4:8, 0:99])
 #Hypothetical radargram
 ax_Hypothetical_radargram.fill_between(Hypothetical_IceSlabs_Transect["distances"],Hypothetical_IceSlabs_Transect["ice_thickness"],color='grey',label='Idealised ice slab')
 ax_Hypothetical_radargram.set_ylim(19,0)
-ax_Hypothetical_radargram.set_xlim(ax_TransectFig6.get_xlim())
+#x axis ends where rolling ice slab ends
+ax_Hypothetical_radargram.set_xlim(ax_TransectFig6.get_xlim()[0],35000)#Hypothetical_IceSlabs_Transect[Hypothetical_IceSlabs_Transect.ice_thickness.isna()].distances.iloc[0])
+
 ax_Hypothetical_radargram.set_ylabel('Depth [m]')
 ax_Hypothetical_radargram.set_xticks([])
 ax_Hypothetical_radargram.legend(loc='upper center')
@@ -697,13 +703,13 @@ ax_Hypothetical_plot.fill_between(Hypothetical_IceSlabs_Transect.distances,
 ax_Hypothetical_plot.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["rolling_mean_ice_thickness"])
 ax_Hypothetical_plot_second=ax_Hypothetical_plot.twinx()
 ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["rolling_CV_ice_thickness"],color='C1')
-
+'''
 ### IN TEST ###
 pdb.set_trace()
 ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["scipy_rolling_MAD/median_ice_thickness"],color='C2')
 ax_Hypothetical_plot_second.plot(Hypothetical_IceSlabs_Transect.distances,Hypothetical_IceSlabs_Transect["rolling_MAD/median_ice_thickness"],color='C3')
 ### IN TEST ###
-
+'''
 #Change color of axis to match color of line, this is from https://stackoverflow.com/questions/1982770/changing-the-color-of-an-axis
 ax_Hypothetical_plot.tick_params(axis='y', colors='C0')
 ax_Hypothetical_plot_second.tick_params(axis='y', colors='C1')
@@ -716,7 +722,9 @@ ax_Hypothetical_plot.set_ylim(ax_TransectFig6.get_ylim())
 ax_Hypothetical_plot_second.set_ylim(0,TransectFig6_WithinBounds_reverted.rolling_CV_ice_thickness.max()+0.025)
 ax_Hypothetical_plot.set_xticks(ax_Hypothetical_plot.get_xticks())
 ax_Hypothetical_plot.set_xticklabels((ax_Hypothetical_plot.get_xticks()/1000).astype(int))
-ax_Hypothetical_plot.set_xlim(ax_TransectFig6.get_xlim())
+#x axis ends where rolling ice slab ends
+ax_Hypothetical_plot.set_xlim(ax_TransectFig6.get_xlim()[0],35000)#Hypothetical_IceSlabs_Transect[Hypothetical_IceSlabs_Transect.ice_thickness.isna()].distances.iloc[0])
+
 
 #Add panel labels
 ax_Hypothetical_radargram.text(0.01, 0.925,'a',ha='center', va='center', transform=ax_Hypothetical_radargram.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
