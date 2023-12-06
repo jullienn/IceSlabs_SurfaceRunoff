@@ -465,6 +465,9 @@ import matplotlib as mpl
 from scipy.optimize import curve_fit
 from scipy import stats
 
+#Choose if we want to generate Fig. 4 or not
+generating_Fig_SAR_IceThickness = 'FALSE' #Can be TRUE or FALSE
+
 composite='TRUE'
 radius=500
 SAR_quantiles_extraction='FALSE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
@@ -1100,9 +1103,10 @@ for indiv_file in list_composite:
     #Open the individual file
     indiv_csv=pd.read_csv(path_SAR_And_IceThickness+indiv_file)
     
-    #If ice content is larger than 16 m thick, set it to 16 m
-    indiv_csv.loc[indiv_csv["20m_ice_content_m"]>16,"20m_ice_content_m"]=16
-    
+    if (generating_Fig_SAR_IceThickness = 'TRUE'):
+        #If ice content is larger than 16 m thick, set it to 16 m
+        indiv_csv.loc[indiv_csv["20m_ice_content_m"]>16,"20m_ice_content_m"]=16
+        
     ### ALL ###
     #Upsample data: where index_right is identical (i.e. for each SAR cell), keep a single value of radar signal and average the ice content
     indiv_upsampled_SAR_and_IceSlabs=indiv_csv.groupby('index_right').mean()  
@@ -1203,10 +1207,10 @@ pal_zones = {'0': "#e7f1ff", '0.5': "#db4500", '1': "#0a4aaa"}
 # Display SAR violin plot for lateral runoff and retention zones
 plt.rcParams.update({'font.size': 15})
 fig = plt.figure(figsize=(12,6))
-gs = gridspec.GridSpec(5, 10)
+gs = gridspec.GridSpec(50, 10)
 gs.update(hspace=0)
 gs.update(wspace=0.1)
-ax_filtered_regions_SAR = plt.subplot(gs[0:5, 5:10])
+ax_filtered_regions_SAR = plt.subplot(gs[0:49, 5:10])
 sns.violinplot(data=final_df_SAR_IceThickness,
                y="SUBREGION1", x="raster_values",hue="aquitard",ax=ax_filtered_regions_SAR,scale="width",palette=pal_zones,cut=0)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
 ax_filtered_regions_SAR.set_xlabel('$\sigma_{0}^{HV}$ [dB]',labelpad=10)
@@ -1219,7 +1223,7 @@ ax_filtered_regions_SAR.text(0.03, 0.95,'g',ha='center', va='center', transform=
 
 
 # Display ice thickness violin plot for lateral runoff and retention zones
-ax_filtered_regions_IceThickness = plt.subplot(gs[0:5,0:5])
+ax_filtered_regions_IceThickness = plt.subplot(gs[0:49,0:5])
 sns.violinplot(data=final_df_SAR_IceThickness,
                y="SUBREGION1", x="20m_ice_content_m",hue="aquitard",ax=ax_filtered_regions_IceThickness,scale="width",palette=pal_zones,cut=0)#, kde=True)#Making the display possible using sns.violinplot by helper from https://stackoverflow.com/questions/52284034/categorical-plotting-with-seaborn-raises-valueerror-object-arrays-are-not-suppo
 ax_filtered_regions_IceThickness.set_xlabel('Ice slab thickness [m]',labelpad=10)
@@ -1228,9 +1232,9 @@ ax_filtered_regions_IceThickness.grid(linestyle='dashed')
 ax_filtered_regions_IceThickness.get_legend().remove()
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#0a4aaa',edgecolor='black',label='Supporting runoff'),
-                   Patch(facecolor='#e7f1ff',edgecolor='black',label='Retention')]
-ax_filtered_regions_SAR.legend(handles=legend_elements,loc='lower left',fontsize=15,framealpha=0.8).set_zorder(7)
+legend_elements = [Patch(facecolor='#0a4aaa',edgecolor='black',label='Areas supporting runoff'),
+                   Patch(facecolor='#e7f1ff',edgecolor='black',label='Retention areas')]
+ax_filtered_regions_SAR.legend(handles=legend_elements,loc='lower left',fontsize=13,framealpha=0.8,bbox_to_anchor=(0, 0.15)).set_zorder(7)
 ax_filtered_regions_IceThickness.text(0.03, 0.95,'f',ha='center', va='center', transform=ax_filtered_regions_IceThickness.transAxes,weight='bold',fontsize=15,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 pdb.set_trace()

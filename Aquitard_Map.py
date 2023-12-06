@@ -394,11 +394,11 @@ ax_SW_zoom.set_xlim(-127109.2920592131, -99678.47675615078)
 ax_SW_zoom.set_ylim(-2649282.3420033744, -2565299.618246693)
 
 #Display panel label
-ax_NO.text(0.02, 0.95,'a',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_NW.text(0.05, 0.975,'b',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_CW.text(0.05, 0.975,'c',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_SW.text(0.05, 0.975,'d',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-ax_SW_zoom.text(0.05, 0.975,'e',ha='center', va='center', transform=ax_SW_zoom.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_NO.text(0.02, 0.925,'a',ha='center', va='center', transform=ax_NO.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_NW.text(0.1, 0.9675,'b',ha='center', va='center', transform=ax_NW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_CW.text(0.075, 0.9675,'c',ha='center', va='center', transform=ax_CW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_SW.text(0.1, 0.9675,'d',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_SW_zoom.text(0.1, 0.9675,'e',ha='center', va='center', transform=ax_SW_zoom.transAxes,weight='bold',fontsize=12,color='black',backgroundcolor='white',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Re add frame on top of plot
 ax_NO.add_patch(patches.Rectangle(([ax_NO.get_xlim()[0],ax_NO.get_ylim()[0]][0],[ax_NO.get_xlim()[0],ax_NO.get_ylim()[0]][1]),
