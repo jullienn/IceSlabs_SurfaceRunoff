@@ -89,6 +89,7 @@ import geopandas as gpd
 import xarray
 import matplotlib.patches as patches
 from matplotlib.lines import Line2D
+import geoutils as gu
 
 #Define paths where data are stored
 path_local='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/'
@@ -157,6 +158,30 @@ ice_content_percentage_FS2=calculate_ice_content(firn_cores_pd,'FS2_12m',114)
 
 #Drop FS where no ice content was computed
 firn_cores_overview=firn_cores_pd['overview'][~firn_cores_pd['overview']['ice content %'].isna()].copy()
+
+
+### ---------------- Extract sigma0HV at firn cores location --------------- ###
+#Open 2021 sigma0HV
+rast = gu.Raster('X:/RT3_jullien/SAR/HV_2021/'+'ref_IW_HV_2021_2021_32_106_40m_ASCDESC_SW_minnscenes50-0000000000-0000000000.tif')
+#Note that the coordinate were wrong for FS5_5m, not for FS5_20m! Hence, no need to change anything here!
+
+#Loop over cores of interest, and extract the average and stddev sigma0Hv in a ~500m window to match the window of ice content extraction in radargrams.
+#Here, the closes is a window = 13 pixels (13*40 = 520 m by 520 m around the coord of intetrest)
+for index, row in firn_cores_overview.iterrows():
+    #Extract mean
+    firn_cores_overview.loc[index,'sigma0HV_mean'] = rast.value_at_coords(x=row.lon_3413,
+                                                                          y=row.lat_3413,
+                                                                          window=5, reducer_function=np.nanmean)
+    #Extract stddev
+    firn_cores_overview.loc[index,'sigma0HV_std'] = rast.value_at_coords(x=row.lon_3413,
+                                                                          y=row.lat_3413,
+                                                                          window=5, reducer_function=np.nanstd)
+    #Extract raw
+    firn_cores_overview.loc[index,'sigma0HV_raw'] = rast.value_at_coords(x=row.lon_3413,
+                                                                          y=row.lat_3413)
+### ---------------- Extract sigma0HV at firn cores location --------------- ###
+
+
 ### ------------------------- Load firn cores data ------------------------ ###
 
 #Display ice slab transect
@@ -293,8 +318,8 @@ for index, row in firn_cores_overview.iterrows():
     
 pdb.set_trace()
 
-### Display strain rate close to FS1 for crevassing potential ###
 
+### Display strain rate close to FS1 for crevassing potential ###
 ### --------------------- Load 2012 and 2018 radargrams ------------------- ###
 path_depth_corrected='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/i_out_from_IceBridgeGPR_Manager_v2.py/pickles_and_images/Depth_Corrected_Picklefiles/'
 #Open 2012 transect
@@ -545,27 +570,6 @@ last_index_where_slab_2013=np.where(np.sum((Transect_2013["IceSlabs_Mask"]>0).as
 
 pdb.set_trace()
 
-#Open SAR image
-SAR_SW_00_00 = rasterio.open(path_SAR+'ref_IW_HV_2021_2021_32_106_40m_ASCDESC_SW_minnscenes50-0000000000-0000000000.tif')
-'''
-### --- This is from Fisg4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' --- ###
-#This section of displaying sat data was coding using tips from
-#https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
-#https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
-#Load SAR data
-SAR_SW_00_00 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000000000-0000000000.tif',masked=True).squeeze()
-SAR_SW_00_23 = rxr.open_rasterio(path_SAR+'ref_IW_HV_2017_2018_32_106_40m_ASCDESC_SW_manual-0000023296-0000000000.tif',masked=True).squeeze()
-'''
-#Extract SAR data at place where firn core was drilled
-tuple_list=np.array((firn_cores_overview.lon_3413.to_numpy(),firn_cores_overview.lat_3413.to_numpy())).T #from https://stackoverflow.com/questions/35091879/merge-two-arrays-vertically-to-array-of-tuples-using-numpy
-
-#This is fropm https://gis.stackexchange.com/questions/190423/getting-pixel-values-at-single-point-using-rasterio
-extracted_SAR=[]
-for val in SAR_SW_00_00.sample(tuple_list): 
-    extracted_SAR=np.append(extracted_SAR,val)
-
-#Store extracted SAR in firn_cores_overview
-firn_cores_overview['SAR']=extracted_SAR
 
 print('End of code')       
 

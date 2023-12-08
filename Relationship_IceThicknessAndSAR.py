@@ -470,7 +470,7 @@ generating_Fig_SAR_IceThickness = 'FALSE' #Can be TRUE or FALSE
 
 composite='TRUE'
 radius=500
-SAR_quantiles_extraction='FALSE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
+SAR_quantiles_extraction='TRUE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
 
 #Define projection
 ###################### From Tedstone et al., 2022 #####################
@@ -484,7 +484,7 @@ crs_proj4 = crs.proj4_init
 
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#ff7f7f", 'Above': "#7f7fff", 'Below': "green"}
+my_pal = {'Within': "#DC3220", 'Above': "#6DC11C", 'Below': "#005AB5"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
@@ -970,7 +970,7 @@ if (SAR_quantiles_extraction == 'TRUE'):
     gs = gridspec.GridSpec(5, 10)
     ax_ice_thickness = plt.subplot(gs[0:5, 0:10])
     sns.violinplot(data=IceThickness_all_sectors, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",scale="width",ax=ax_ice_thickness,palette=my_pal,cut=0)#, kde=True)
-    ax_ice_thickness.set_xlabel('Ice thickness [m]',labelpad=10)
+    ax_ice_thickness.set_xlabel('Ice slab thickness [m]',labelpad=10)
     ax_ice_thickness.set_ylabel('Region',labelpad=10)
     ax_ice_thickness.grid(linestyle='dashed')
     #ax_ice_thickness.text(0.03, 0.97,'a',ha='center', va='center', transform=ax_ice_thickness.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
