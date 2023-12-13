@@ -392,7 +392,7 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
     regional_df["raster_normalised"] = (regional_df.raster_values-regional_df.raster_values.min())/(regional_df.raster_values.max()-regional_df.raster_values.min())
     
     #quantile 0.01-quantile 0.91 normalisation
-    regional_df["raster_Qnormalised"] = (regional_df.raster_values-regional_df.raster_values.quantile(0.01))/(regional_df.raster_values.quantile(0.99)-regional_df.raster_values.quantile(0.01))
+    regional_df["raster_Qnormalised"] = (regional_df.raster_values-regional_df.raster_values.quantile(0.025))/(regional_df.raster_values.quantile(0.975)-regional_df.raster_values.quantile(0.025))
     
     #Concatenate
     upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.concat([upsampled_CumHydro_and_IceSlabs_ForAnalysis,regional_df])
