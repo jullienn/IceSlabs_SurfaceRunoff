@@ -208,7 +208,7 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     
     #Display 2D histogram
     fig_heatmap, ((ax_SW, ax_CW, ax_NW), (ax_NO, ax_NE, ax_GrIS)) = plt.subplots(2, 3)
-    fig_heatmap.set_size_inches(14, 7) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+    fig_heatmap.set_size_inches(12.47, 7) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
     
     for region in list(['SW','CW','NW','NO','NE']):
         if (region == 'SW'):
@@ -305,7 +305,6 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     ax_GrIS.set_ylim(0,16)
     ax_GrIS.set_xlim(0,1)
     ax_GrIS.set_title('All')
-    ax_GrIS.set_xlabel('Normalised $\sigma_{0}^{HV}$ [-]')
     fig_heatmap.colorbar(cbar_GrIS[3], ax=ax_GrIS,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
 
     '''
@@ -324,8 +323,19 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     
     ### Finalise plot ###
     #Set labels
+    ax_SW.set_xlabel('$\sigma_{0}^{HV}$ [dB]')
+    ax_CW.set_xlabel('$\sigma_{0}^{HV}$ [dB]')
+    ax_NW.set_xlabel('$\sigma_{0}^{HV}$ [dB]')
     ax_NO.set_xlabel('$\sigma_{0}^{HV}$ [dB]')
+    ax_NE.set_xlabel('$\sigma_{0}^{HV}$ [dB]')
+    ax_GrIS.set_xlabel('Normalised $\sigma_{0}^{HV}$ [-]')
+
+    ax_SW.set_ylabel('Ice slab thickness [m]')
+    ax_CW.set_ylabel('Ice slab thickness [m]')
+    ax_NW.set_ylabel('Ice slab thickness [m]')
     ax_NO.set_ylabel('Ice slab thickness [m]')
+    ax_NE.set_ylabel('Ice slab thickness [m]')
+    ax_GrIS.set_ylabel('Ice slab thickness [m]')
     '''
     #Display firn cores ice content and SAR on SW plot
     ax_SW.scatter(FS_display['SAR'],FS_display['10m_ice_content_%']/10,c='black',marker='x')
@@ -336,7 +346,7 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     legend_elements = [Line2D([0], [0], color='#DC3220', lw=2 ,linestyle='dashed', label='Upper threshold'),
                        Line2D([0], [0], color='#005AB5', lw=2 ,linestyle='dashed', label='Lower threshold'),
                        Line2D([0], [0], color='black', lw=2 ,linestyle='dashed', label='Ice thickness retrieval')]
-    ax_NE.legend(handles=legend_elements,loc='upper center',fontsize=10,framealpha=0.5).set_zorder(7)
+    ax_NE.legend(handles=legend_elements,loc='upper left',bbox_to_anchor=(0, 0.85), fontsize=10,framealpha=0.5).set_zorder(7)
     
     #Add panel labels
     ax_SW.text(0.04, 0.925,'a',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
@@ -347,6 +357,8 @@ def display_2d_histogram(df_to_display,FS_display,method,thresholds_dictionnary_
     ax_GrIS.text(0.04, 0.935,' ',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=8,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
     ax_GrIS.text(0.04, 0.925,'f',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
     ### Finalise plot ###
+    
+    fig_heatmap.tight_layout()
     
     pdb.set_trace()
     '''
@@ -466,11 +478,11 @@ from scipy.optimize import curve_fit
 from scipy import stats
 
 #Choose if we want to generate Fig. 4 or not
-generating_Fig_SAR_IceThickness = 'FALSE' #Can be TRUE or FALSE
+generating_Fig_SAR_IceThickness = 'TRUE' #Can be TRUE or FALSE
 
 composite='TRUE'
 radius=500
-SAR_quantiles_extraction='TRUE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
+SAR_quantiles_extraction='FALSE'#If it is desired to extract the SAR quantiles in the different sectors of different regions
 
 #Define projection
 ###################### From Tedstone et al., 2022 #####################

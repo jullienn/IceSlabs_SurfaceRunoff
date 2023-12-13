@@ -399,6 +399,9 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
     #Min-max normalisation
     regional_df["raster_normalised"] = (regional_df.raster_values-regional_df.raster_values.min())/(regional_df.raster_values.max()-regional_df.raster_values.min())
     
+    #quantile 0.01-quantile 0.91 normalisation
+    regional_df["raster_Qnormalised"] = (regional_df.raster_values-regional_df.raster_values.quantile(0.01))/(regional_df.raster_values.quantile(0.99)-regional_df.raster_values.quantile(0.01))
+    
     #Concatenate
     upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.concat([upsampled_CumHydro_and_IceSlabs_ForAnalysis,regional_df])
     
@@ -417,7 +420,7 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
         pdb.set_trace()
         
     cbar_region = axis_plot.hist2d(data=regional_df,
-                                   x="raster_normalised",
+                                   x="raster_Qnormalised",
                                    y="20m_ice_content_m",cmap='magma_r',
                                    bins=[np.arange(0,1.05,0.05),np.arange(0,17,1)],norm=mpl.colors.LogNorm())
     
@@ -431,7 +434,7 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
     axis_plot.set_title(indiv_region)
 
 #Display regional CumHydro distributions
-distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_normalised", hue="SUBREGION1",element="poly",
+distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_Qnormalised", hue="SUBREGION1",element="poly",
                       stat="count",log_scale=[False,True],bins=np.arange(0,1.05,0.05),ax=ax_hist)
 sns.move_legend(distribs,"upper right",title="")
 ax_hist.set_xlim(0,1)
