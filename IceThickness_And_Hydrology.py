@@ -379,16 +379,8 @@ ax_CumHydro_Thickness.hist2d(upsampled_CumHydro_and_IceSlabs_OnlySectors_gdp_wit
 upsampled_CumHydro_and_IceSlabs_ForAnalysis=pd.DataFrame()
 
 #Display per region
-fig_CumHydro_IceThickness = plt.figure(figsize=(14, 7))
-gs = gridspec.GridSpec(4, 6)
-gs.update(hspace=0.8)
-gs.update(wspace=0.8)
-ax_SW = plt.subplot(gs[0:2, 0:2])
-ax_CW = plt.subplot(gs[0:2, 2:4])
-ax_NW = plt.subplot(gs[0:2, 4:6])
-ax_NO = plt.subplot(gs[2:4, 0:2])
-ax_NE = plt.subplot(gs[2:4, 2:4])
-ax_hist = plt.subplot(gs[2:4, 4:6])
+fig_CumHydro_IceThickness, ((ax_SW, ax_CW, ax_NW), (ax_NO, ax_NE, ax_hist)) = plt.subplots(2, 3)
+fig_CumHydro_IceThickness.set_size_inches(12.47, 7) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 
 for indiv_region in list(['SW','CW','NW','NO','NE']):
     
@@ -425,11 +417,7 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
                                    bins=[np.arange(0,1.05,0.05),np.arange(0,17,1)],norm=mpl.colors.LogNorm())
     
     #Display colorbar
-    if (indiv_region == 'NO'):
-        fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-    else:
-        fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
-
+    fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
     #Display region name
     axis_plot.set_title(indiv_region)
 
@@ -438,13 +426,23 @@ distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_Qno
                       stat="count",log_scale=[False,True],bins=np.arange(0,1.05,0.05),ax=ax_hist)
 sns.move_legend(distribs,"upper right",title="")
 ax_hist.set_xlim(0,1)
-ax_hist.set_xlabel('Frequency of surface hydrology [-]')
 
 
 ### Finalise plot ###
 #Set labels
+ax_SW.set_xlabel('Frequency of surface hydrology [-]')
+ax_CW.set_xlabel('Frequency of surface hydrology [-]')
+ax_NW.set_xlabel('Frequency of surface hydrology [-]')
 ax_NO.set_xlabel('Frequency of surface hydrology [-]')
+ax_NE.set_xlabel('Frequency of surface hydrology [-]')
+ax_hist.set_xlabel('Frequency of surface hydrology [-]')
+
+ax_SW.set_ylabel('Ice slab thickness [m]')
+ax_CW.set_ylabel('Ice slab thickness [m]')
+ax_NW.set_ylabel('Ice slab thickness [m]')
 ax_NO.set_ylabel('Ice slab thickness [m]')
+ax_NE.set_ylabel('Ice slab thickness [m]')
+
 
 #Add backgound to display panel label
 ax_SW.text(0.045, 0.935,' ',ha='center', va='center', transform=ax_SW.transAxes,weight='bold',fontsize=10,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8),zorder=10)
@@ -460,6 +458,7 @@ ax_NO.text(0.04, 0.925,'d',ha='center', va='center', transform=ax_NO.transAxes,w
 ax_NE.text(0.04, 0.925,'e',ha='center', va='center', transform=ax_NE.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
 ax_hist.text(0.04, 0.925,'f',ha='center', va='center', transform=ax_hist.transAxes,weight='bold',fontsize=15,color='black',zorder=10)
 ### Finalise plot ###
+fig_CumHydro_IceThickness.tight_layout()
 
 ### ------ CumHydro and Ice slabs thickness dataset in sectors only ------- ###
 
