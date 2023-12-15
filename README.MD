@@ -5,7 +5,7 @@
 All the codes used for data preparation, processing, analysis and figure generation are present in this folder.
 These codes were written by Nicolas Jullien between 2022 and 2023.
 The way the codes and folders are now organized in this code repository were not tested, and some parts may fail. Furthermore, path adaptations are mandatory before running any code.
-Some codes (that we may or may not have modified) were directly taken from MacFerrin et al., (2019), and Jullien et al., (2023). Some sections in other codes use functions developped by MacFerrin et al., (2019), some others, and Jullien et al., (2023) that may or not have been modified by us.
+Some sections in several codes use functions developped by Jullien et al., (2023), some others by MacFerrin et al., (2019) that may or not have been modified by us.
 Feel free to contact the author for any questions (nicolas.jullien@unifr.ch).
 
 The datasets used in this paper, as well as exported data are archived in the data repository related to the paper, accessible at https://zenodo.org/records/10376906
@@ -22,28 +22,6 @@ The datasets used in this paper, as well as exported data are archived in the da
 * 'Fig5_And_Fig6agh.py': Generation of Fig. 5, Fig 6a, Fig 6gh.
 * 'Sigma0HVThresholds_And_Fig2_And_Fig3_And_Fig4fg.py': Determine the sigma0HV thresholds used to map the areas supporting runoff after performing the aggregation of sigma0HV in the different zones in the vicinity of the runoff limit. Also, performing the generation of Fig2, Fig3, Fig4fg.
 * 'Sigma0HV_And_FirnCores.py': Performing the data processing associated with Supp Info 2.
-
-
-### Codes not used in this study, but kept for continuitprocessing and figures
-* 'Sigma0HVUpperLimitExtraction.py': This code ot used in the paper, kept for the future)
-
-
-* 'Greenland_Hydrology_Summary.py': Displaying a context map of Greenland hydrology summary - not used in paper, but kept for the future.
-
-
-
-
-
-
-
-
-
-
-
-### Figures
-
-All the figures can be regenerated using the corresponding code.
-
 
 ## License
 This code repository is under the GNU General Public License v3.0. If it is used in publication (academic or otherwise), we request the following paper be cited:
