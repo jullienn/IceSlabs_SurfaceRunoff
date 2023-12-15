@@ -768,10 +768,10 @@ iceslabs_20102012_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefile
 iceslabs_20102018_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefiles/iceslabs_jullien_highend_20102018.shp')
 
 #Load MVRL in 2012, 2012, 2016, 2019
-poly_2010=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2010.shp')
-poly_2012=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2012.shp')
-poly_2016=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2016.shp')
-poly_2019=gpd.read_file(path_local+'data/runoff_limit_polys/poly_2019.shp')
+poly_2010=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2010.shp')
+poly_2012=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2012.shp')
+poly_2016=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2016.shp')
+poly_2019=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2019.shp')
 ### -------------------------- Load shapefiles --------------------------- ###
 
 ### ---------------------------- Load xytpd ------------------------------ ###
@@ -786,7 +786,7 @@ df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd_NDWI_cleaned_2019
 #This section of displaying sat data was coding using tips from
 #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
 #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
-CumHydro = rxr.open_rasterio(path_local+'data/master_maps/'+'master_map_GrIS_mean.vrt',
+CumHydro = rxr.open_rasterio('X:/RT3_jullien/TedstoneAndMachguth2022/master_maps/'+'master_map_GrIS_mean.vrt',
                              masked=True).squeeze() #No need to reproject satelite image
 #Extract x and y coordinates of satellite image
 x_coord_CumHydro=np.asarray(CumHydro.x)
