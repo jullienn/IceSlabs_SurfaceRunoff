@@ -11,13 +11,33 @@ Feel free to contact the author for any questions (nicolas.jullien@unifr.ch).
 The datasets used in this paper, as well as exported data are archived in the data repository related to the paper, accessible at https://zenodo.org/records/10376906
 
 ## Codes
-### Data processing
+### Data processing and figures
 
-#### General
+* 'AreasSupportingRunoff_And_Fig4abcde.py': Creating the raster files of Areas Supporting Runoff by applying the sigma0HV threshods to the winter composite maps, and generating Fig 4abcde.
+* 'Fig6_bcdef.py': Generates Fig 6bcdef.
+* 'Extraction_IceThicknessAndSigma0HV_InRLzones.py': Extracting the ice slab thickness and sigma0HV in the different zones in the vicinity of the runoff limit ('below', 'at', 'in-between', 'above' zones).
+* 'Extraction_CumHydroAndSigma0HV_InTransects.py': Extracting the occurrence of surface hydrology and sigma0HV at each ice slabs thickness sampling point.
+* 'RunoffLimit_Check_Filtering.py': Displaying the cleaned runoff limit retrievals with NDWI map to check filtering went well.
+* 'Fig1.py': Performing data processing associated with the generation of Fig. 1, performing the generation of Fig. 1 generation, and performing the analysis for Supp Info 1.
+* 'Fig5_And_Fig6agh.py': Generation of Fig. 5, Fig 6a, Fig 6gh.
+* 'Sigma0HVThresholds_And_Fig2_And_Fig3_And_Fig4fg.py': Determine the sigma0HV thresholds used to map the areas supporting runoff after performing the aggregation of sigma0HV in the different zones in the vicinity of the runoff limit. Also, performing the generation of Fig2, Fig3, Fig4fg.
+* 'Sigma0HV_And_FirnCores.py': Performing the data processing associated with Supp Info 2.
 
-* 'code.py': 
 
-#### 2002-2003
+### Codes not used in this study, but kept for continuitprocessing and figures
+* 'Sigma0HVUpperLimitExtraction.py': This code ot used in the paper, kept for the future)
+
+
+* 'Greenland_Hydrology_Summary.py': Displaying a context map of Greenland hydrology summary - not used in paper, but kept for the future.
+
+
+
+
+
+
+
+
+
 
 
 ### Figures
