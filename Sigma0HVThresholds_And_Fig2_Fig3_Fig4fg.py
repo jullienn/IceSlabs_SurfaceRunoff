@@ -497,6 +497,7 @@ crs_proj4 = crs.proj4_init
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
 my_pal = {'Within': "#DC3220", 'Above': "#6DC11C", 'Below': "#005AB5"}
+pal_year= {2012 : "#6baed6", 2019 : "#fcbba1"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
 path_data='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/SAR_and_IceThickness/'
@@ -515,46 +516,148 @@ IceThickness_in_between=pd.DataFrame()
 IceThickness_within=pd.DataFrame()
 IceThickness_below=pd.DataFrame()
 
+pdb.set_trace()
+
 for indiv_box in range(4,32):
     print(indiv_box)
-    #open above
-    try:
-        above = pd.read_csv(path_data+'SAR_sectors/above/IceSlabs_above_box_'+str(indiv_box)+'_year_2019.csv')
-        if (len(above)>0):
-            #Append data
-            IceThickness_above=pd.concat([IceThickness_above,above])
-    except FileNotFoundError:
-        print('No above')
-    
-    #open InBetween
-    try:
-        in_between = pd.read_csv(path_data+'SAR_sectors/in_between/IceSlabs_in_between_box_'+str(indiv_box)+'_year_2019.csv')
-        if (len(in_between)>0):
-            #Append data
-            IceThickness_in_between=pd.concat([IceThickness_in_between,in_between])
-    except FileNotFoundError:
-        print('No in_between')
-    
-    #open within
-    try:
-        within = pd.read_csv(path_data+'SAR_sectors/within/IceSlabs_within_box_'+str(indiv_box)+'_year_2019.csv')
-        if (len(within)>0):
-            #Append data
-            IceThickness_within=pd.concat([IceThickness_within,within])
-    except FileNotFoundError:
-        print('No within')
-    
-    #open below
-    try:
-        below = pd.read_csv(path_data+'SAR_sectors/below/IceSlabs_below_box_'+str(indiv_box)+'_year_2019.csv')
-        if (len(below)>0):
-            #Append data
-            IceThickness_below=pd.concat([IceThickness_below,below])
-    except FileNotFoundError:
-        print('No below')
+    for indiv_year in list(['2012','2019']):
+        print('   '+indiv_year)
+        #open above
+        try:
+            above = pd.read_csv(path_data+'SAR_sectors/above/IceSlabs_above_box_'+str(indiv_box)+'_year_'+indiv_year+'.csv')
+            if (len(above)>0):
+                #Append data
+                IceThickness_above=pd.concat([IceThickness_above,above])
+        except FileNotFoundError:
+            print('No above')
+        
+        #open InBetween
+        try:
+            in_between = pd.read_csv(path_data+'SAR_sectors/in_between/IceSlabs_in_between_box_'+str(indiv_box)+'_year_'+indiv_year+'.csv')
+            if (len(in_between)>0):
+                #Append data
+                IceThickness_in_between=pd.concat([IceThickness_in_between,in_between])
+        except FileNotFoundError:
+            print('No in_between')
+        
+        #open within
+        try:
+            within = pd.read_csv(path_data+'SAR_sectors/within/IceSlabs_within_box_'+str(indiv_box)+'_year_'+indiv_year+'.csv')
+            if (len(within)>0):
+                #Append data
+                IceThickness_within=pd.concat([IceThickness_within,within])
+        except FileNotFoundError:
+            print('No within')
+        
+        #open below
+        try:
+            below = pd.read_csv(path_data+'SAR_sectors/below/IceSlabs_below_box_'+str(indiv_box)+'_year_'+indiv_year+'.csv')
+            if (len(below)>0):
+                #Append data
+                IceThickness_below=pd.concat([IceThickness_below,below])
+        except FileNotFoundError:
+            print('No below')
 ###############################################################################
 ###         Load Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
+
+#Display as boxplots
+#Aggregate data together
+IceThickness_above['type']=['Above']*len(IceThickness_above)
+IceThickness_in_between['type']=['In_Between']*len(IceThickness_in_between)
+IceThickness_within['type']=['Within']*len(IceThickness_within)
+IceThickness_below['type']=['Below']*len(IceThickness_below)
+IceThickness_all_sectors=pd.concat([IceThickness_above,IceThickness_within,IceThickness_below])
+
+#Consider all regions execpt the NE flor GrIS aggregation
+IceThickness_SW_CW_NW_NO = IceThickness_all_sectors[IceThickness_all_sectors.key_shp!='NE'].copy(deep=True)
+IceThickness_SW_CW_NW_NO['key_shp']=[' All \n($\mathrm{\overline{s}}$ NE)']*len(IceThickness_SW_CW_NW_NO)
+IceThickness_all_sectors_region_GrIS=pd.concat([IceThickness_all_sectors,IceThickness_SW_CW_NW_NO])
+#Reindex for the updated version of seaborn to work, and delete previous index
+IceThickness_all_sectors_region_GrIS.reset_index(inplace=True)
+IceThickness_all_sectors_region_GrIS.drop(columns=['index', 'Unnamed: 0'],inplace=True)
+
+'''
+IceThickness_all_sectors_GrIS=IceThickness_all_sectors.copy(deep=True)
+IceThickness_all_sectors_GrIS['key_shp']=['GrIS']*len(IceThickness_all_sectors)
+'''
+
+
+#Display 2012 and 2019 separately
+plt.rcParams.update({'font.size': 15})
+fig = plt.figure(figsize=(14,12))
+gs = gridspec.GridSpec(10, 10)
+ax_ice_thickness_2012 = plt.subplot(gs[0:10, 0:5])
+ax_ice_thickness_2019 = plt.subplot(gs[0:10, 5:10])
+#Display 2012
+sns.violinplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
+               density_norm='width',ax=ax_ice_thickness_2012,palette=my_pal,cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
+ax_ice_thickness_2012.set_xlabel('Ice slab thickness [m]',labelpad=10)
+ax_ice_thickness_2012.set_ylabel('Region',labelpad=10)
+ax_ice_thickness_2012.grid(linestyle='dashed')
+ax_ice_thickness_2012.text(0.02, 0.97,'a',ha='center', va='center', transform=ax_ice_thickness_2012.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_ice_thickness_2012.text(0.9, 0.97,'2012',ha='center', va='center', transform=ax_ice_thickness_2012.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+#Display 2019
+sns.violinplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year>=2017], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
+               density_norm='width',ax=ax_ice_thickness_2019,palette=my_pal,cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
+ax_ice_thickness_2019.set_xlabel('Ice slab thickness [m]',labelpad=10)
+ax_ice_thickness_2019.set_ylabel('Region',labelpad=10)
+ax_ice_thickness_2019.grid(linestyle='dashed')
+ax_ice_thickness_2019.text(0.02, 0.97,'b',ha='center', va='center', transform=ax_ice_thickness_2019.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+ax_ice_thickness_2019.text(0.9, 0.97,'2019',ha='center', va='center', transform=ax_ice_thickness_2019.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+#Set axis to right hand side
+ax_ice_thickness_2019.set_ylabel('')
+ax_ice_thickness_2019.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=False, labelleft=False, right=True, labelright=True)
+ax_ice_thickness_2019.yaxis.set_label_position('right')#from https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+ax_ice_thickness_2019.legend_.remove() #from https://stackoverflow.com/questions/54781243/hide-legend-from-seaborn-pairplot
+
+#Add vertical bar to separate regions from GrIS
+ax_ice_thickness_2012.axhline(4.5,color='k',linewidth=0.5)
+ax_ice_thickness_2019.axhline(4.5,color='k',linewidth=0.5)
+
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Upstream'),
+                   Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
+                   Patch(facecolor=my_pal['Below'],edgecolor='black',label='Downstream')]
+ax_ice_thickness_2012.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.55, 0.35)).set_zorder(7)
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v4/Fig2_regions.png',dpi=300,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
+
+
+### Plot SW, CW, NW and NO on a signel plot on its own
+#Associate the RL year for plot
+IceThickness_SW_CW_NW_NO.loc[IceThickness_SW_CW_NW_NO.year <= 2012,'RL_year']='2012'
+IceThickness_SW_CW_NW_NO.loc[IceThickness_SW_CW_NW_NO.year >= 2017,'RL_year']='2019'
+#Reindex for the updated version of seaborn to work, and delete previous index
+IceThickness_SW_CW_NW_NO.reset_index(inplace=True)
+IceThickness_SW_CW_NW_NO.drop(columns=['index', 'Unnamed: 0'],inplace=True)
+
+#Display
+fig = plt.figure(figsize=(7,6.65))
+gs = gridspec.GridSpec(10, 10)
+ax_ice_thickness = plt.subplot(gs[0:10, 0:10])
+#Display 2019
+sns.violinplot(data=IceThickness_SW_CW_NW_NO, x="20m_ice_content_m", y="RL_year",hue="type",orient="h",density_norm='width',ax=ax_ice_thickness,palette=my_pal,cut=0)#, kde=True)
+ax_ice_thickness.set_xlabel('Ice slab thickness [m]',labelpad=10)
+ax_ice_thickness.set_ylabel('Year',labelpad=10)
+ax_ice_thickness.grid(linestyle='dashed')
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Upstream'),
+                   Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
+                   Patch(facecolor=my_pal['Below'],edgecolor='black',label='Downstream')]
+ax_ice_thickness.legend(handles=legend_elements,loc='center right',fontsize=15,framealpha=0.8).set_zorder(7)
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v4/Fig2_SW_CW_NW_NO_aggregation.png',dpi=300,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
+
+pdb.set_trace()
 
 ###############################################################################
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
@@ -583,24 +686,12 @@ plot_histo(axGrIS,IceThickness_above,IceThickness_within,IceThickness_below,'GrI
 #Finalise plot
 axSW.set_xlabel('Ice Thickness [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('2019 - 2 years running slabs')
+fig.suptitle([desired_year,'- 2 years running slabs'])
 plt.show()
 '''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Histo_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
-
-#Display as boxplots
-#Aggregate data together
-IceThickness_above['type']=['Above']*len(IceThickness_above)
-IceThickness_in_between['type']=['In_Between']*len(IceThickness_in_between)
-IceThickness_within['type']=['Within']*len(IceThickness_within)
-IceThickness_below['type']=['Below']*len(IceThickness_below)
-IceThickness_all_sectors=pd.concat([IceThickness_above,IceThickness_within,IceThickness_below])
-
-IceThickness_all_sectors_GrIS=IceThickness_all_sectors.copy(deep=True)
-IceThickness_all_sectors_GrIS['key_shp']=['GrIS']*len(IceThickness_all_sectors)
-IceThickness_all_sectors_region_GrIS=pd.concat([IceThickness_all_sectors,IceThickness_all_sectors_GrIS])
 
 #Display
 fig = plt.figure(figsize=(10,6))
@@ -611,14 +702,13 @@ ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice Thickness [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2019 - 2 years running slabs')
+fig.suptitle([desired_year,'- 2 years running slabs'])
+
 '''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
 ######################## Plot with 0m thick ice slabs #########################
-
-#pdb.set_trace()
 
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
@@ -668,7 +758,8 @@ plot_histo(axGrIS,
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle('2019 - 2 years running slabs - 0m thick slabs excluded')
+fig.suptitle([desired_year,'- 2 years running slabs - 0m thick slabs excluded'])
+
 plt.show()
 '''
 #Save the figure
@@ -683,7 +774,7 @@ ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle('2019 - 2 years running slabs - 0m thick slabs excluded')
+fig.suptitle([desired_year,'- 2 years running slabs - 0m thick slabs excluded'])
 '''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_without0mslabs.png',dpi=500)
@@ -694,7 +785,7 @@ plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2Year
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 
-#pdb.set_trace()
+pdb.set_trace()
 
 ###############################################################################
 ###                                   SAR                                   ###
@@ -976,28 +1067,6 @@ if (SAR_quantiles_extraction == 'TRUE'):
     ax_SAR.grid(linestyle='dashed')
     ax_SAR.text(0.03, 0.97,'b',ha='center', va='center', transform=ax_SAR.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     
-    #Display actually only one plot
-    plt.rcParams.update({'font.size': 15})
-    fig = plt.figure(figsize=(7,10))
-    gs = gridspec.GridSpec(5, 10)
-    ax_ice_thickness = plt.subplot(gs[0:5, 0:10])
-    sns.violinplot(data=IceThickness_all_sectors, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",scale="width",ax=ax_ice_thickness,palette=my_pal,cut=0)#, kde=True)
-    ax_ice_thickness.set_xlabel('Ice slab thickness [m]',labelpad=10)
-    ax_ice_thickness.set_ylabel('Region',labelpad=10)
-    ax_ice_thickness.grid(linestyle='dashed')
-    #ax_ice_thickness.text(0.03, 0.97,'a',ha='center', va='center', transform=ax_ice_thickness.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    
-    #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-    legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Above'),
-                       Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
-                       Patch(facecolor=my_pal['Below'],edgecolor='black',label='Below')]
-    ax_ice_thickness.legend(handles=legend_elements,loc='lower right',fontsize=15,framealpha=0.8).set_zorder(7)
-    
-    '''
-    #Save the figure
-    plt.savefig(path_switchdrive+'RT3/figures/Fig2/v3/Fig2.png',dpi=300,bbox_inches='tight')
-    #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
-    '''
 
 '''
 Results of the quantiles in the different regions for the different sectors
