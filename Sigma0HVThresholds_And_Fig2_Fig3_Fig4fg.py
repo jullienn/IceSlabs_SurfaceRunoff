@@ -7,33 +7,53 @@ Created on Wed Oct 26 14:01:33 2022
 
 #The fuction plot_histo is from Emax_SlabsThickness.py
 def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
-    if (region == 'GrIS'):
-        ax_plot.hist(iceslabs_above['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_within['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
-        ax_plot.hist(iceslabs_below['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17),density=True)
+    if (region == 'GrIS_except_NE'):
+        #Drop the NE
+        iceslabs_above_func = iceslabs_above[iceslabs_above.key_shp != 'NE']
+        iceslabs_within_func = iceslabs_within[iceslabs_within.key_shp != 'NE']
+        iceslabs_below_func = iceslabs_below[iceslabs_below.key_shp != 'NE']
+        
+        ax_plot.hist(iceslabs_above_func['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_within_func['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_below_func['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Dislay median values
-        ax_plot.axvline(x=np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),linestyle='--',color='blue')
-        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),linestyle='--',color='red')
-        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-        ax_plot.axvline(x=np.nanquantile(iceslabs_below['20m_ice_content_m'],0.5),linestyle='--',color='green')
-        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_below['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='green')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.nanquantile(iceslabs_above_func['20m_ice_content_m'],0.5),linestyle='--',color='blue')
+        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above_func['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.nanquantile(iceslabs_within_func['20m_ice_content_m'],0.5),linestyle='--',color='red')
+        ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within_func['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.nanquantile(iceslabs_below_func['20m_ice_content_m'],0.5),linestyle='--',color='green')
+        ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_below_func['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='green')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Display sample size
         print(region)
         print('-> Sample size:')
-        print('   Above: ',len(iceslabs_above))
-        print('   Within: ',len(iceslabs_within))
-        print('   Below: ',len(iceslabs_below))
+        print('   Above: ',len(iceslabs_above_func))
+        print('   Within: ',len(iceslabs_within_func))
+        print('   Below: ',len(iceslabs_below_func))
         print('-> Coefficient of variation:')
-        print('   Above: ',np.round(iceslabs_above['20m_ice_content_m'].std()/iceslabs_above['20m_ice_content_m'].mean(),4))
-        print('   Within: ',np.round(iceslabs_within['20m_ice_content_m'].std()/iceslabs_within['20m_ice_content_m'].mean(),4))
-        print('   Below: ',np.round(iceslabs_below['20m_ice_content_m'].std()/iceslabs_below['20m_ice_content_m'].mean(),4))
+        print('   Above: ',np.round(iceslabs_above_func['20m_ice_content_m'].std()/iceslabs_above_func['20m_ice_content_m'].mean(),4))
+        print('   Within: ',np.round(iceslabs_within_func['20m_ice_content_m'].std()/iceslabs_within_func['20m_ice_content_m'].mean(),4))
+        print('   Below: ',np.round(iceslabs_below_func['20m_ice_content_m'].std()/iceslabs_below_func['20m_ice_content_m'].mean(),4))
         print('-> MAD/median:')
-        print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above['20m_ice_content_m'],nan_policy='omit')/iceslabs_above['20m_ice_content_m'].median(),2))
-        print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within['20m_ice_content_m'],nan_policy='omit')/iceslabs_within['20m_ice_content_m'].median(),2))
-        print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below['20m_ice_content_m'],nan_policy='omit')/iceslabs_below['20m_ice_content_m'].median(),2))        
-        print('\n')        
+        print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_above_func['20m_ice_content_m'].median(),2))
+        print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_within_func['20m_ice_content_m'].median(),2))
+        print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_below_func['20m_ice_content_m'].median(),2))        
+        print('\n')  
+        print('-> Perform Welsch t-test above VS below:')
+
+        above_to_test=iceslabs_above_func['20m_ice_content_m'].copy()
+        above_to_test=above_to_test[~above_to_test.isna()]
+        
+        below_to_test=iceslabs_below_func['20m_ice_content_m'].copy()
+        below_to_test=below_to_test[~below_to_test.isna()]
+        
+        #Perform a Welsch's t test when we have no normality, no equal variance
+        #Perform a Yuen's t test when we have no normality, no equal variance, and tailed distribution - https://www.youtube.com/watch?v=D_dZyUpgGkI
+        #According to scipy doc, "Trimming is recommended if the underlying distribution is long-tailed or contaminated with outliers"
+        #Should I perform a Yuen's t-test? If yes, ass in the ttest_ind() the arguemtn trim = 0.x, where x represents the percentage of data in the extremetiy of the distribution to be excluded
+        print('  ',stats.ttest_ind(above_to_test,below_to_test,equal_var=False))#, trim=.1))#If negative t statistic return, this means the mean of above is less than the mean of below. If p < alpha (alpha being the significance level), then the difference between the two distributions is significantly different at the alpha level.
+        print('\n')
+        
     else:
         ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
@@ -516,8 +536,6 @@ IceThickness_in_between=pd.DataFrame()
 IceThickness_within=pd.DataFrame()
 IceThickness_below=pd.DataFrame()
 
-pdb.set_trace()
-
 for indiv_box in range(4,32):
     print(indiv_box)
     for indiv_year in list(['2012','2019']):
@@ -577,6 +595,10 @@ IceThickness_all_sectors_region_GrIS=pd.concat([IceThickness_all_sectors,IceThic
 IceThickness_all_sectors_region_GrIS.reset_index(inplace=True)
 IceThickness_all_sectors_region_GrIS.drop(columns=['index', 'Unnamed: 0'],inplace=True)
 
+#Reindex for the updated version of seaborn to work, and delete previous index
+IceThickness_all_sectors.reset_index(inplace=True)
+IceThickness_all_sectors.drop(columns=['index', 'Unnamed: 0'],inplace=True)
+
 '''
 IceThickness_all_sectors_GrIS=IceThickness_all_sectors.copy(deep=True)
 IceThickness_all_sectors_GrIS['key_shp']=['GrIS']*len(IceThickness_all_sectors)
@@ -627,8 +649,7 @@ plt.savefig(path_switchdrive+'RT3/figures/Fig2/v4/Fig2_regions.png',dpi=300,bbox
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
-
-### Plot SW, CW, NW and NO on a signel plot on its own
+### Plot SW, CW, NW and NO on a single plot on its own
 #Associate the RL year for plot
 IceThickness_SW_CW_NW_NO.loc[IceThickness_SW_CW_NW_NO.year <= 2012,'RL_year']='2012'
 IceThickness_SW_CW_NW_NO.loc[IceThickness_SW_CW_NW_NO.year >= 2017,'RL_year']='2019'
@@ -657,13 +678,12 @@ plt.savefig(path_switchdrive+'RT3/figures/Fig2/v4/Fig2_SW_CW_NW_NO_aggregation.p
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
-pdb.set_trace()
-
 ###############################################################################
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
 ######################## Plot with 0m thick ice slabs #########################
 #Display ice slabs distributions as a function of the regions - This is fromEmax_SLabsThickness.py
+### 2012 ###
 #Prepare plot
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(15, 10)
@@ -676,17 +696,17 @@ axNE = plt.subplot(gs[5:10, 5:10])
 axGrIS = plt.subplot(gs[10:15, 5:10])
 
 #Plot histograms
-plot_histo(axNW,IceThickness_above,IceThickness_within,IceThickness_below,'NW')
-plot_histo(axCW,IceThickness_above,IceThickness_within,IceThickness_below,'CW')
-plot_histo(axSW,IceThickness_above,IceThickness_within,IceThickness_below,'SW')
-plot_histo(axNO,IceThickness_above,IceThickness_within,IceThickness_below,'NO')
-plot_histo(axNE,IceThickness_above,IceThickness_within,IceThickness_below,'NE')
-plot_histo(axGrIS,IceThickness_above,IceThickness_within,IceThickness_below,'GrIS')
+plot_histo(axNW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NW')
+plot_histo(axCW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'CW')
+plot_histo(axSW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'SW')
+plot_histo(axNO,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NO')
+plot_histo(axNE,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NE')
+plot_histo(axGrIS,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'GrIS_except_NE')
 
 #Finalise plot
 axSW.set_xlabel('Ice Thickness [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle([desired_year,'- 2 years running slabs'])
+fig.suptitle('2012 - 2 years running slabs')
 plt.show()
 '''
 #Save the figure
@@ -697,19 +717,60 @@ plt.savefig(path_data+'SAR_sectors/Composite2019_Histo_IceSlabsThickness_2YearsR
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.boxplot(data=IceThickness_all_sectors_region_GrIS, x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+box_plot_regions_GrIS=sns.boxplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
 ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice Thickness [m]')
-ax_regions_GrIS.set_xlim(-0.5,20)
+#ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle([desired_year,'- 2 years running slabs'])
-
+fig.suptitle('2012 - 2 years running slabs')
 '''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500)
 '''
-######################## Plot with 0m thick ice slabs #########################
+### 2012 ###
 
+pdb.set_trace()
+
+### 2019 ###
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(15, 10)
+#projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+axNW = plt.subplot(gs[0:5, 0:5])
+axCW = plt.subplot(gs[5:10, 0:5])
+axSW = plt.subplot(gs[10:15, 0:5])
+axNO = plt.subplot(gs[0:5, 5:10])
+axNE = plt.subplot(gs[5:10, 5:10])
+axGrIS = plt.subplot(gs[10:15, 5:10])
+
+#Plot histograms
+plot_histo(axNW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NW')
+plot_histo(axCW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'CW')
+plot_histo(axSW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'SW')
+plot_histo(axNO,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NO')
+plot_histo(axNE,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NE')
+plot_histo(axGrIS,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'GrIS_except_NE')
+
+#Finalise plot
+axSW.set_xlabel('Ice Thickness [m]')
+axSW.set_ylabel('Density [ ]')
+fig.suptitle('2019 - 2 years running slabs')
+plt.show()
+
+fig = plt.figure(figsize=(10,6))
+gs = gridspec.GridSpec(10, 6)
+ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
+box_plot_regions_GrIS=sns.boxplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year>=2017], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+ax_regions_GrIS.set_ylabel('')
+ax_regions_GrIS.set_xlabel('Ice Thickness [m]')
+#ax_regions_GrIS.set_xlim(-0.5,20)
+ax_regions_GrIS.legend(loc='lower right')
+fig.suptitle('2019 - 2 years running slabs')
+### 2019 ###
+
+######################## Plot with 0m thick ice slabs #########################
+pdb.set_trace()
+
+print('----- Now displaying statistics for 2012 where ice slabs are thicker than > 0 m -----')
 ####################### Plot without 0m thick ice slabs #######################
 #Display ice slabs distributions as a function of the regions without 0m thick ice slabs
 #Prepare plot
@@ -725,42 +786,72 @@ axGrIS = plt.subplot(gs[10:15, 5:10])
 
 #Plot histograms
 plot_histo(axNW,
-           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
-           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
-           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
-           'NW')
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Above') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Within') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Below') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],'NW')
 plot_histo(axCW,
-           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
-           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
-           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
-           'CW')
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Above') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Within') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Below') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],'CW')
 plot_histo(axSW,
-           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
-           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
-           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
-           'SW')
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Above') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Within') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Below') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],'SW')
 plot_histo(axNO,
-           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
-           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
-           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
-           'NO')
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Above') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Within') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Below') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],'NO')
 plot_histo(axNE,
-           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
-           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
-           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
-           'NE')
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Above') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Within') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Below') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],'NE')
 plot_histo(axGrIS,
-           IceThickness_above[IceThickness_above['20m_ice_content_m']>0],
-           IceThickness_within[IceThickness_within['20m_ice_content_m']>0],
-           IceThickness_below[IceThickness_below['20m_ice_content_m']>0],
-           'GrIS')
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Above') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Within') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],
+           IceThickness_all_sectors[(IceThickness_all_sectors.type == 'Below') &
+                                    (IceThickness_all_sectors.year <= 2012) &
+                                    (IceThickness_all_sectors['20m_ice_content_m'] > 0)],'GrIS_except_NE')
 
 #Finalise plot
 axSW.set_xlabel('Ice content [m]')
 axSW.set_ylabel('Density [ ]')
-fig.suptitle([desired_year,'- 2 years running slabs - 0m thick slabs excluded'])
-
+fig.suptitle('2012- 2 years running slabs - 0m thick slabs excluded')
 plt.show()
+
 '''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Histo_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_without0mslabs.png',dpi=500)
@@ -769,23 +860,52 @@ plt.savefig(path_data+'SAR_sectors/Composite2019_Histo_IceSlabsThickness_2YearsR
 fig = plt.figure(figsize=(10,6))
 gs = gridspec.GridSpec(10, 6)
 ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
-box_plot_regions_GrIS=sns.boxplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS['20m_ice_content_m']>0], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
+box_plot_regions_GrIS=sns.boxplot(data=IceThickness_all_sectors_region_GrIS[(IceThickness_all_sectors_region_GrIS.year <= 2012) &
+                                                                            (IceThickness_all_sectors_region_GrIS['20m_ice_content_m'] > 0)],
+                                  x="20m_ice_content_m", y="key_shp",hue="type",orient="h",ax=ax_regions_GrIS,palette=my_pal)#, kde=True)
 ax_regions_GrIS.set_ylabel('')
 ax_regions_GrIS.set_xlabel('Ice content [m]')
 ax_regions_GrIS.set_xlim(-0.5,20)
 ax_regions_GrIS.legend(loc='lower right')
-fig.suptitle([desired_year,'- 2 years running slabs - 0m thick slabs excluded'])
+fig.suptitle('2012 - 2 years running slabs - 0m thick slabs excluded')
+
 '''
 #Save the figure
 plt.savefig(path_data+'SAR_sectors/Composite2019_Boxplot_IceSlabsThickness_2YearsRunSlabs_radius_'+str(radius)+'m_cleanedxytpdV3_without0mslabs.png',dpi=500)
+'''
+
+#Display
+fig = plt.figure(figsize=(8,12))
+gs = gridspec.GridSpec(10, 6)
+ax_regions_GrIS = plt.subplot(gs[0:10, 0:6])
+sns.violinplot(data=IceThickness_all_sectors_region_GrIS[(IceThickness_all_sectors_region_GrIS.year <= 2012) &
+                                                         (IceThickness_all_sectors_region_GrIS['20m_ice_content_m'] > 0)],
+                                  x="20m_ice_content_m", y="key_shp",hue="type",orient="h",density_norm='width',ax=ax_regions_GrIS,palette=my_pal,
+                                  cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
+
+ax_regions_GrIS.set_ylabel('Region',labelpad=10)
+ax_regions_GrIS.set_xlabel('Ice slab thickness [m]',labelpad=10)
+ax_regions_GrIS.grid(linestyle='dashed')
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Upstream'),
+                   Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
+                   Patch(facecolor=my_pal['Below'],edgecolor='black',label='Downstream')]
+ax_regions_GrIS.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.6, 0.35)).set_zorder(7)
+#fig.suptitle('2012 - 2 years running slabs - 0m thick slabs excluded')
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v4/Fig3_2012Without0mThickSlabs.png',dpi=300,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 ####################### Plot without 0m thick ice slabs #######################
 
 ###############################################################################
 ###         Plot Ice Slabs Thickness data in the different sectors          ###
 ###############################################################################
+# UNTIL THERE, EVERYTHIG IS GOOD! FOR QUANTILES REPORT, READ IT IN THE CONSOLE RATHER THAN READING ON THE PLOT!
 
 pdb.set_trace()
+
 
 ###############################################################################
 ###                                   SAR                                   ###
