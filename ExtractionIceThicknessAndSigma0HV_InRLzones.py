@@ -51,8 +51,8 @@ def create_polygon_above(line_input,radius_around_line,distance_start,distance_e
     polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.1)#'grey'
     
     #Plot the above upper boundaries
-    ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
-    ax_plot.plot(line_upper_end_a.xy[0],line_upper_end_a.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
+    ax_plot.plot(line_upper_end_a.xy[0],line_upper_end_a.xy[1],zorder=5,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ax_plot_SAR.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ax_plot_SAR.plot(line_upper_end_a.xy[0],line_upper_end_a.xy[1],zorder=5,color=color_plot) #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     
@@ -91,7 +91,7 @@ def perform_extraction_in_polygon(dataframe_to_intersect,polygon_for_intersectio
     #Intersection between dataframe and poylgon, from https://gis.stackexchange.com/questions/346550/accelerating-geopandas-for-selecting-points-inside-polygon        
     Intersection_polygon_dataframe_slabs = gpd.sjoin(dataframe_to_intersect, polygon_for_intersection, predicate='within')
     #Plot the result of this intersection
-    ax_plot.scatter(Intersection_polygon_dataframe_slabs['lon_3413'],Intersection_polygon_dataframe_slabs['lat_3413'],color=color_plot,s=1,zorder=8)
+    ax_plot.scatter(Intersection_polygon_dataframe_slabs['lon_3413'],Intersection_polygon_dataframe_slabs['lat_3413'],color=color_plot,s=1.5,zorder=8)
     
     return Intersection_polygon_dataframe_slabs
 
@@ -222,16 +222,19 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
         
     ################ Create polygons and extract ice slabs ################
     #Perform polygon above creation and slabs extraction
-    above_polygon,upper_limit=create_polygon_above(lineEmax,radius_func,4000,9000,1000,ax_sectors,ax_SAR,'#045a8d')
-    Intersection_slabs_above = perform_extraction_in_polygon(subset_iceslabs_func,above_polygon,ax_sectors,'blue')
-    
-    #Perform polygon in-between creation and slabs extraction
-    in_between_polygon,lower_inbetween_limit=create_polygon_offset(lineEmax,radius_func,4000,'upstream',ax_sectors,ax_SAR,'yellow')
-    Intersection_slabs_InBetween = perform_extraction_in_polygon(subset_iceslabs_func,in_between_polygon,ax_sectors,'yellow')
+    above_polygon,upper_limit=create_polygon_above(lineEmax,radius_func,4000,9000,1000,ax_sectors,ax_SAR,'#005AB5')
+    Intersection_slabs_above = perform_extraction_in_polygon(subset_iceslabs_func,above_polygon,ax_sectors,'#005AB5')
+
+    if (plot_method == 'FALSE'):
+        #Perform polygon in-between creation and slabs extraction
+        in_between_polygon,lower_inbetween_limit=create_polygon_offset(lineEmax,radius_func,4000,'upstream',ax_sectors,ax_SAR,'yellow')
+        Intersection_slabs_InBetween = perform_extraction_in_polygon(subset_iceslabs_func,in_between_polygon,ax_sectors,'yellow')
+    else:
+        Intersection_slabs_InBetween = np.nan
     
     #Perform polygon within creation and slabs extraction
     within_polygon = create_buffer_polygon(lineEmax,radius_func,ax_sectors)
-    Intersection_slabs_within = perform_extraction_in_polygon(subset_iceslabs_func,within_polygon,ax_sectors,'red')
+    Intersection_slabs_within = perform_extraction_in_polygon(subset_iceslabs_func,within_polygon,ax_sectors,'#DC3220')
     
     #Perform polygon below creation and slabs extraction
     below_polygon,lower_limit=create_polygon_offset(lineEmax,radius_func,5000,'downstream',ax_sectors,ax_SAR,'green')
@@ -357,9 +360,9 @@ type_slabs='high' #can be high or low
 
 #Extract SAR? Can be TRUE or FLASE
 SAR_extraction = 'FALSE'
-
+plot_method = 'FALSE'
 #Define which year to process
-desired_year=2012
+desired_year=2019
 
 #Define radius
 radius=500
@@ -495,6 +498,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         continue
     
     if ((desired_year == 2012) & (indiv_index !=25)):
+        continue
+    
+        
+    if (indiv_index <8):
         continue
     
     print(indiv_index)
@@ -794,24 +801,187 @@ for indiv_index in Boxes_Tedstone2022.FID:
         
         pdb.set_trace()
         
+        '''
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500,bbox_inches='tight')
         #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+        '''
         
         '''
         ax_sectors.legend(handles=legend_elements)
         plt.legend()
         '''
+        #Create figure for method illustration
+        if (indiv_index == 8):
+            plot_method = 'TRUE'
+            #Prepare plot
+            plt.rcParams.update({'font.size': 9})
+            fig = plt.figure(figsize=(8.27,9.23))
+            gs = gridspec.GridSpec(100, 100)
+            #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
+            ax_sectors = plt.subplot(gs[0:100, 0:50],projection=crs)
+            ax_legend = plt.subplot(gs[0:35, 50:100])
+            ax_ice_distrib = plt.subplot(gs[36:60, 52:85])
+            ax_GrIS = plt.subplot(gs[63:85, 50:90],projection=crs)
+            
+            ### ----------------------- Context map ----------------------- ###
+            #Load and display Greenland coast shapefile
+            GreenlandCoast=gpd.read_file('C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/Greenland_coast/Greenland_coast.shp') 
+            GreenlandCoast.plot(ax=ax_GrIS,color='#CEB481', edgecolor='grey',linewidth=0.1)
+            #Display GrIS drainage bassins and polygon
+            NO_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1)
+            NE_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1) 
+            SE_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1) 
+            SW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1) 
+            CW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1) 
+            NW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1)
+            ax_GrIS.axis('off')
+            #Display all the processed polygons
+            Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].plot(ax=ax_GrIS,color='none', edgecolor='black',linewidth=0.1)
+            '''
+            #Display polygon
+            indiv_polygon.plot(ax=ax_GrIS,color='#faf6c8', edgecolor='black',linewidth=0.5)
+            '''
+            ###################### From Tedstone et al., 2022 #####################
+            #from plot_map_decadal_change.py
+            ax_GrIS.set_extent([-634797, 856884, -3345483, -764054], crs=crs)# x0, x1, y0, y1
+            gl=ax_GrIS.gridlines(draw_labels=True, xlocs=[-35, -50], ylocs=[65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
+            gl.top_labels = False
+            ###################### From Tedstone et al., 2022 #####################
+            #Display scalebar
+            ax_GrIS.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None)).set_pad(-0.5)
+            ### ----------------------- Context map ----------------------- ###
+
+            ### ----------------------- Polygon map ----------------------- ###
+            '''
+            #Display polygon
+            indiv_polygon.plot(ax=ax_sectors,color='none', edgecolor='black',linewidth=0.5,zorder=1)
+            '''
+            #Define bounds of Emaxs in this box
+            x_min=np.min(Emax_points['x'])-1e5
+            x_max=np.max(Emax_points['x'])+5e4
+            y_min=np.min(Emax_points['y'])-5e4
+            y_max=np.max(Emax_points['y'])+5e4
+            
+            #Extract coordinates of NDWI image within Emaxs bounds
+            logical_x_coord_within_bounds=np.logical_and(x_coord_NDWI>=x_min,x_coord_NDWI<=x_max)
+            x_coord_within_bounds=x_coord_NDWI[logical_x_coord_within_bounds]
+            logical_y_coord_within_bounds=np.logical_and(y_coord_NDWI>=y_min,y_coord_NDWI<=y_max)
+            y_coord_within_bounds=y_coord_NDWI[logical_y_coord_within_bounds]
+
+            #Define extents based on the bounds
+            extent_NDWI = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
+            #Display NDWI image
+            cbar = ax_sectors.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='bone_r',zorder=0,vmin=0.05,vmax=0.4) #NDWI
+            #Display cbar
+            fig.colorbar(cbar, ax=ax_sectors,label='NDWI [ ]',orientation='horizontal',location='bottom',pad=0.01)
+            #Set limits
+            ax_sectors.set_xlim(-126566, -70124)
+            ax_sectors.set_ylim(-2600076, -2495884)
+            #Display scalebar
+            ax_sectors.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))
+
+            '''
+            #Display 2010-2012 and 2010-2018 high end ice slabs jullien et al., 2023
+            IceSlabsExtent_20102018_jullienetal2023.plot(ax=ax_sectors,facecolor='none',edgecolor='#ba2b2b',zorder=10)
+            IceSlabsExtent_20102012_jullienetal2023.plot(ax=ax_sectors,facecolor='none',edgecolor='magenta',zorder=10)
+            '''
+            #Display the tracks of the current year within the polygon            
+            ax_sectors.scatter(subset_iceslabs['lon_3413'],subset_iceslabs['lat_3413'],color='black',edgecolor='none',s=0.5,zorder=1)
+            
+            #Open, filter and display the non cleaned Emax retrievals of the selected year in the selected box
+            Emax_NonCleaned=pd.read_csv(path_data+'/Emax/xytpd.csv',delimiter=',',decimal='.')
+            Emax_NonCleaned=Emax_NonCleaned.rename(columns={"index":"index_Emax"})
+            points_Emax_NonCleaned = gpd.GeoDataFrame(Emax_NonCleaned, geometry = gpd.points_from_xy(Emax_NonCleaned['x'],Emax_NonCleaned['y']),crs="EPSG:3413")
+            within_points_Emax_NonCleaned = gpd.sjoin(points_Emax_NonCleaned, indiv_polygon, predicate='within')
+            Emax_points_NonCleaned=within_points_Emax_NonCleaned[within_points_Emax_NonCleaned.year==indiv_year]
+            #Keep only Emax points whose box_id is associated with the current box_id
+            Emax_points_NonCleaned=Emax_points_NonCleaned[Emax_points_NonCleaned.box_id==indiv_index]
+            ax_sectors.scatter(Emax_points_NonCleaned['x'],Emax_points_NonCleaned['y'],color='#dd3497',s=5,zorder=6)
+            #Display the cleaned Emax retrievals
+            ax_sectors.scatter(Emax_points['x'],Emax_points['y'],color='black',s=5,zorder=6)
+            
+            #Display sectors
+            Intersection_slabs_above_out,Intersection_slabs_InBetween_out,Intersection_slabs_within_out,Intersection_slabs_below_out,indiv_SAR_above_out,indiv_SAR_inbetween_out,indiv_SAR_within_out,indiv_SAR_below_out=perform_processing(Emax_points,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_N_00_00_EW,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
+
+            '''
+            # In case a zoom is needed
+            ax_sectors.set_xlim(-169088.0, -90288.0)
+            ax_sectors.set_ylim(-2701771.0, -2582212.0)
+            '''
+            #Plot ice slabs thickness that are above, within and below Emax polygons
+            ax_ice_distrib.hist(Intersection_slabs_below_out['20m_ice_content_m'],color='green',label='Downstream',alpha=0.5,bins=np.arange(0,20,0.5),density=True,log=True)
+            ax_ice_distrib.hist(Intersection_slabs_within_out['20m_ice_content_m'],color='red',label='At',alpha=0.5,bins=np.arange(0,20,0.5),density=True,log=True)
+            ax_ice_distrib.hist(Intersection_slabs_above_out['20m_ice_content_m'],color='blue',label='Upstream',alpha=0.5,bins=np.arange(0,20,0.5),density=True,log=True)
+            ax_ice_distrib.set_xlabel('Ice slab thickness [m]')
+            ax_ice_distrib.set_ylabel('Density [ ]')
+            ax_ice_distrib.set_xlim(0,20)
+            ax_ice_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+            ax_ice_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+            ax_ice_distrib.xaxis.set_label_position("top")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+            ax_ice_distrib.xaxis.tick_top()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
+            ax_ice_distrib.legend(loc='lower left',framealpha=0.5)
+            
+            #Custom legend myself for ax_sectors - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+            legend_elements =  [Line2D([0], [0], color='black', label='Runoff limit (RL) retrievals', marker='o',linestyle='None'),
+                               Line2D([0], [0], color='#dd3497', label='Discarded RL retrievals', marker='o',linestyle='None'),
+                               Line2D([0], [0], color='#DD9C9F', lw=1, label='RL line'),
+                               Line2D([0], [0], markerfacecolor='#F8E0E0',markeredgecolor='none',label='\'At\' zone',linestyle='',marker='s',markersize=10),
+                               Line2D([0], [0], markerfacecolor='#D3E6D9',markeredgecolor='green',label='\'Downstream\' zone',linestyle='',marker='s',markersize=10),
+                               Line2D([0], [0], markerfacecolor='#DCE8F2',markeredgecolor='#005AB5',label='\'Upstream\' zone',linestyle='',marker='s',markersize=10),
+                               Line2D([0], [0], color='green', lw=2, label='Ice slabs \'downstream\' the RL'),
+                               Line2D([0], [0], color='red', lw=2, label='Ice slabs \'at\' the RL'),
+                               Line2D([0], [0], color='#005AB5', lw=2, label='Ice slabs \'upstream\' the RL'),
+                               Line2D([0], [0], color='k', lw=0.5, label='Accumulation Radar flightlines')]
+            #legend rectangles from https://stackoverflow.com/questions/39500265/how-to-manually-create-a-legend
+            
+            ax_legend.legend(handles=legend_elements,loc='upper left')
+            ax_legend.axis('off')
+            plt.legend()
+            
+            ### Display extent of panel a in panel c - this is from Fig4andS5.py of paper I. ###
+            coord_origin=[ax_sectors.get_xlim()[0]],[ax_sectors.get_ylim()[0]]
+            coord_topright=[ax_sectors.get_xlim()[1]],[ax_sectors.get_ylim()[1]]
+            #This is from https://stackoverflow.com/questions/37435369/matplotlib-how-to-draw-a-rectangle-on-image
+            rect = patches.Rectangle((coord_origin[0][0],coord_origin[1][0]),
+                                     np.abs(coord_origin[0][0]-coord_topright[0][0]),
+                                     np.abs(coord_origin[1][0]-coord_topright[1][0]),
+                                     angle=0, linewidth=1, edgecolor='black', facecolor='#faf6c8')
+            ax_GrIS.add_patch(rect)
+            ax_GrIS.text(ax_sectors.get_xlim()[1]+100000,ax_sectors.get_ylim()[0]+50000,'a',ha='center', va='center',fontsize=11,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+            ### Display extent of panel a in panel c - this is from Fig4andS5.py of paper I. ###
+            
+            #Add panel labels
+            ax_sectors.text(0.04,0.97,'a',ha='center', va='center', transform=ax_sectors.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_ice_distrib.text(0.065,0.9,'b',ha='center', va='center', transform=ax_ice_distrib.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_GrIS.text(-0.6,0.94,'c',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+            pdb.set_trace()
+            
+            #Copy/paste this in the console to remove legend
+            ax_GrIS.legend().remove()#from https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
+
+            '''
+            #Save the figure
+            plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT3/figures/Fig_methods/Fig_methods.png',dpi=500,bbox_inches='tight')
+            #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+            '''
+            #reset plot_method
+            plot_method = 'FALSE'
+        
+        
         ############# Display ice slabs thickness and SAR signal #############
         plt.close()
         
+        '''
         ### Export extracted Ice Slabs and SAR sectors as csv files ###
         # Export the extracted ice slabs in sectors as csv files
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_above_out,'above',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_InBetween_out,'in_between',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_within_out,'within',indiv_index,indiv_year)
         save_slabs_as_csv(path_save_SAR_IceSlabs,Intersection_slabs_below_out,'below',indiv_index,indiv_year)
-        
+        '''
         if (SAR_extraction == 'TRUE'): 
             # Export the extracted SAR in sectors as csv files
             indiv_SAR_above_out.to_csv(path_save_SAR_IceSlabs+'above'+'/SAR_'+'above'+'_box_'+str(indiv_index)+'_year_'+str(indiv_year)+'.csv')
