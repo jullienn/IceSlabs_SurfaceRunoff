@@ -101,7 +101,7 @@ plt.rc('ytick.major',width=0.75)
 v= 299792458
 
 desired_map='master_map'#'master_map' or 'NDWI'
-display_Emax="False"
+display_Emax="True"
 
 #Define paths to data
 path_data_Jullien='C:/Users/jullienn/switchdrive/Private/research/RT1/final_dataset_2002_2018/i_out_from_IceBridgeGPR_Manager_v2.py/pickles_and_images/'
@@ -128,12 +128,14 @@ my_pal = {'2002': '#1b7837', '2003': '#5aae61', '2004': '#a6dba0', '2005': '#d9f
           '2014': "#fee090", '2015': '#e0f3f8', '2016': '#abd9e9', '2017': "#74add1",
           '2018': "#4575b4", '2019': '#313695', '2020': '#1a1a1a'}
 '''
+'''
 my_pal = {'2002': '#980043', '2003': '#dd1c77', '2004': '#df65b0',
           '2005': '#54278f', '2006': '#756bb1', '2007': '#9e9ac8', '2008': '#cbc9e2', '2009': '#f2f0f7',
           '2010': "#bd0026", '2011': "#f03b20", '2012': "#fd8d3c", '2013': "#fecc5c", '2014': "#ffffb2",
           '2015': '#006d2c', '2016': '#31a354', '2017': "#74c476", '2018': "#bae4b3", '2019': '#edf8e9',
           '2020': '#993404'}
-
+'''
+my_pal = {'2005': '#e66101','2010': "#fdb863",'2016': '#b2abd2','2019': '#5e3c99'}
 
 from matplotlib.colors import  ListedColormap
 #Create a palette for traffic_light display
@@ -635,7 +637,7 @@ for single_year in investigation_year.keys():
 
 ### ----------------- This is from Emax_Slabs_tickness.py ----------------- ###
 #Load Emax from Tedstone and Machguth (2022)
-Emax_TedMach=pd.read_csv(path_data_switchdrive+'Emax/xytpd_NDWI_cleaned_2012_16_19_v2.csv',delimiter=',',decimal='.')
+Emax_TedMach=pd.read_csv(path_data_switchdrive+'Emax/xytpd_NDWI_cleaned_2019_v3.csv',delimiter=',',decimal='.')
 #Rename columns preventing intersection
 Emax_TedMach=Emax_TedMach.rename(columns={"index":"index_Emax"})
 #Define Emax_TedMach as being a geopandas dataframes
@@ -795,11 +797,11 @@ for single_year in investigation_year.keys():
     #Set axis frame to be black
     #Display year
     if (single_year<2004):
-        ax_plot.text(0.9725, 0.625,'                     ',ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=2,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
-        ax_plot.text(0.9725, 0.6,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.text(0.9725, 0.175,'                     ',ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=2,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+        ax_plot.text(0.9725, 0.15,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     else:
-        ax_plot.text(0.9725, 0.825,'                     ',ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=2,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
-        ax_plot.text(0.9725, 0.825,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.text(0.9725, 0.175,'                     ',ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=2,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+        ax_plot.text(0.9725, 0.15,str(single_year),ha='center', va='center', transform=ax_plot.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     
     #Display radargram track on the map
     index_within_bounds=np.logical_and(dataframe[str(single_year)]['lon_appended']>=start_transect,dataframe[str(single_year)]['lon_appended']<=end_transect)
@@ -890,7 +892,7 @@ if (desired_map=='NDWI'):
     
 elif (desired_map=='master_map'):
     #Load hydrological master map from Tedstone and Machuguth (2022)
-    path_CumHydroMap='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/master_maps/'
+    path_CumHydroMap='X:/RT3_jullien/TedstoneAndMachguth2022/master_maps/'
     #Load master map
     MapPlot = rxr.open_rasterio(path_CumHydroMap+'master_map_GrIS_mean.vrt',
                                   masked=True).squeeze() #No need to reproject satelite image
@@ -938,16 +940,18 @@ ax_map.set_ylim(y_min,y_max)
 
 if (display_Emax == "True"):
     count=0
-    
+    '''
     #Create a list of years holding data
     list_holding_data=[]
     for holding_data in investigation_year.keys():
         
         if (investigation_year[holding_data]!='empty'):
             list_holding_data=np.append(list_holding_data,holding_data)
+    '''
+    list_holding_data = np.array([2003,2010,2014,2018])
     
     #Display Emax
-    for single_year in range(2002,2021):
+    for single_year in list([2005,2010,2016,2019]):#range(2002,2021):
         
         #If no data before this year, continue
         if (single_year<list_holding_data[0]):
@@ -1069,9 +1073,12 @@ if (display_Emax == "True"):
         pdb.set_trace()
         ax_map.scatter(highest_Emax_extraction['x'],highest_Emax_extraction['y'],c='yellow',s=10,zorder=count+1)#Display this easternmost point
         '''
-        
+        '''
         #Store the closest and highest points
         best_Emax_points=pd.concat([closest_Emax_extraction, highest_Emax_extraction])
+        '''
+        #Store ontly the highest points
+        best_Emax_points=highest_Emax_extraction
         
         #If the difference in elevation between the two points is larger than 50m (to change?), we probably have two Emax points at two different hydrological features. Discard the lowest one
         if (np.diff(best_Emax_points.elev)>50):
@@ -1092,23 +1099,27 @@ if (display_Emax == "True"):
             
             #Plot Emax on the correct radargrams
             if (year_transect==2002):
-                ax1.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax1.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2003):
-                ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax2.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black',label=str(single_year)+' RL')
+                ax2.legend(loc='upper left',bbox_to_anchor=(0.775, 0.475),framealpha=0.5)
             elif(year_transect==2010):
-                ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax3.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black',label=str(single_year)+' RL')
+                ax3.legend(loc='upper left',bbox_to_anchor=(0.775, 0.475),framealpha=0.5)
             elif(year_transect==2011):
-                ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2012):
-                ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2013):
-                ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2014):
-                ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black',label=str(single_year)+' RL')
+                ax7.legend(loc='upper left',bbox_to_anchor=(0.775, 0.475),framealpha=0.5)
             elif(year_transect==2017):
-                ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2018):
-                ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)])
+                ax9.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black',label=str(single_year)+' RL')
+                ax9.legend(loc='upper left',bbox_to_anchor=(0.775, 0.475),framealpha=0.5)
             else:
                 print('Should not end up there')
                 pdb.set_trace()
@@ -1396,7 +1407,7 @@ plt.show()
 pdb.set_trace()
 
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v6/Fig6bcdef.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v7/Fig6bcdef.png',dpi=300)#,bbox_inches='tight')
 
 '''
 #Save the figure
