@@ -462,7 +462,7 @@ fig_CumHydro_IceThickness.tight_layout()
 
 ### ------ CumHydro and Ice slabs thickness dataset in sectors only ------- ###
 
-pdb.set_trace()
+#pdb.set_trace()
 '''
 #Save figure
 plt.savefig(path_switchdrive+'RT3/figures/Fig5/v3/Fig5.png',dpi=300,bbox_inches='tight')
@@ -520,7 +520,10 @@ fig.suptitle('Rolling window: '+str(window_distance)+' m')
 Transects_2017_2018.loc[Transects_2017_2018.rolling_mean_ice_thickness<1,'rolling_CV_ice_thickness']=np.nan
         
 print('--- 2017-2018 dataset ---')
+print('   Rolling window width '+str(window_distance)+' m')
 print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75]).round(2))
+
+pdb.set_trace()
 
 ### --- Perform the same analysis for the 2018 transect displayed in Fig. 6 --- ###
 #Open the 20180427_01_170_172 file holding 0 m thick and > 16 m thick ice slabs - inspire from the loop above

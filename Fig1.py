@@ -1002,8 +1002,10 @@ ax_inset_map = plt.subplot(gs[12:15, 8:12],projection=crs)
 axsummary_elev = plt.subplot(gs[12:15, 1:8])
 
 #Draw plot of GrIS map
-ax_inset_map.coastlines(edgecolor='black',linewidth=0.075)
-GrIS_drainage_bassins.plot(ax=ax_inset_map,color='none', edgecolor='black',linewidth=0.075)
+#Load and display Greenland coast shapefile
+GreenlandCoast=gpd.read_file('C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/Greenland_coast/Greenland_coast.shp') 
+GreenlandCoast.plot(ax=ax_inset_map,color='#CEB481', edgecolor='grey',linewidth=0.1)
+GrIS_drainage_bassins.plot(ax=ax_inset_map,color='white', edgecolor='black',linewidth=0.075)
 #Display region name
 ax_inset_map.text(NO_rignotetal.centroid.x-150000,NO_rignotetal.centroid.y-100000,np.asarray(NO_rignotetal.SUBREGION1)[0])
 ax_inset_map.text(NE_rignotetal.centroid.x-200000,NE_rignotetal.centroid.y+20000,np.asarray(NE_rignotetal.SUBREGION1)[0])
@@ -1016,10 +1018,15 @@ ax_inset_map.set_xlim(-693308, 912076)
 ax_inset_map.set_ylim(-3440844, -541728)
 
 #Display coastlines
-ax_north.coastlines(edgecolor='grey',linewidth=0.5)
-ax_SW.coastlines(edgecolor='grey',linewidth=0.5)
-ax_NW.coastlines(edgecolor='grey',linewidth=0.5)
-ax_CW.coastlines(edgecolor='grey',linewidth=0.5)
+GreenlandCoast.plot(ax=ax_north,color='#CEB481', edgecolor='grey',linewidth=0.1)
+GreenlandCoast.plot(ax=ax_SW,color='#CEB481', edgecolor='grey',linewidth=0.1)
+GreenlandCoast.plot(ax=ax_NW,color='#CEB481', edgecolor='grey',linewidth=0.1)
+GreenlandCoast.plot(ax=ax_CW,color='#CEB481', edgecolor='grey',linewidth=0.1)
+#Display GrIS
+GrIS_drainage_bassins.plot(ax=ax_north,color='white', edgecolor='black',linewidth=0.075)
+GrIS_drainage_bassins.plot(ax=ax_SW,color='white', edgecolor='black',linewidth=0.075)
+GrIS_drainage_bassins.plot(ax=ax_NW,color='white', edgecolor='black',linewidth=0.075)
+GrIS_drainage_bassins.plot(ax=ax_CW,color='white', edgecolor='black',linewidth=0.075)
 
 #Display 2010-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102018_jullienetal2023.plot(ax=ax_north,facecolor='#ba2b2b',edgecolor='#ba2b2b')
@@ -1098,10 +1105,10 @@ for i in range(0,len(list_together_2019)):
 
 
 #Display boxes not processed
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display exclusion box in box 21
 box_21_inclusion,box_21_exclusion = create_polygon_inclusion_box21(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==21])
 box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
@@ -1168,13 +1175,13 @@ legend_elements = [Patch(facecolor='#045a8d',edgecolor='none',label='2010-2012 i
                    Patch(facecolor='#ba2b2b',edgecolor='none',label='2010-2018 ice slabs'),
                    Line2D([0], [0], color=pal_year[2012], lw=2, label='2012 runoff limit'),
                    Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
-                   Patch(facecolor='#d9d9d9',edgecolor='none',label='Ignored areas')]
+                   Patch(facecolor='white',edgecolor='grey',hatch= "xxxx",label='Ignored areas')]
 ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=1, bbox_to_anchor=(0.65, 0)).set_zorder(7)
 plt.show()
 
 # Display scalebar with GeoPandas
-ax_north.add_artist(ScaleBar(1,location='upper left',box_alpha=1)).set_pad(2)
-ax_NW.add_artist(ScaleBar(1,location='lower left',box_alpha=1))
+ax_north.add_artist(ScaleBar(1,location='upper left',box_alpha=0)).set_pad(1.5)
+ax_NW.add_artist(ScaleBar(1,location='lower left',box_alpha=0))
 ax_SW.add_artist(ScaleBar(1,location='lower right',box_alpha=1))
 ax_CW.add_artist(ScaleBar(1,location='lower left',box_alpha=1))
 

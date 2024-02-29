@@ -34,6 +34,10 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         print('   Above: ',np.round(iceslabs_above_func['20m_ice_content_m'].std()/iceslabs_above_func['20m_ice_content_m'].mean(),4))
         print('   Within: ',np.round(iceslabs_within_func['20m_ice_content_m'].std()/iceslabs_within_func['20m_ice_content_m'].mean(),4))
         print('   Below: ',np.round(iceslabs_below_func['20m_ice_content_m'].std()/iceslabs_below_func['20m_ice_content_m'].mean(),4))
+        print('-> MAD:')
+        print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above_func['20m_ice_content_m'],nan_policy='omit'),2))
+        print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within_func['20m_ice_content_m'],nan_policy='omit'),2))
+        print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below_func['20m_ice_content_m'],nan_policy='omit'),2))
         print('-> MAD/median:')
         print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_above_func['20m_ice_content_m'].median(),2))
         print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_within_func['20m_ice_content_m'].median(),2))
@@ -66,7 +70,7 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='green')
         ax_plot.text(0.75, 0.05,'med:'+str(np.round(np.nanquantile(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='green')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-                
+        
         #Display sample size
         print(region)
         print('-> Sample size:')
@@ -77,12 +81,16 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         print('   Above: ',np.round(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].mean(),4))
         print('   Within: ',np.round(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].mean(),4))
         print('   Below: ',np.round(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].mean(),4))
+        print('-> MAD:')
+        print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],nan_policy='omit'),2))
+        print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],nan_policy='omit'),2))
+        print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],nan_policy='omit'),2))
         print('-> MAD/median:')
         print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].median(),2))
         print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].median(),2))
         print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].median(),2))
         print('-> Perform Welsch t-test above VS below:')
-                
+        
         above_to_test=iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].copy()
         above_to_test=above_to_test[~above_to_test.isna()]
         
