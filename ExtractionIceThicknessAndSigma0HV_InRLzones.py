@@ -348,6 +348,7 @@ from shapely.geometry import CAP_STYLE, JOIN_STYLE
 import rioxarray as rxr
 from pyproj import Transformer
 from matplotlib_scalebar.scalebar import ScaleBar
+import matplotlib.patches as patches
 
 transformer = Transformer.from_crs("EPSG:4326", "EPSG:3413", always_xy=True)
 
@@ -820,9 +821,9 @@ for indiv_index in Boxes_Tedstone2022.FID:
             gs = gridspec.GridSpec(100, 100)
             #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
             ax_sectors = plt.subplot(gs[0:100, 0:50],projection=crs)
-            ax_legend = plt.subplot(gs[0:35, 50:100])
-            ax_ice_distrib = plt.subplot(gs[36:60, 52:85])
-            ax_GrIS = plt.subplot(gs[63:85, 50:90],projection=crs)
+            ax_legend = plt.subplot(gs[0:27, 50:100])
+            ax_ice_distrib = plt.subplot(gs[28:52, 52:85])
+            ax_GrIS = plt.subplot(gs[56:86, 50:90],projection=crs)
             
             ### ----------------------- Context map ----------------------- ###
             #Load and display Greenland coast shapefile
@@ -847,9 +848,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
             ax_GrIS.set_extent([-634797, 856884, -3345483, -764054], crs=crs)# x0, x1, y0, y1
             gl=ax_GrIS.gridlines(draw_labels=True, xlocs=[-35, -50], ylocs=[65,70,75,80], x_inline=False, y_inline=False,linewidth=0.5,linestyle='dashed')
             gl.top_labels = False
+            gl.right_labels = False
             ###################### From Tedstone et al., 2022 #####################
             #Display scalebar
-            ax_GrIS.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None)).set_pad(-0.5)
+            ax_GrIS.add_artist(ScaleBar(1,location='lower right',box_alpha=0,box_color=None))#.set_pad(-0.5)
             ### ----------------------- Context map ----------------------- ###
 
             ### ----------------------- Polygon map ----------------------- ###
@@ -897,7 +899,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             Emax_points_NonCleaned=within_points_Emax_NonCleaned[within_points_Emax_NonCleaned.year==indiv_year]
             #Keep only Emax points whose box_id is associated with the current box_id
             Emax_points_NonCleaned=Emax_points_NonCleaned[Emax_points_NonCleaned.box_id==indiv_index]
-            ax_sectors.scatter(Emax_points_NonCleaned['x'],Emax_points_NonCleaned['y'],color='#dd3497',s=5,zorder=6)
+            ax_sectors.scatter(Emax_points_NonCleaned['x'],Emax_points_NonCleaned['y'],color='#00ffff',s=5,zorder=6)
             #Display the cleaned Emax retrievals
             ax_sectors.scatter(Emax_points['x'],Emax_points['y'],color='black',s=5,zorder=6)
             
@@ -924,14 +926,14 @@ for indiv_index in Boxes_Tedstone2022.FID:
             
             #Custom legend myself for ax_sectors - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
             legend_elements =  [Line2D([0], [0], color='black', label='Runoff limit (RL) retrievals', marker='o',linestyle='None'),
-                               Line2D([0], [0], color='#dd3497', label='Discarded RL retrievals', marker='o',linestyle='None'),
+                               Line2D([0], [0], color='#00ffff', label='Discarded RL retrievals', marker='o',linestyle='None'),
                                Line2D([0], [0], color='#DD9C9F', lw=1, label='RL line'),
                                Line2D([0], [0], markerfacecolor='#F8E0E0',markeredgecolor='none',label='\'At\' zone',linestyle='',marker='s',markersize=10),
                                Line2D([0], [0], markerfacecolor='#D3E6D9',markeredgecolor='green',label='\'Downstream\' zone',linestyle='',marker='s',markersize=10),
                                Line2D([0], [0], markerfacecolor='#DCE8F2',markeredgecolor='#005AB5',label='\'Upstream\' zone',linestyle='',marker='s',markersize=10),
-                               Line2D([0], [0], color='green', lw=2, label='Ice slabs \'downstream\' the RL'),
-                               Line2D([0], [0], color='red', lw=2, label='Ice slabs \'at\' the RL'),
-                               Line2D([0], [0], color='#005AB5', lw=2, label='Ice slabs \'upstream\' the RL'),
+                               #Line2D([0], [0], color='green', lw=2, label='Ice slabs \'downstream\' the RL'),
+                               #Line2D([0], [0], color='red', lw=2, label='Ice slabs \'at\' the RL'),
+                               #Line2D([0], [0], color='#005AB5', lw=2, label='Ice slabs \'upstream\' the RL'),
                                Line2D([0], [0], color='k', lw=0.5, label='Accumulation Radar flightlines')]
             #legend rectangles from https://stackoverflow.com/questions/39500265/how-to-manually-create-a-legend
             
@@ -955,7 +957,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             #Add panel labels
             ax_sectors.text(0.04,0.97,'a',ha='center', va='center', transform=ax_sectors.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
             ax_ice_distrib.text(0.065,0.9,'b',ha='center', va='center', transform=ax_ice_distrib.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-            ax_GrIS.text(-0.6,0.94,'c',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_GrIS.text(-0.3,0.94,'c',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
             pdb.set_trace()
             
@@ -964,7 +966,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
 
             '''
             #Save the figure
-            plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT3/figures/Fig_methods/Fig_methods.png',dpi=500,bbox_inches='tight')
+            plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT3/figures/Fig_methods/Fig_methods_v2.png',dpi=500,bbox_inches='tight')
             #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
             '''
             #reset plot_method
