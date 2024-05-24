@@ -577,7 +577,7 @@ def extract_in_boxes(indiv_Boxes_Tedstone2022,poly_2012_in_func,poly_2019_in_fun
         #Update slice id
         slice_id=slice_id+1
     
-    #pdb.set_trace()
+    pdb.set_trace()
     #Save figure
     plt.savefig(path_switchdrive+'RT3/figures/Fig1/IceSlabs_and_RL_extraction/ExtractionSlabs_and_RL_box_'+box_nb+'_cleanedxytpdV3_final.png',dpi=500,bbox_inches='tight')
     #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
@@ -764,8 +764,12 @@ GrIS_DEM = gu.Raster(path_rignotetal2016_GrIS+'elevations/greenland_dem_mosaic_1
 
 #load 2012-2018 ice slabs high end from Jullien et al., (2023)
 iceslabs_20102012_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefiles/iceslabs_jullien_highend_2010_11_12.shp')
+'''
 #load 2010-2018 ice slabs high end from Jullien et al., (2023)
 iceslabs_20102018_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefiles/iceslabs_jullien_highend_20102018.shp')
+'''
+#load 2017-2018 ice slabs high end but name it as iceslabs_20102018_jullienetal2023 to avoid changes in variable names
+iceslabs_20102018_jullienetal2023=gpd.read_file('C:/Users/jullienn/switchdrive/Private/research/RT3/data/IceSlabsExtentHighEndJullien_20172018/iceslabs_jullien_highend_20172018.shp')
 
 #Load MVRL in 2012, 2012, 2016, 2019
 poly_2010=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2010.shp')
@@ -822,7 +826,6 @@ crs = ccrs.NorthPolarStereo(central_longitude=-45., true_scale_latitude=70.)
 # This can be converted into a `proj4` string/dict compatible with GeoPandas
 crs_proj4 = crs.proj4_init
 ###################### From Tedstone et al., 2022 #####################
-
 
 ### ----------- Ice slabs upper end and RL 2012/2019 extraction ----------- ###
 #Transform xytpd dataframe into geopandas dataframe for distance calculation
@@ -1172,7 +1175,7 @@ gl.right_labels = False
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor='#045a8d',edgecolor='none',label='2010-2012 ice slabs'),
-                   Patch(facecolor='#ba2b2b',edgecolor='none',label='2010-2018 ice slabs'),
+                   Patch(facecolor='#ba2b2b',edgecolor='none',label='2017-2018 ice slabs'),
                    Line2D([0], [0], color=pal_year[2012], lw=2, label='2012 runoff limit'),
                    Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
                    Patch(facecolor='white',edgecolor='grey',hatch= "xxxx",label='Ignored areas')]

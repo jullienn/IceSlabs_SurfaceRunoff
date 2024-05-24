@@ -620,8 +620,12 @@ gs = gridspec.GridSpec(10, 10)
 ax_ice_thickness_2012 = plt.subplot(gs[0:10, 0:5])
 ax_ice_thickness_2019 = plt.subplot(gs[0:10, 5:10])
 #Display 2012
+'''
 sns.violinplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
                density_norm='width',ax=ax_ice_thickness_2012,palette=my_pal,cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
+'''
+sns.boxenplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
+              ax=ax_ice_thickness_2012,palette=my_pal,showfliers=False,gap=0.1,width_method="exponential",line_kws=dict(linewidth=2, color="k"))#,inner_kws=dict(box_width=6, color='k'))
 ax_ice_thickness_2012.set_xlabel('Ice slab thickness [m]',labelpad=10)
 ax_ice_thickness_2012.set_ylabel('Region',labelpad=10)
 ax_ice_thickness_2012.grid(linestyle='dashed')
