@@ -524,7 +524,7 @@ crs_proj4 = crs.proj4_init
 
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#DC3220", 'Above': "#6DC11C", 'Below': "#005AB5"}
+my_pal = {'Within': "#DC3220", 'Above': "#005AB5", 'Below': "#6DC11C"}
 pal_year= {2012 : "#6baed6", 2019 : "#fcbba1"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
@@ -620,12 +620,8 @@ gs = gridspec.GridSpec(10, 10)
 ax_ice_thickness_2012 = plt.subplot(gs[0:10, 0:5])
 ax_ice_thickness_2019 = plt.subplot(gs[0:10, 5:10])
 #Display 2012
-'''
 sns.violinplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
                density_norm='width',ax=ax_ice_thickness_2012,palette=my_pal,cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
-'''
-sns.boxenplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
-              ax=ax_ice_thickness_2012,palette=my_pal,showfliers=False,gap=0.1,width_method="exponential",line_kws=dict(linewidth=2, color="k"))#,inner_kws=dict(box_width=6, color='k'))
 ax_ice_thickness_2012.set_xlabel('Ice slab thickness [m]',labelpad=10)
 ax_ice_thickness_2012.set_ylabel('Region',labelpad=10)
 ax_ice_thickness_2012.grid(linestyle='dashed')
@@ -658,6 +654,40 @@ ax_ice_thickness_2012.legend(handles=legend_elements,loc='upper left',fontsize=1
 '''
 #Save the figure
 plt.savefig(path_switchdrive+'RT3/figures/Fig2/v4/Fig2_regions.png',dpi=300,bbox_inches='tight')
+#bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
+'''
+
+#Display only 2012 with 0 m thick slabs
+plt.rcParams.update({'font.size': 15})
+fig = plt.figure(figsize=(7.97, 10.27))
+gs = gridspec.GridSpec(10, 10)
+ax_ice_thickness_2012 = plt.subplot(gs[0:10, 0:10])
+#Display 2012
+'''
+sns.violinplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
+               density_norm='width',ax=ax_ice_thickness_2012,palette=my_pal,cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
+'''
+sns.boxenplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
+              ax=ax_ice_thickness_2012,palette=my_pal,showfliers=False,gap=0.1,width_method="exponential",line_kws=dict(linewidth=2, color="k"))#,inner_kws=dict(box_width=6, color='k'))
+ax_ice_thickness_2012.set_xlabel('Ice slab thickness [m]',labelpad=10)
+ax_ice_thickness_2012.set_ylabel('Region',labelpad=10)
+ax_ice_thickness_2012.grid(linestyle='dashed')
+ax_ice_thickness_2012.text(0.9, 0.97,'2012',ha='center', va='center', transform=ax_ice_thickness_2012.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+
+#Add vertical bar to separate regions from GrIS
+ax_ice_thickness_2012.axhline(4.5,color='k',linewidth=0.5)
+
+#Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
+legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Upstream'),
+                   Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
+                   Patch(facecolor=my_pal['Below'],edgecolor='black',label='Downstream')]
+ax_ice_thickness_2012.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.55, 0.35)).set_zorder(7)
+
+pdb.set_trace()
+
+'''
+#Save the figure
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v5/Fig2_regions.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 

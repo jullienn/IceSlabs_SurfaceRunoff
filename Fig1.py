@@ -1297,7 +1297,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v7/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v9/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
