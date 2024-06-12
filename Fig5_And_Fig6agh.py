@@ -515,6 +515,8 @@ sns.histplot(Transects_2017_2018, x="rolling_CV_ice_thickness",element="poly",
 fig.suptitle('Rolling window: '+str(window_distance)+' m')
 '''
 
+pdb.set_trace()
+
 ### -------- Display the distribution of 2017-2018 Cv in the zones -------- ###
 #Get rid of Cv where the mean ice thickness is lower than 0 to avoid erroneous large Cv
 Transects_2017_2018.loc[Transects_2017_2018.rolling_mean_ice_thickness<1,'rolling_CV_ice_thickness']=np.nan
@@ -630,9 +632,20 @@ Hypothetical_IceSlabs_Transect=pd.DataFrame()
 #Compute distance
 Hypothetical_IceSlabs_Transect['distances']=TransectFig6_WithinBounds_reverted.distances_reverted.copy().to_numpy()
 Hypothetical_IceSlabs_Transect['time_distance']=pd.to_datetime(Hypothetical_IceSlabs_Transect['distances'].round(2),unit='s')
-
+'''
 #The amount of noise we apply is the median of the absolute of the vector of difference spaced by the size of the applied averaging window (i.e. an approximation of the max difference) in the 2018 transect in Fig. 6.
 noise_to_apply=TransectFig6_WithinBounds_reverted["20m_ice_content_m"].diff(int(window_distance/TransectFig6_WithinBounds_reverted.distances_reverted.diff().median())).abs().median()
+'''
+#Extract the radargram noise for the idealised transect
+noise_to_apply = np.round(TransectFig6_WithinBounds_reverted[np.logical_and(TransectFig6_WithinBounds_reverted['lon']>=-47.56,TransectFig6_WithinBounds_reverted['lon']<=-47.45)]['20m_ice_content_m'].diff().abs().max(),2)
+
+'''
+#Display to make sure location where the noise is extracted is correct
+ax_TransectFig6.axvline(TransectFig6_WithinBounds_reverted.loc[(TransectFig6_WithinBounds_reverted.lon--47.56).abs().idxmin()].distances_reverted,linestyle='dashed',color='black',linewidth=1)
+ax_TransectFig6.axvline(TransectFig6_WithinBounds_reverted.loc[(TransectFig6_WithinBounds_reverted.lon--47.45).abs().idxmin()].distances_reverted,linestyle='dashed',color='black',linewidth=1)
+'''
+
+pdb.set_trace()
 
 #Create and ice slabs transect 36.8 km long (to match case study transect length), whose lowermost point's thickness is the max rolling mean thickness in Fig. 6's transect, and uppermost thickness is the min rolling mean thickness in Fig. 6's transect:
 max_iceslab=TransectFig6_WithinBounds_reverted["rolling_mean_ice_thickness"].max()
@@ -753,7 +766,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v6/Fig_hypothetical_slab.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v8/Fig_hypothetical_slab.png',dpi=300,bbox_inches='tight')
 '''
 plt.close()
 
@@ -786,7 +799,7 @@ plt.show()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v6/Fig6_a.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v8/Fig6_a.png',dpi=300)#,bbox_inches='tight')
 '''
 ### --------- Perform the same analysis for an hypothetical ice slab --------- ###
 

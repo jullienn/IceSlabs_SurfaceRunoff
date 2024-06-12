@@ -788,9 +788,10 @@ for single_year in investigation_year.keys():
     ax_plot.set_yticks([0,10,20,30])
     ax_plot.set_yticklabels(['0','10','20',''])
     '''
+    
     #Set transect limits
     ax_plot.set_xlim(start_transect,end_transect)
-    
+
     #Get rid of xticklabels
     ax_plot.set_xticklabels([])
     
@@ -1388,6 +1389,20 @@ for indiv_point in coord_sectors:
     '''
     ax_NDWI.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
     '''
+    
+    #Make sure the sector for noise extraction is correct
+    '''
+    ax2.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
+    ax3.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
+    ax7.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
+    ax9.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
+    
+    ax2.axvline(-47.45,linestyle='dashed',color='green',linewidth=1)
+    ax3.axvline(-47.45,linestyle='dashed',color='green',linewidth=1)
+    ax7.axvline(-47.45,linestyle='dashed',color='green',linewidth=1)
+    ax9.axvline(-47.45,linestyle='dashed',color='green',linewidth=1)
+    '''
+
 #Add sector label
 ax_map.text(0.39, 0.05,'i',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 ax_map.text(0.515, 0.05,'ii',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=8,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
