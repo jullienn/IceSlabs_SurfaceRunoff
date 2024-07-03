@@ -1388,14 +1388,14 @@ for indiv_point in coord_sectors:
     ax_map.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
     '''
     ax_NDWI.axvline(points[0],zorder=3,color='black',linestyle='dashed',linewidth=1)
-    '''
     
+    '''
     #Make sure the sector for noise extraction is correct
     '''
-    ax2.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
-    ax3.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
-    ax7.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
-    ax9.axvline(-47.56,linestyle='dashed',color='red',linewidth=1)
+    ax2.axvline(-47.5675,linestyle='dashed',color='red',linewidth=1)
+    ax3.axvline(-47.5675,linestyle='dashed',color='red',linewidth=1)
+    ax7.axvline(-47.5675,linestyle='dashed',color='red',linewidth=1)
+    ax9.axvline(-47.5675,linestyle='dashed',color='red',linewidth=1)
     
     ax2.axvline(-47.45,linestyle='dashed',color='green',linewidth=1)
     ax3.axvline(-47.45,linestyle='dashed',color='green',linewidth=1)

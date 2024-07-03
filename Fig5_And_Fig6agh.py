@@ -637,11 +637,11 @@ Hypothetical_IceSlabs_Transect['time_distance']=pd.to_datetime(Hypothetical_IceS
 noise_to_apply=TransectFig6_WithinBounds_reverted["20m_ice_content_m"].diff(int(window_distance/TransectFig6_WithinBounds_reverted.distances_reverted.diff().median())).abs().median()
 '''
 #Extract the radargram noise for the idealised transect
-noise_to_apply = np.round(TransectFig6_WithinBounds_reverted[np.logical_and(TransectFig6_WithinBounds_reverted['lon']>=-47.56,TransectFig6_WithinBounds_reverted['lon']<=-47.45)]['20m_ice_content_m'].diff().abs().max(),2)
+noise_to_apply = np.round(TransectFig6_WithinBounds_reverted[np.logical_and(TransectFig6_WithinBounds_reverted['lon']>=-47.5675,TransectFig6_WithinBounds_reverted['lon']<=-47.45)]['20m_ice_content_m'].diff().abs().max(),2)
 
 '''
 #Display to make sure location where the noise is extracted is correct
-ax_TransectFig6.axvline(TransectFig6_WithinBounds_reverted.loc[(TransectFig6_WithinBounds_reverted.lon--47.56).abs().idxmin()].distances_reverted,linestyle='dashed',color='black',linewidth=1)
+ax_TransectFig6.axvline(TransectFig6_WithinBounds_reverted.loc[(TransectFig6_WithinBounds_reverted.lon--47.5675).abs().idxmin()].distances_reverted,linestyle='dashed',color='black',linewidth=1)
 ax_TransectFig6.axvline(TransectFig6_WithinBounds_reverted.loc[(TransectFig6_WithinBounds_reverted.lon--47.45).abs().idxmin()].distances_reverted,linestyle='dashed',color='black',linewidth=1)
 '''
 
