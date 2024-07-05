@@ -15,10 +15,10 @@ def plot_zoom(ax_plot,xlim_plot,ylim_plot):
     #Display 2017-2018 high end ice slabs
     iceslabs_20172018.plot(ax=ax_plot,facecolor='#ba2b2b',edgecolor='#ba2b2b')
     #Display flightlines
-    ax_plot.scatter(gdf_flighlines_2017_GrIS.lon_3413,gdf_flighlines_2017_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none')
-    ax_plot.scatter(gdf_flighlines_2018_GrIS.lon_3413,gdf_flighlines_2018_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none')
+    ax_plot.scatter(gdf_flighlines_2017_GrIS.lon_3413,gdf_flighlines_2017_GrIS.lat_3413,s=0.5,color='#bdbdbd',edgecolor='none')
+    ax_plot.scatter(gdf_flighlines_2018_GrIS.lon_3413,gdf_flighlines_2018_GrIS.lat_3413,s=0.5,color='#bdbdbd',edgecolor='none')
     #Display 2017-2018 ice slabs thickness
-    ax_plot.scatter(ice_slabs_thickness_2017_2018.lon_3413,ice_slabs_thickness_2017_2018.lat_3413,s=0.1,color='#3182bd',edgecolor='none')
+    ax_plot.scatter(ice_slabs_thickness_2017_2018.lon_3413,ice_slabs_thickness_2017_2018.lat_3413,s=1,color='#3182bd',edgecolor='none')
     #Custom limits
     #ax_plot.axis('off')
     
@@ -185,10 +185,10 @@ ax_inset_map.text(ax_SW.get_xlim()[1]+60000, (ax_SW.get_ylim()[0]+ax_SW.get_ylim
 ax_inset_map.text(ax_NO.get_xlim()[1]+60000, (ax_NO.get_ylim()[0]+ax_NO.get_ylim()[1])/2,'d',ha='center', va='center', fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='black',edgecolor='none',label='2010-2018 ice slabs extent'),
+legend_elements = [Patch(facecolor='black',edgecolor='none',label='2010-2018 ice slabs extent (maximum)'),
                    Patch(facecolor='#ba2b2b',edgecolor='none',label='2017-2018 ice slabs extent'),
                    Line2D([0], [0], color='#bdbdbd', lw=2, label='2017-2018 OIB AR flight-lines'),
-                   Line2D([0], [0], color='#9ecae1', lw=2, label='2017-2018 ice slabs')]
+                   Line2D([0], [0], color='#3182bd', lw=2, label='2017-2018 ice slabs')]
 ax_inset_map.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=0.7).set_zorder(7)
 plt.show()
 

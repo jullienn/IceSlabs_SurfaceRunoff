@@ -233,7 +233,7 @@ path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/NotClip
 list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
 
 #Set the window distance for rolling window calculations (in meter) for ice slabs thickness spatial heterogeneity
-window_distance=3000
+window_distance=4000
 
 #Define empty dataframes
 Transects_2017_2018 = pd.DataFrame()
@@ -518,9 +518,19 @@ fig.suptitle('Rolling window: '+str(window_distance)+' m')
 pdb.set_trace()
 
 ### -------- Display the distribution of 2017-2018 Cv in the zones -------- ###
-#Get rid of Cv where the mean ice thickness is lower than 0 to avoid erroneous large Cv
+#Get rid of Cv where the mean ice thickness is lower than 1 to avoid erroneous large Cv
 Transects_2017_2018.loc[Transects_2017_2018.rolling_mean_ice_thickness<1,'rolling_CV_ice_thickness']=np.nan
-        
+
+#---Calculating the amount of discarded data
+#Number of points where ice thickness is nan
+nb_nan = Transects_2017_2018.rolling_mean_ice_thickness.isna().sum()
+#Setting data whose thickness is lower than 1 m to nan
+Transects_2017_2018.loc[Transects_2017_2018.rolling_mean_ice_thickness<1,'rolling_mean_ice_thickness']=np.nan
+#Calculating the new total amount of nan
+new_nb_nan = Transects_2017_2018.rolling_mean_ice_thickness.isna().sum()
+#calculating the amount of discarded data (i.e. whose ice thickness is lower than 1 m)
+(new_nb_nan-nb_nan)/(len(Transects_2017_2018)-nb_nan)*100
+
 print('--- 2017-2018 dataset ---')
 print('   Rolling window width '+str(window_distance)+' m')
 print(Transects_2017_2018.rolling_CV_ice_thickness.quantile([0.05,0.25,0.5,0.75]).round(2))

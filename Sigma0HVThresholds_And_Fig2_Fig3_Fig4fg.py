@@ -690,7 +690,20 @@ pdb.set_trace()
 plt.savefig(path_switchdrive+'RT3/figures/Fig2/v5/Fig2_regions_2012.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
+##############################################################################################################
+### Extract the amout of data larger than ice thickness threholds associated with surface meltwater runoff ###
+#------------------------------------------------------------------------------------------------------------#
+#Select 2012 data
+df_2012 = IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012].copy()
+#Create a column storing whether ice thickness is larger than threshold or no
+df_2012['larger_than_lower_bound'] = (df_2012['20m_ice_content_m']>=3).astype(int)
+df_2012['larger_than_upper_bound'] = (df_2012['20m_ice_content_m']>=3.7).astype(int)
 
+(df_2012.groupby(['key_shp','type'])['larger_than_lower_bound'].sum()/df_2012.groupby(['key_shp','type'])['20m_ice_content_m'].count()*100).round() #We divide by ice content column as some data have ice thickness of nan which should not be taken into account when calculating the sharing of ice slabs retrievals larger than a specific threshold
+(df_2012.groupby(['key_shp','type'])['larger_than_upper_bound'].sum()/df_2012.groupby(['key_shp','type'])['20m_ice_content_m'].count()*100).round() #We divide by ice content column as some data have ice thickness of nan which should not be taken into account when calculating the sharing of ice slabs retrievals larger than a specific threshold
+#------------------------------------------------------------------------------------------------------------#
+### Extract the amout of data larger than ice thickness threholds associated with surface meltwater runoff ###
+##############################################################################################################
 
 #Display only 2019 with 0 m thick slabs
 plt.rcParams.update({'font.size': 15})
