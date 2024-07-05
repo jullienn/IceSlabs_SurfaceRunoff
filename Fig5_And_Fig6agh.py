@@ -233,7 +233,7 @@ path_CumHydro_And_IceThickness=path_local+'CumHydro_and_IceThickness/csv/NotClip
 list_composite=os.listdir(path_CumHydro_And_IceThickness) #this is inspired from https://pynative.com/python-list-files-in-a-directory/
 
 #Set the window distance for rolling window calculations (in meter) for ice slabs thickness spatial heterogeneity
-window_distance=4000
+window_distance=3000
 
 #Define empty dataframes
 Transects_2017_2018 = pd.DataFrame()
