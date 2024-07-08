@@ -1,4 +1,4 @@
-# Ice slabs thickening drives surface runoff expansion from the Greenland Ice Sheet’s percolation zone
+# TO BE MODIFIED - Ice slabs thickening drives surface runoff expansion from the Greenland Ice Sheet’s percolation zone
 
 ## Introduction
 
@@ -13,15 +13,14 @@ The datasets used in this paper, as well as exported data are archived in the da
 ## Codes
 ### Data processing and figures
 
-* 'AreasSupportingRunoff_And_Fig4abcde.py': Creating the raster files of Areas Supporting Runoff by applying the sigma0HV threshods to the winter composite maps, and generating Fig 4abcde.
-* 'Fig6_bcdef.py': Generates Fig 6bcdef.
-* 'Extraction_IceThicknessAndSigma0HV_InRLzones.py': Extracting the ice slab thickness and sigma0HV in the different zones in the vicinity of the runoff limit ('below', 'at', 'in-between', 'above' zones).
-* 'Extraction_CumHydroAndSigma0HV_InTransects.py': Extracting the occurrence of surface hydrology and sigma0HV at each ice slabs thickness sampling point.
+* 'ExtractionIceThickness_InRLzones_andFig1.py': Extracting the ice slab thickness (and sigma0HV, out of date) in the different zones in the vicinity of the runoff limit ('below', 'at', 'in-between', 'above' zones). Generating Fig. 1.
+* 'Extraction_CumHydroAndSigma0HV_InTransects.py': Extracting the occurrence of surface hydrology (and sigma0HV, out of date) at each ice slabs thickness sampling point.
+* 'Fig2.py': Performing data processing associated with the generation of Fig. 2.
+* 'Fig3_and_FigS2_and_Sigma0HVThresholds.py': Generation of Fig. 3 and Fig S2. There is codes sections where is performed the determination of the sigma0HV thresholds used to map the areas supporting runoff after performing the aggregation of sigma0HV in the different zones in the vicinity of the runoff limit (legacy code, out of date).
+* 'Fig4_and_Fig5agh_and_Fig6.py': Generation of Fig. 4, Fig. 5agh, Fig. 6. 
+* 'Fig5bcdef.py': Generates Fig. 5bcdef.
+* 'FigS2.py': Generating Fig. S1.
 * 'RunoffLimit_Check_Filtering.py': Displaying the cleaned runoff limit retrievals with NDWI map to check filtering went well.
-* 'Fig1.py': Performing data processing associated with the generation of Fig. 1, performing the generation of Fig. 1 generation, and performing the analysis for Supp Info 1.
-* 'Fig5_And_Fig6agh.py': Generation of Fig. 5, Fig 6a, Fig 6gh.
-* 'Sigma0HVThresholds_And_Fig2_And_Fig3_And_Fig4fg.py': Determine the sigma0HV thresholds used to map the areas supporting runoff after performing the aggregation of sigma0HV in the different zones in the vicinity of the runoff limit. Also, performing the generation of Fig2, Fig3, Fig4fg.
-* 'Sigma0HV_And_FirnCores.py': Performing the data processing associated with Supp Info 2.
 
 ## License
 This code repository is under the GNU General Public License v3.0. If it is used in publication (academic or otherwise), we request the following paper be cited:
