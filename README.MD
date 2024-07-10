@@ -1,14 +1,16 @@
-# TO BE MODIFIED - Ice slabs thickening drives surface runoff expansion from the Greenland Ice Sheet’s percolation zone
+# Constraining the Minimum Ice Slab Thickness which Enables Surface Runoff on the Greenland Ice Sheet
 
 ## Introduction
 
+Material related to the paper "Constraining the Minimum Ice Slab Thickness which Enables Surface Runoff on the Greenland Ice Sheet", submitted to the Journal of Glaciology on 11th July 2024.
 All the codes used for data preparation, processing, analysis and figure generation are present in this folder.
-These codes were written by Nicolas Jullien between 2022 and 2023.
+These codes were written by Nicolas Jullien between 2022 and 2024.
 The way the codes and folders are now organized in this code repository were not tested, and some parts may fail. Furthermore, path adaptations are mandatory before running any code.
 Some sections in several codes use functions developped by Jullien et al., (2023), some others by MacFerrin et al., (2019) that may or not have been modified by us.
+Somes sections in several files are outdated and not used in the current version of the manuscript, but kept for continuity.
 Feel free to contact the author for any questions (nicolas.jullien@unifr.ch).
 
-The datasets used in this paper, as well as exported data are archived in the data repository related to the paper, accessible at https://zenodo.org/records/10376906
+The datasets used in this paper, as well as exported data are archived in the data repository related to the paper, accessible at https://zenodo.org/records/12699584
 
 ## Codes
 ### Data processing and figures
