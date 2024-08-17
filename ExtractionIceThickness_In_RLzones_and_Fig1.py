@@ -899,7 +899,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             Emax_points_NonCleaned=within_points_Emax_NonCleaned[within_points_Emax_NonCleaned.year==indiv_year]
             #Keep only Emax points whose box_id is associated with the current box_id
             Emax_points_NonCleaned=Emax_points_NonCleaned[Emax_points_NonCleaned.box_id==indiv_index]
-            ax_sectors.scatter(Emax_points_NonCleaned['x'],Emax_points_NonCleaned['y'],color='#00ffff',s=5,zorder=6)
+            ax_sectors.scatter(Emax_points_NonCleaned['x'],Emax_points_NonCleaned['y'],color='#fe9929',s=5,zorder=6)
             #Display the cleaned Emax retrievals
             ax_sectors.scatter(Emax_points['x'],Emax_points['y'],color='black',s=5,zorder=6)
             
@@ -926,7 +926,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             
             #Custom legend myself for ax_sectors - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
             legend_elements =  [Line2D([0], [0], color='black', label='Runoff limit (RL) retrievals', marker='o',linestyle='None'),
-                               Line2D([0], [0], color='#00ffff', label='Discarded RL retrievals', marker='o',linestyle='None'),
+                               Line2D([0], [0], color='#fe9929', label='Discarded RL retrievals', marker='o',linestyle='None'),
                                Line2D([0], [0], color='#DD9C9F', lw=1, label='RL line'),
                                Line2D([0], [0], markerfacecolor='#F8E0E0',markeredgecolor='none',label='\'At\' zone',linestyle='',marker='s',markersize=10),
                                Line2D([0], [0], markerfacecolor='#D3E6D9',markeredgecolor='green',label='\'Downstream\' zone',linestyle='',marker='s',markersize=10),
@@ -955,9 +955,9 @@ for indiv_index in Boxes_Tedstone2022.FID:
             ### Display extent of panel a in panel c - this is from Fig4andS5.py of paper I. ###
             
             #Add panel labels
-            ax_sectors.text(0.04,0.97,'a',ha='center', va='center', transform=ax_sectors.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-            ax_ice_distrib.text(0.065,0.9,'b',ha='center', va='center', transform=ax_ice_distrib.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-            ax_GrIS.text(-0.3,0.94,'c',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=20,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_sectors.text(0.04,0.97,'a',ha='center', va='center', transform=ax_sectors.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_ice_distrib.text(0.065,0.9,'b',ha='center', va='center', transform=ax_ice_distrib.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+            ax_GrIS.text(-0.3,0.94,'c',ha='center', va='center', transform=ax_GrIS.transAxes,weight='bold',fontsize=15,color='black',zorder=10)#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
 
             pdb.set_trace()
             
@@ -966,7 +966,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
 
             '''
             #Save the figure
-            plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT3/figures/Fig_methods/Fig_methods_v2.png',dpi=500,bbox_inches='tight')
+            plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT3/figures/Fig_methods/Fig_methods_v3.png',dpi=500,bbox_inches='tight')
             #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
             '''
             #reset plot_method

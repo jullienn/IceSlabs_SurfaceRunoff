@@ -1179,7 +1179,7 @@ legend_elements = [Patch(facecolor='#045a8d',edgecolor='none',label='2010-2012 i
                    Line2D([0], [0], color=pal_year[2012], lw=2, label='2012 runoff limit'),
                    Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
                    Patch(facecolor='white',edgecolor='grey',hatch= "xxxx",label='Ignored areas')]
-ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=1, bbox_to_anchor=(0.65, 0)).set_zorder(7)
+ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=0.8, bbox_to_anchor=(0.65, 0)).set_zorder(15)
 plt.show()
 
 # Display scalebar with GeoPandas
@@ -1291,7 +1291,7 @@ axsummary_elev.text(0.025, 0.9,'e',ha='center', va='center', transform=axsummary
 
 #This is from https://stackoverflow.com/questions/1726391/matplotlib-draw-grid-lines-behind-other-graph-elements
 axsummary_elev.set_axisbelow(True)
-axsummary_elev.grid(color='gray', linestyle='dashed')
+axsummary_elev.grid(color='gray', linestyle='dashed',linewidth=0.5)
 
 pdb.set_trace()
 
