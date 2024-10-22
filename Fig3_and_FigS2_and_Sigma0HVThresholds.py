@@ -524,7 +524,7 @@ crs_proj4 = crs.proj4_init
 
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#DC3220", 'Above': "#005AB5", 'Below': "#6DC11C"}
+my_pal = {'Within': "#DC3220", 'In_Between': "#984ea3", 'Above': "#005AB5", 'Below': "#6DC11C"}
 pal_year= {2012 : "#6baed6", 2019 : "#fcbba1"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
@@ -593,7 +593,7 @@ IceThickness_above['type']=['Above']*len(IceThickness_above)
 IceThickness_in_between['type']=['In_Between']*len(IceThickness_in_between)
 IceThickness_within['type']=['Within']*len(IceThickness_within)
 IceThickness_below['type']=['Below']*len(IceThickness_below)
-IceThickness_all_sectors=pd.concat([IceThickness_above,IceThickness_within,IceThickness_below])
+IceThickness_all_sectors=pd.concat([IceThickness_above,IceThickness_in_between,IceThickness_within,IceThickness_below])
 
 #Consider all regions execpt the NE flor GrIS aggregation
 IceThickness_SW_CW_NW_NO = IceThickness_all_sectors[IceThickness_all_sectors.key_shp!='NE'].copy(deep=True)
@@ -679,6 +679,7 @@ ax_ice_thickness_2012.axhline(4.5,color='k',linewidth=0.5)
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Upstream'),
+                   Patch(facecolor=my_pal['In_Between'],edgecolor='black',label='In-between'),
                    Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
                    Patch(facecolor=my_pal['Below'],edgecolor='black',label='Downstream')]
 ax_ice_thickness_2012.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.55, 0.35)).set_zorder(7)
@@ -687,7 +688,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig2/v5/Fig2_regions_2012.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v6/Fig2_regions_2012.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 ##############################################################################################################
