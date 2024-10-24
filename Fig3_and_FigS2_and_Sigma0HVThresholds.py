@@ -6,20 +6,31 @@ Created on Wed Oct 26 14:01:33 2022
 """
 
 #The fuction plot_histo is from Emax_SlabsThickness.py
-def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
+def plot_histo(ax_plot,iceslabs_above,iceslabs_InBetween,iceslabs_within,iceslabs_below,region):
+    '''### REV 1
     if (region == 'GrIS_except_NE'):
         #Drop the NE
         iceslabs_above_func = iceslabs_above[iceslabs_above.key_shp != 'NE']
         iceslabs_within_func = iceslabs_within[iceslabs_within.key_shp != 'NE']
         iceslabs_below_func = iceslabs_below[iceslabs_below.key_shp != 'NE']
+    REV 1 ###'''
+    if (region == 'GrIS'):
+        #Do not drop the NE anymore
+        iceslabs_above_func = iceslabs_above.copy()
+        iceslabs_InBetween_func = iceslabs_InBetween.copy()
+        iceslabs_within_func = iceslabs_within.copy()
+        iceslabs_below_func = iceslabs_below.copy()
         
         ax_plot.hist(iceslabs_above_func['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_InBetween_func['20m_ice_content_m'],color='yellow',label='InBetween',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within_func['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_below_func['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Dislay median values
         ax_plot.axvline(x=np.nanquantile(iceslabs_above_func['20m_ice_content_m'],0.5),linestyle='--',color='blue')
         ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above_func['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.nanquantile(iceslabs_InBetween_func['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
+        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_InBetween_func['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_within_func['20m_ice_content_m'],0.5),linestyle='--',color='red')
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within_func['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_below_func['20m_ice_content_m'],0.5),linestyle='--',color='green')
@@ -28,18 +39,22 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         print(region)
         print('-> Sample size:')
         print('   Above: ',len(iceslabs_above_func))
+        print('   InBetween: ',len(iceslabs_InBetween_func))
         print('   Within: ',len(iceslabs_within_func))
         print('   Below: ',len(iceslabs_below_func))
         print('-> Coefficient of variation:')
         print('   Above: ',np.round(iceslabs_above_func['20m_ice_content_m'].std()/iceslabs_above_func['20m_ice_content_m'].mean(),4))
+        print('   InBetween: ',np.round(iceslabs_InBetween_func['20m_ice_content_m'].std()/iceslabs_InBetween_func['20m_ice_content_m'].mean(),4))
         print('   Within: ',np.round(iceslabs_within_func['20m_ice_content_m'].std()/iceslabs_within_func['20m_ice_content_m'].mean(),4))
         print('   Below: ',np.round(iceslabs_below_func['20m_ice_content_m'].std()/iceslabs_below_func['20m_ice_content_m'].mean(),4))
         print('-> MAD:')
         print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above_func['20m_ice_content_m'],nan_policy='omit'),2))
+        print('   InBetween: ',np.round(stats.median_abs_deviation(iceslabs_InBetween_func['20m_ice_content_m'],nan_policy='omit'),2))
         print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within_func['20m_ice_content_m'],nan_policy='omit'),2))
         print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below_func['20m_ice_content_m'],nan_policy='omit'),2))
         print('-> MAD/median:')
         print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_above_func['20m_ice_content_m'].median(),2))
+        print('   InBetween: ',np.round(stats.median_abs_deviation(iceslabs_InBetween_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_InBetween_func['20m_ice_content_m'].median(),2))
         print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_within_func['20m_ice_content_m'].median(),2))
         print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below_func['20m_ice_content_m'],nan_policy='omit')/iceslabs_below_func['20m_ice_content_m'].median(),2))        
         print('\n')  
@@ -60,12 +75,15 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         
     else:
         ax_plot.hist(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],color='blue',label='Above',alpha=0.5,bins=np.arange(0,17),density=True)
+        ax_plot.hist(iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'],color='yellow',label='InBetween',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],color='red',label='Within',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.hist(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],color='green',label='Below',alpha=0.5,bins=np.arange(0,17),density=True)
         ax_plot.text(0.075, 0.9,region,zorder=10, ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         #Dislay median values
         ax_plot.axvline(x=np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='blue')
         ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='blue')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+        ax_plot.axvline(x=np.nanquantile(iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='yellow')
+        ax_plot.text(0.75, 0.25,'med:'+str(np.round(np.nanquantile(iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='yellow')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='red')
         ax_plot.text(0.75, 0.5,'med:'+str(np.round(np.nanquantile(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],0.5),1))+'m',ha='center', va='center', transform=ax_plot.transAxes,fontsize=15,weight='bold',color='red')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
         ax_plot.axvline(x=np.nanquantile(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],0.5),linestyle='--',color='green')
@@ -75,18 +93,22 @@ def plot_histo(ax_plot,iceslabs_above,iceslabs_within,iceslabs_below,region):
         print(region)
         print('-> Sample size:')
         print('   Above: ',len(iceslabs_above[iceslabs_above['key_shp']==region]))
+        print('   InBetween: ',len(iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]))
         print('   Within: ',len(iceslabs_within[iceslabs_within['key_shp']==region]))
         print('   Below: ',len(iceslabs_below[iceslabs_below['key_shp']==region]))
         print('-> Coefficient of variation:')
         print('   Above: ',np.round(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].mean(),4))
+        print('   InBetween: ',np.round(iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'].mean(),4))
         print('   Within: ',np.round(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].mean(),4))
         print('   Below: ',np.round(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].std()/iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].mean(),4))
         print('-> MAD:')
         print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],nan_policy='omit'),2))
+        print('   InBetween: ',np.round(stats.median_abs_deviation(iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'],nan_policy='omit'),2))
         print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],nan_policy='omit'),2))
         print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],nan_policy='omit'),2))
         print('-> MAD/median:')
         print('   Above: ',np.round(stats.median_abs_deviation(iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_above[iceslabs_above['key_shp']==region]['20m_ice_content_m'].median(),2))
+        print('   InBetween: ',np.round(stats.median_abs_deviation(iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_InBetween[iceslabs_InBetween['key_shp']==region]['20m_ice_content_m'].median(),2))
         print('   Within: ',np.round(stats.median_abs_deviation(iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_within[iceslabs_within['key_shp']==region]['20m_ice_content_m'].median(),2))
         print('   Below: ',np.round(stats.median_abs_deviation(iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'],nan_policy='omit')/iceslabs_below[iceslabs_below['key_shp']==region]['20m_ice_content_m'].median(),2))
         print('-> Perform Welsch t-test above VS below:')
@@ -524,7 +546,7 @@ crs_proj4 = crs.proj4_init
 
 #Define palette for time , this is From Fig3.py from paper 'Greenland Ice slabs Expansion and Thicknening'
 #This is from https://www.python-graph-gallery.com/33-control-colors-of-boxplot-seaborn
-my_pal = {'Within': "#DC3220", 'In_Between': "#984ea3", 'Above': "#005AB5", 'Below': "#6DC11C"}
+my_pal = {'Within': "#DC3220", 'In_Between': "#984ea3", 'Above': "#005AB5", 'Below': "green"}#"#6DC11C"}
 pal_year= {2012 : "#6baed6", 2019 : "#fcbba1"}
 
 #Generate boxplot and distributions using 2012, 2016 and 2019 as one population
@@ -595,10 +617,16 @@ IceThickness_within['type']=['Within']*len(IceThickness_within)
 IceThickness_below['type']=['Below']*len(IceThickness_below)
 IceThickness_all_sectors=pd.concat([IceThickness_above,IceThickness_in_between,IceThickness_within,IceThickness_below])
 
+'''
 #Consider all regions execpt the NE flor GrIS aggregation
 IceThickness_SW_CW_NW_NO = IceThickness_all_sectors[IceThickness_all_sectors.key_shp!='NE'].copy(deep=True)
 IceThickness_SW_CW_NW_NO['key_shp']=[' All \n($\mathrm{\overline{s}}$ NE)']*len(IceThickness_SW_CW_NW_NO)
 IceThickness_all_sectors_region_GrIS=pd.concat([IceThickness_all_sectors,IceThickness_SW_CW_NW_NO])
+'''
+#Consider all regions execpt the NE flor GrIS aggregation
+IceThickness_SW_CW_NW_NO_NE = IceThickness_all_sectors.copy(deep=True)
+IceThickness_SW_CW_NW_NO_NE['key_shp']=[' All']*len(IceThickness_SW_CW_NW_NO_NE)
+IceThickness_all_sectors_region_GrIS=pd.concat([IceThickness_all_sectors,IceThickness_SW_CW_NW_NO_NE])
 #Reindex for the updated version of seaborn to work, and delete previous index
 IceThickness_all_sectors_region_GrIS.reset_index(inplace=True)
 IceThickness_all_sectors_region_GrIS.drop(columns=['index', 'Unnamed: 0'],inplace=True)
@@ -611,7 +639,6 @@ IceThickness_all_sectors.drop(columns=['index', 'Unnamed: 0'],inplace=True)
 IceThickness_all_sectors_GrIS=IceThickness_all_sectors.copy(deep=True)
 IceThickness_all_sectors_GrIS['key_shp']=['GrIS']*len(IceThickness_all_sectors)
 '''
-
 
 #Display 2012 and 2019 separately
 plt.rcParams.update({'font.size': 15})
@@ -663,42 +690,35 @@ fig = plt.figure(figsize=(7.97, 10.27))
 gs = gridspec.GridSpec(10, 10)
 ax_ice_thickness_2012 = plt.subplot(gs[0:10, 0:10])
 #Display 2012
-'''
-sns.violinplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
-               density_norm='width',ax=ax_ice_thickness_2012,palette=my_pal,cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
-'''
 sns.boxenplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
               ax=ax_ice_thickness_2012,palette=my_pal,showfliers=False,gap=0.1,width_method="exponential",line_kws=dict(linewidth=2, color="k"))#,inner_kws=dict(box_width=6, color='k'))
 ax_ice_thickness_2012.set_xlabel('Ice slab thickness [m]',labelpad=10)
 ax_ice_thickness_2012.set_ylabel('Region',labelpad=10)
 ax_ice_thickness_2012.grid(linestyle='dashed')
 ax_ice_thickness_2012.text(0.9, 0.97,'2012',ha='center', va='center', transform=ax_ice_thickness_2012.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
 #Add vertical bar to separate regions from GrIS
 ax_ice_thickness_2012.axhline(4.5,color='k',linewidth=0.5)
-
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Upstream'),
                    Patch(facecolor=my_pal['In_Between'],edgecolor='black',label='In-between'),
                    Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
                    Patch(facecolor=my_pal['Below'],edgecolor='black',label='Downstream')]
-ax_ice_thickness_2012.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.55, 0.35)).set_zorder(7)
-
+ax_ice_thickness_2012.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.63, 0.35)).set_zorder(7)
 pdb.set_trace()
-
 '''
 #Save the figure
 plt.savefig(path_switchdrive+'RT3/figures/Fig2/v6/Fig2_regions_2012.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
+
 ##############################################################################################################
 ### Extract the amout of data larger than ice thickness threholds associated with surface meltwater runoff ###
 #------------------------------------------------------------------------------------------------------------#
 #Select 2012 data
 df_2012 = IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012].copy()
 #Create a column storing whether ice thickness is larger than threshold or no
-df_2012['larger_than_lower_bound'] = (df_2012['20m_ice_content_m']>=3).astype(int)
-df_2012['larger_than_upper_bound'] = (df_2012['20m_ice_content_m']>=3.7).astype(int)
+df_2012['larger_than_lower_bound'] = (df_2012['20m_ice_content_m']>=2.8).astype(int)
+df_2012['larger_than_upper_bound'] = (df_2012['20m_ice_content_m']>=3.5).astype(int)
 
 (df_2012.groupby(['key_shp','type'])['larger_than_lower_bound'].sum()/df_2012.groupby(['key_shp','type'])['20m_ice_content_m'].count()*100).round() #We divide by ice content column as some data have ice thickness of nan which should not be taken into account when calculating the sharing of ice slabs retrievals larger than a specific threshold
 (df_2012.groupby(['key_shp','type'])['larger_than_upper_bound'].sum()/df_2012.groupby(['key_shp','type'])['20m_ice_content_m'].count()*100).round() #We divide by ice content column as some data have ice thickness of nan which should not be taken into account when calculating the sharing of ice slabs retrievals larger than a specific threshold
@@ -712,49 +732,41 @@ fig = plt.figure(figsize=(7.97, 10.27))
 gs = gridspec.GridSpec(10, 10)
 ax_ice_thickness_2019 = plt.subplot(gs[0:10, 0:10])
 #Display 2012
-'''
-sns.violinplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year<=2012], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
-               density_norm='width',ax=ax_ice_thickness_2012,palette=my_pal,cut=0,linewidth=0.1,inner_kws=dict(box_width=6, color='k'))#, kde=True)
-'''
 sns.boxenplot(data=IceThickness_all_sectors_region_GrIS[IceThickness_all_sectors_region_GrIS.year>=2017], x="20m_ice_content_m", y="key_shp",hue="type",orient="h",
               ax=ax_ice_thickness_2019,palette=my_pal,showfliers=False,gap=0.1,width_method="exponential",line_kws=dict(linewidth=2, color="k"))#,inner_kws=dict(box_width=6, color='k'))
 ax_ice_thickness_2019.set_xlabel('Ice slab thickness [m]',labelpad=10)
 ax_ice_thickness_2019.set_ylabel('Region',labelpad=10)
 ax_ice_thickness_2019.grid(linestyle='dashed')
 ax_ice_thickness_2019.text(0.9, 0.97,'2019',ha='center', va='center', transform=ax_ice_thickness_2019.transAxes,weight='bold',fontsize=20,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-
 #Add vertical bar to separate regions from GrIS
 ax_ice_thickness_2019.axhline(4.5,color='k',linewidth=0.5)
-
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor=my_pal['Above'],edgecolor='black',label='Upstream'),
+                   Patch(facecolor=my_pal['In_Between'],edgecolor='black',label='In-between'),
                    Patch(facecolor=my_pal['Within'],edgecolor='black',label='At'),
                    Patch(facecolor=my_pal['Below'],edgecolor='black',label='Downstream')]
-ax_ice_thickness_2019.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.55, 0.35)).set_zorder(7)
-
+ax_ice_thickness_2019.legend(handles=legend_elements,loc='upper left',fontsize=15,framealpha=0.8,bbox_to_anchor=(0.63, 0.35)).set_zorder(7)
 pdb.set_trace()
-
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig2/v5/Fig2_regions_2019.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig2/v6/Fig2_regions_2019.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
-
-### Plot SW, CW, NW and NO on a single plot on its own
+### Plot SW, CW, NW, NO and NE on a single plot on its own
 #Associate the RL year for plot
-IceThickness_SW_CW_NW_NO.loc[IceThickness_SW_CW_NW_NO.year <= 2012,'RL_year']='2012'
-IceThickness_SW_CW_NW_NO.loc[IceThickness_SW_CW_NW_NO.year >= 2017,'RL_year']='2019'
+IceThickness_SW_CW_NW_NO_NE.loc[IceThickness_SW_CW_NW_NO_NE.year <= 2012,'RL_year']='2012'
+IceThickness_SW_CW_NW_NO_NE.loc[IceThickness_SW_CW_NW_NO_NE.year >= 2017,'RL_year']='2019'
 #Reindex for the updated version of seaborn to work, and delete previous index
-IceThickness_SW_CW_NW_NO.reset_index(inplace=True)
-IceThickness_SW_CW_NW_NO.drop(columns=['index', 'Unnamed: 0'],inplace=True)
+IceThickness_SW_CW_NW_NO_NE.reset_index(inplace=True)
+IceThickness_SW_CW_NW_NO_NE.drop(columns=['index', 'Unnamed: 0'],inplace=True)
 
 #Display
 fig = plt.figure(figsize=(7,6.65))
 gs = gridspec.GridSpec(10, 10)
 ax_ice_thickness = plt.subplot(gs[0:10, 0:10])
 #Display 2019
-sns.violinplot(data=IceThickness_SW_CW_NW_NO, x="20m_ice_content_m", y="RL_year",hue="type",orient="h",density_norm='width',ax=ax_ice_thickness,palette=my_pal,cut=0)#, kde=True)
+sns.violinplot(data=IceThickness_SW_CW_NW_NO_NE, x="20m_ice_content_m", y="RL_year",hue="type",orient="h",density_norm='width',ax=ax_ice_thickness,palette=my_pal,cut=0)#, kde=True)
 ax_ice_thickness.set_xlabel('Ice slab thickness [m]',labelpad=10)
 ax_ice_thickness.set_ylabel('Year',labelpad=10)
 ax_ice_thickness.grid(linestyle='dashed')
@@ -788,12 +800,12 @@ axNE = plt.subplot(gs[5:10, 5:10])
 axGrIS = plt.subplot(gs[10:15, 5:10])
 
 #Plot histograms
-plot_histo(axNW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NW')
-plot_histo(axCW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'CW')
-plot_histo(axSW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'SW')
-plot_histo(axNO,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NO')
-plot_histo(axNE,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NE')
-plot_histo(axGrIS,IceThickness_above[IceThickness_above.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'GrIS_except_NE')
+plot_histo(axNW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_in_between[IceThickness_in_between.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NW')
+plot_histo(axCW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_in_between[IceThickness_in_between.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'CW')
+plot_histo(axSW,IceThickness_above[IceThickness_above.year<=2012],IceThickness_in_between[IceThickness_in_between.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'SW')
+plot_histo(axNO,IceThickness_above[IceThickness_above.year<=2012],IceThickness_in_between[IceThickness_in_between.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NO')
+plot_histo(axNE,IceThickness_above[IceThickness_above.year<=2012],IceThickness_in_between[IceThickness_in_between.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'NE')
+plot_histo(axGrIS,IceThickness_above[IceThickness_above.year<=2012],IceThickness_in_between[IceThickness_in_between.year<=2012],IceThickness_within[IceThickness_within.year<=2012],IceThickness_below[IceThickness_below.year<=2012],'GrIS')
 
 #Finalise plot
 axSW.set_xlabel('Ice Thickness [m]')
@@ -835,12 +847,12 @@ axNE = plt.subplot(gs[5:10, 5:10])
 axGrIS = plt.subplot(gs[10:15, 5:10])
 
 #Plot histograms
-plot_histo(axNW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NW')
-plot_histo(axCW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'CW')
-plot_histo(axSW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'SW')
-plot_histo(axNO,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NO')
-plot_histo(axNE,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NE')
-plot_histo(axGrIS,IceThickness_above[IceThickness_above.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'GrIS_except_NE')
+plot_histo(axNW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_in_between[IceThickness_in_between.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NW')
+plot_histo(axCW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_in_between[IceThickness_in_between.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'CW')
+plot_histo(axSW,IceThickness_above[IceThickness_above.year>=2017],IceThickness_in_between[IceThickness_in_between.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'SW')
+plot_histo(axNO,IceThickness_above[IceThickness_above.year>=2017],IceThickness_in_between[IceThickness_in_between.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NO')
+plot_histo(axNE,IceThickness_above[IceThickness_above.year>=2017],IceThickness_in_between[IceThickness_in_between.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'NE')
+plot_histo(axGrIS,IceThickness_above[IceThickness_above.year>=2017],IceThickness_in_between[IceThickness_in_between.year>=2017],IceThickness_within[IceThickness_within.year>=2017],IceThickness_below[IceThickness_below.year>=2017],'GrIS')
 
 #Finalise plot
 axSW.set_xlabel('Ice Thickness [m]')

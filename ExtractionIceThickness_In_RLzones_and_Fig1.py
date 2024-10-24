@@ -242,8 +242,8 @@ def perform_processing(Emax_points_func,subset_iceslabs_func,radius_func,indiv_p
     Intersection_slabs_within = perform_extraction_in_polygon(subset_iceslabs_func,within_polygon,ax_sectors,'#DC3220')
     
     #Perform polygon below creation and slabs extraction
-    below_polygon,lower_limit=create_polygon_offset(lineEmax,radius_func,5000,'downstream',ax_sectors,ax_SAR,'#6DC11C')
-    Intersection_slabs_below = perform_extraction_in_polygon(subset_iceslabs_func,below_polygon,ax_sectors,'#6DC11C')    
+    below_polygon,lower_limit=create_polygon_offset(lineEmax,radius_func,5000,'downstream',ax_sectors,ax_SAR,'green')
+    Intersection_slabs_below = perform_extraction_in_polygon(subset_iceslabs_func,below_polygon,ax_sectors,'green')    
     
     #Perform polygon from below to above creation
     polygon_below_to_above=Polygon([*list(upper_limit.coords),*list(lower_limit.coords)]) #from https://gis.stackexchange.com/questions/378727/creating-polygon-from-two-not-connected-linestrings-using-shapely
@@ -511,7 +511,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
     if (indiv_index <8):
         continue
     
-    pdb.set_trace()
+    #pdb.set_trace()
     print(indiv_index)
     
     #Extract individual polygon
@@ -806,7 +806,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V3')
-        pdb.set_trace()
+        #pdb.set_trace()
         
         '''
         #Save the figure
@@ -818,8 +818,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
         ax_sectors.legend(handles=legend_elements)
         plt.legend()
         '''
+        
         #Create figure for method illustration
         if (indiv_index == 8):
+        
             plot_method = 'TRUE'
             #Prepare plot
             plt.rcParams.update({'font.size': 9})
@@ -913,16 +915,14 @@ for indiv_index in Boxes_Tedstone2022.FID:
             
             #Display sectors
             Intersection_slabs_above_out,Intersection_slabs_InBetween_out,Intersection_slabs_within_out,Intersection_slabs_below_out,indiv_SAR_above_out,indiv_SAR_inbetween_out,indiv_SAR_within_out,indiv_SAR_below_out=perform_processing(Emax_points,subset_iceslabs,radius,indiv_polygon,SAR_SW_00_00,SAR_N_00_00_EW,SAR_NW_00_00,SAR_N_00_00,SAR_N_00_23)
-            
-            pdb.set_trace()
-            
+                        
             #Custom legend myself for ax_sectors - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
             legend_elements =  [Line2D([0], [0], color='black', label='Runoff limit (RL) retrievals', marker='o',linestyle='None'),
                                Line2D([0], [0], color='#fe9929', label='Discarded RL retrievals', marker='o',linestyle='None'),
                                Line2D([0], [0], color='#DD9C9F', linestyle='-', lw=1, markerfacecolor='#F8E0E0',markeredgecolor='none',label='RL line and \'At\' zone',marker='s',markersize=10),
                                Line2D([0], [0], markerfacecolor='#F4ECF5',markeredgecolor='#984ea3',label='\'In-between\' zone',linestyle='',marker='s',markersize=10),
                                Line2D([0], [0], markerfacecolor='#DCE8F2',markeredgecolor='#005AB5',label='\'Upstream\' zone',linestyle='',marker='s',markersize=10),
-                               Line2D([0], [0], markerfacecolor='#D3E6D9',markeredgecolor='#6DC11C',label='\'Downstream\' zone',linestyle='',marker='s',markersize=10),
+                               Line2D([0], [0], markerfacecolor='#E5F2E5',markeredgecolor='green',label='\'Downstream\' zone',linestyle='',marker='s',markersize=10),
                                #Line2D([0], [0], color='green', lw=2, label='Ice slabs \'downstream\' the RL'),
                                #Line2D([0], [0], color='red', lw=2, label='Ice slabs \'at\' the RL'),
                                #Line2D([0], [0], color='#005AB5', lw=2, label='Ice slabs \'upstream\' the RL'),
@@ -939,12 +939,12 @@ for indiv_index in Boxes_Tedstone2022.FID:
             '''            
             
             #Plot ice slabs thickness that are above, within and below Emax polygons
-            ax_ice_distrib.hist(Intersection_slabs_below_out['20m_ice_content_m'],color='#6DC11C',label='Downstream',bins=np.arange(0,20,0.5),density=True,log=True,alpha=0.5)
+            ax_ice_distrib.hist(Intersection_slabs_below_out['20m_ice_content_m'],color='green',label='Downstream',bins=np.arange(0,20,0.5),density=True,log=True,alpha=0.5)
             ax_ice_distrib.hist(Intersection_slabs_within_out['20m_ice_content_m'],color='#DC3220',label='At',bins=np.arange(0,20,0.5),density=True,log=True,alpha=0.5)
             ax_ice_distrib.hist(Intersection_slabs_InBetween_out['20m_ice_content_m'],color='#984ea3',label='In-between',bins=np.arange(0,20,0.5),density=True,log=True,alpha=0.5)
             ax_ice_distrib.hist(Intersection_slabs_above_out['20m_ice_content_m'],color='#005AB5',label='Upstream',bins=np.arange(0,20,0.5),density=True,log=True,alpha=0.5)
             ax_ice_distrib.set_xlabel('Ice slab thickness [m]')
-            ax_ice_distrib.set_ylabel('Density [ ]')
+            ax_ice_distrib.set_ylabel('Probability density [m$^{-1}$]')
             ax_ice_distrib.set_xlim(0,20)
             ax_ice_distrib.yaxis.set_label_position("right")#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
             ax_ice_distrib.yaxis.tick_right()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
@@ -952,13 +952,13 @@ for indiv_index in Boxes_Tedstone2022.FID:
             ax_ice_distrib.xaxis.tick_top()#from https://stackoverflow.com/questions/13369888/matplotlib-y-axis-label-on-right-side
             
             #Add step histograms
-            ax_ice_distrib.hist(Intersection_slabs_below_out['20m_ice_content_m'],color='#6DC11C',label='Downstream',bins=np.arange(0,20,0.5),density=True,log=True,linewidth=1.5,histtype='step')
+            ax_ice_distrib.hist(Intersection_slabs_below_out['20m_ice_content_m'],color='green',label='Downstream',bins=np.arange(0,20,0.5),density=True,log=True,linewidth=1.5,histtype='step')
             ax_ice_distrib.hist(Intersection_slabs_within_out['20m_ice_content_m'],color='#DC3220',label='At',bins=np.arange(0,20,0.5),density=True,log=True,linewidth=1.5,histtype='step')
             ax_ice_distrib.hist(Intersection_slabs_InBetween_out['20m_ice_content_m'],color='#984ea3',label='In-between',bins=np.arange(0,20,0.5),density=True,log=True,linewidth=1.5,histtype='step')
             ax_ice_distrib.hist(Intersection_slabs_above_out['20m_ice_content_m'],color='#005AB5',label='Upstream',bins=np.arange(0,20,0.5),density=True,log=True,linewidth=1.5,histtype='step')
             
             #Custom legend myself for ax_ice_distrib - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-            legend_elements_hist =  [Line2D([0], [0], markerfacecolor='#D3E6D9',markeredgecolor='#6DC11C',label='Downstream',linestyle='',marker='s',markersize=10),
+            legend_elements_hist =  [Line2D([0], [0], markerfacecolor='#E5F2E5',markeredgecolor='green',label='Downstream',linestyle='',marker='s',markersize=10),
                                      Line2D([0], [0], markerfacecolor='#F8E0E0',markeredgecolor='#DC3220',label='At',linestyle='',marker='s',markersize=10),
                                      Line2D([0], [0], markerfacecolor='#F4ECF5',markeredgecolor='#984ea3',label='In-between',linestyle='',marker='s',markersize=10),
                                      Line2D([0], [0], markerfacecolor='#DCE8F2',markeredgecolor='#005AB5',label='Upstream',linestyle='',marker='s',markersize=10),

@@ -771,11 +771,13 @@ iceslabs_20102018_jullienetal2023=gpd.read_file(path_jullienetal2023+'/shapefile
 #load 2017-2018 ice slabs high end but name it as iceslabs_20102018_jullienetal2023 to avoid changes in variable names
 iceslabs_20102018_jullienetal2023=gpd.read_file('C:/Users/jullienn/switchdrive/Private/research/RT3/data/IceSlabsExtentHighEndJullien_20172018/iceslabs_jullien_highend_20172018.shp')
 
+'''### REV1
 #Load MVRL in 2012, 2012, 2016, 2019
 poly_2010=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2010.shp')
 poly_2012=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2012.shp')
 poly_2016=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2016.shp')
 poly_2019=gpd.read_file('X:/RT3_jullien/TedstoneAndMachguth2022/runoff_limit_polys/poly_2019.shp')
+REV1 ###'''
 ### -------------------------- Load shapefiles --------------------------- ###
 
 ### ---------------------------- Load xytpd ------------------------------ ###
@@ -785,6 +787,7 @@ df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd.csv',delimiter=',
 df_xytpd_all=pd.read_csv(path_switchdrive+'RT3/data/Emax/xytpd_NDWI_cleaned_2019_v3.csv',delimiter=',',decimal='.')
 ### ---------------------------- Load xytpd ------------------------------ ###
 
+'''### REV1
 ### -------------------------- Load CumHydro ----------------------------- ###
 #Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
 #This section of displaying sat data was coding using tips from
@@ -796,6 +799,7 @@ CumHydro = rxr.open_rasterio('X:/RT3_jullien/TedstoneAndMachguth2022/master_maps
 x_coord_CumHydro=np.asarray(CumHydro.x)
 y_coord_CumHydro=np.asarray(CumHydro.y)
 ### -------------------------- Load CumHydro ----------------------------- ###
+REV1 ###'''
 
 ### ---------------- Load firn aquifers Miège et al., 2016 ---------------- ###
 path_aquifers=path_switchdrive+'/backup_Aglaja/working_environment/greenland_topo_data/firn_aquifers_miege/'
@@ -840,6 +844,8 @@ df_xytpd_all_gpd=df_xytpd_all_gpd.rename(columns={"index":"index_Emax"})
 #Calculate the difference in elevation between xytpd in 2012 VS 2019 in each slice_id
 df_xytpd_2012=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2012].copy()
 df_xytpd_2019=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2019].copy()
+
+pdb.set_trace()
 
 if (extract_data_in_boxes == 'TRUE'):
     #Generate dataset
@@ -1031,11 +1037,13 @@ GrIS_drainage_bassins.plot(ax=ax_SW,color='white', edgecolor='black',linewidth=0
 GrIS_drainage_bassins.plot(ax=ax_NW,color='white', edgecolor='black',linewidth=0.075)
 GrIS_drainage_bassins.plot(ax=ax_CW,color='white', edgecolor='black',linewidth=0.075)
 
+'''
 #Display 2010-2018 high end ice slabs jullien et al., 2023
 iceslabs_20102018_jullienetal2023.plot(ax=ax_north,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 iceslabs_20102018_jullienetal2023.plot(ax=ax_SW,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 iceslabs_20102018_jullienetal2023.plot(ax=ax_NW,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 iceslabs_20102018_jullienetal2023.plot(ax=ax_CW,facecolor='#ba2b2b',edgecolor='#ba2b2b')
+'''
 
 #Display 2010-2012 high end ice slabs jullien et al., 2023
 iceslabs_20102012_jullienetal2023.plot(ax=ax_north,facecolor='#045a8d',edgecolor='#045a8d')
@@ -1060,6 +1068,7 @@ for i in range(0,len(list_together_2012)):
     ax_NW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
     ax_CW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
 
+'''
 #Treat the follwing boxes together
 list_together_2019=np.array([[4,14],[16,19],[21,21],[22,27],[28,31]])
 
@@ -1105,7 +1114,7 @@ for i in range(0,len(list_together_2019)):
         ax_SW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color=pal_year[2019])
         ax_NW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color=pal_year[2019])
         ax_CW.plot(roll_window_2019.x,roll_window_2019.y,zorder=10,color=pal_year[2019])
-
+'''
 
 #Display boxes not processed
 Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
@@ -1297,7 +1306,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v9/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v10/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 
