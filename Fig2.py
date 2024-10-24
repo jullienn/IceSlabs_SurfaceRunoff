@@ -1184,9 +1184,9 @@ gl.right_labels = False
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
 legend_elements = [Patch(facecolor='#045a8d',edgecolor='none',label='2010-2012 ice slabs'),
-                   Patch(facecolor='#ba2b2b',edgecolor='none',label='2017-2018 ice slabs'),
+                   #Patch(facecolor='#ba2b2b',edgecolor='none',label='2017-2018 ice slabs'),
                    Line2D([0], [0], color=pal_year[2012], lw=2, label='2012 runoff limit'),
-                   Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
+                   #Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
                    Patch(facecolor='white',edgecolor='grey',hatch= "xxxx",label='Ignored areas')]
 ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=0.8, bbox_to_anchor=(0.65, 0)).set_zorder(15)
 plt.show()
@@ -1282,9 +1282,12 @@ print(' ')
 print('Count:')
 print('    ',df_plot_IceSlabs20102018_2019RL.count())
 
-
+''' ### REV 1
 #Concatenate data to display panels f and g
 df_plot_IceSlabs_RL = pd.concat([df_plot_IceSlabs20102012_2012RL,df_plot_IceSlabs20102018_2019RL])
+### REV 1'''
+#Concatenate data to display panels f and g
+df_plot_IceSlabs_RL = df_plot_IceSlabs20102012_2012RL.copy()
 #Reset index of df_plot_IceSlabs_RL
 df_plot_IceSlabs_RL.reset_index(inplace=True)
 #Transform signed distances from m to km
