@@ -845,7 +845,7 @@ df_xytpd_all_gpd=df_xytpd_all_gpd.rename(columns={"index":"index_Emax"})
 df_xytpd_2012=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2012].copy()
 df_xytpd_2019=df_xytpd_all_gpd[df_xytpd_all_gpd.year==2019].copy()
 
-pdb.set_trace()
+#pdb.set_trace()
 
 if (extract_data_in_boxes == 'TRUE'):
     #Generate dataset
@@ -1000,21 +1000,23 @@ plt.rcParams.update({'font.size': 8})
 fig = plt.figure()
 fig.set_size_inches(7.09, 10.15) # set figure's size manually to your full screen (32x18), this is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 #projection set up from https://stackoverflow.com/questions/33942233/how-do-i-change-matplotlibs-subplot-projection-of-an-existing-axis
-gs = gridspec.GridSpec(15, 12)
-gs.update(hspace=0.1)
+gs = gridspec.GridSpec(60, 12)
+gs.update(hspace=1)
 gs.update(wspace=0.1)
-ax_north = plt.subplot(gs[0:3, 0:12],projection=crs)
-ax_NW = plt.subplot(gs[3:12, 0:4],projection=crs)
-ax_CW = plt.subplot(gs[3:12, 4:8],projection=crs)
-ax_SW = plt.subplot(gs[3:12, 8:12],projection=crs)
-ax_inset_map = plt.subplot(gs[12:15, 8:12],projection=crs)
-axsummary_elev = plt.subplot(gs[12:15, 1:8])
+ax_north = plt.subplot(gs[0:12, 0:12],projection=crs)
+ax_NW = plt.subplot(gs[12:48, 0:4],projection=crs)
+ax_CW = plt.subplot(gs[12:48, 4:8],projection=crs)
+ax_SW = plt.subplot(gs[12:48, 8:12],projection=crs)
+ax_colorbar = plt.subplot(gs[48:49, 0:8])
+ax_inset_map = plt.subplot(gs[48:60, 8:12],projection=crs)
+axsummary_elev = plt.subplot(gs[53:60, 1:8])
 
 #Draw plot of GrIS map
 #Load and display Greenland coast shapefile
 GreenlandCoast=gpd.read_file('C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/Greenland_coast/Greenland_coast.shp') 
 GreenlandCoast.plot(ax=ax_inset_map,color='#CEB481', edgecolor='grey',linewidth=0.1)
 GrIS_drainage_bassins.plot(ax=ax_inset_map,color='white', edgecolor='black',linewidth=0.075)
+
 #Display region name
 ax_inset_map.text(NO_rignotetal.centroid.x-150000,NO_rignotetal.centroid.y-100000,np.asarray(NO_rignotetal.SUBREGION1)[0])
 ax_inset_map.text(NE_rignotetal.centroid.x-200000,NE_rignotetal.centroid.y+20000,np.asarray(NE_rignotetal.SUBREGION1)[0])
@@ -1026,16 +1028,55 @@ ax_inset_map.axis('off')
 ax_inset_map.set_xlim(-693308, 912076)
 ax_inset_map.set_ylim(-3440844, -541728)
 
-#Display coastlines
-GreenlandCoast.plot(ax=ax_north,color='#CEB481', edgecolor='grey',linewidth=0.1)
-GreenlandCoast.plot(ax=ax_SW,color='#CEB481', edgecolor='grey',linewidth=0.1)
-GreenlandCoast.plot(ax=ax_NW,color='#CEB481', edgecolor='grey',linewidth=0.1)
-GreenlandCoast.plot(ax=ax_CW,color='#CEB481', edgecolor='grey',linewidth=0.1)
 #Display GrIS
-GrIS_drainage_bassins.plot(ax=ax_north,color='white', edgecolor='black',linewidth=0.075)
-GrIS_drainage_bassins.plot(ax=ax_SW,color='white', edgecolor='black',linewidth=0.075)
-GrIS_drainage_bassins.plot(ax=ax_NW,color='white', edgecolor='black',linewidth=0.075)
-GrIS_drainage_bassins.plot(ax=ax_CW,color='white', edgecolor='black',linewidth=0.075)
+GrIS_drainage_bassins.plot(ax=ax_north,color='white', edgecolor='black',linewidth=0.075,zorder=0)
+GrIS_drainage_bassins.plot(ax=ax_SW,color='white', edgecolor='black',linewidth=0.075,zorder=0)
+GrIS_drainage_bassins.plot(ax=ax_NW,color='white', edgecolor='black',linewidth=0.075,zorder=0)
+GrIS_drainage_bassins.plot(ax=ax_CW,color='white', edgecolor='black',linewidth=0.075,zorder=0)
+
+### MoA plot ###
+import xarray
+
+#Load the MoA count 2001-2011
+MoAgtT_count_2001_2011 = xarray.open_dataset("C:/Users/jullienn/switchdrive/Private/research/RT3/data/jullien_slabhydrology_MoA/jullien_moa/MARv.3.14_MoAgtT_count_2001_2011.nc")
+#Load the 2012 MoA shapefile
+MoA_gte_2012=gpd.read_file('C:/Users/jullienn/switchdrive/Private/research/RT3/data/jullien_slabhydrology_MoA/jullien_moa/MoA_gte_0.7_2012.shp') 
+
+#Define extent
+extent_MoAgtT_count_2001_2011 = [np.min(MoAgtT_count_2001_2011.x.data), np.max(MoAgtT_count_2001_2011.x.data), np.min(MoAgtT_count_2001_2011.y.data), np.max(MoAgtT_count_2001_2011.y.data)]#[west limit, east limit., south limit, north limit]
+
+#Display map
+cmap = sns.color_palette("flare", as_cmap=True)
+ax_north.imshow(MoAgtT_count_2001_2011.__xarray_dataarray_variable__.data,
+                extent=extent_MoAgtT_count_2001_2011,origin='lower',cmap=cmap,zorder=1,alpha=0.75)
+MoA_gte_2012[MoA_gte_2012.raster_val==0].plot(ax=ax_north,edgecolor='green', color='none', linewidth=1,zorder=5)
+
+cbar_MoA=ax_SW.imshow(MoAgtT_count_2001_2011.__xarray_dataarray_variable__.data,
+                      extent=extent_MoAgtT_count_2001_2011,origin='lower',cmap=cmap,zorder=1,alpha=0.75)
+MoA_gte_2012[MoA_gte_2012.raster_val==0].plot(ax=ax_SW,edgecolor='green', color='none', linewidth=1,zorder=5)
+
+ax_NW.imshow(MoAgtT_count_2001_2011.__xarray_dataarray_variable__.data,
+             extent=extent_MoAgtT_count_2001_2011,origin='lower',cmap=cmap,zorder=1,alpha=0.75)
+MoA_gte_2012[MoA_gte_2012.raster_val==0].plot(ax=ax_NW,edgecolor='green', color='none', linewidth=1,zorder=5)
+
+ax_CW.imshow(MoAgtT_count_2001_2011.__xarray_dataarray_variable__.data,
+             extent=extent_MoAgtT_count_2001_2011,origin='lower',cmap=cmap,zorder=1,alpha=0.75)
+MoA_gte_2012[MoA_gte_2012.raster_val==0].plot(ax=ax_CW,edgecolor='green', color='none', linewidth=1,zorder=5)
+#Display also on inset map
+MoA_gte_2012[MoA_gte_2012.raster_val==0].plot(ax=ax_inset_map,edgecolor='green', color='none', linewidth=1,zorder=1)
+
+#Display cbar excess melt
+cbar_MoA=fig.colorbar(cbar_MoA, cax=ax_colorbar,orientation='horizontal',ticklocation='bottom')#Inspired from https://stackoverflow.com/questions/6063876/matplotlib-colorbar-for-scatter
+cbar_MoA.set_label('N. Yrs MoA > 0.7 (2001-2011)')
+### MoA plot ###
+
+#Load and display Greenland inverted coast shapefile
+GreenlandInvertedCoast=gpd.read_file('C:/Users/jullienn/switchdrive/Private/research/backup_Aglaja/working_environment/greenland_topo_data/Greenland_coast/Inverted_Greenland_coast.shp') 
+#Display coastlines
+GreenlandInvertedCoast.plot(ax=ax_north,color='#CEB481', edgecolor='grey',linewidth=0.1,zorder=2)
+GreenlandInvertedCoast.plot(ax=ax_SW,color='#CEB481', edgecolor='grey',linewidth=0.1,zorder=2)
+GreenlandInvertedCoast.plot(ax=ax_NW,color='#CEB481', edgecolor='grey',linewidth=0.1,zorder=2)
+GreenlandInvertedCoast.plot(ax=ax_CW,color='#CEB481', edgecolor='grey',linewidth=0.1,zorder=2)
 
 '''
 #Display 2010-2018 high end ice slabs jullien et al., 2023
@@ -1044,12 +1085,68 @@ iceslabs_20102018_jullienetal2023.plot(ax=ax_SW,facecolor='#ba2b2b',edgecolor='#
 iceslabs_20102018_jullienetal2023.plot(ax=ax_NW,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 iceslabs_20102018_jullienetal2023.plot(ax=ax_CW,facecolor='#ba2b2b',edgecolor='#ba2b2b')
 '''
-
 #Display 2010-2012 high end ice slabs jullien et al., 2023
-iceslabs_20102012_jullienetal2023.plot(ax=ax_north,facecolor='#045a8d',edgecolor='#045a8d')
+iceslabs_20102012_jullienetal2023.plot(ax=ax_north,facecolor='none',edgecolor='white',zorder=4,linewidth=2)
+iceslabs_20102012_jullienetal2023.plot(ax=ax_SW,facecolor='none',edgecolor='white',zorder=4,linewidth=2)
+iceslabs_20102012_jullienetal2023.plot(ax=ax_NW,facecolor='none',edgecolor='white',zorder=4,linewidth=2)
+iceslabs_20102012_jullienetal2023.plot(ax=ax_CW,facecolor='none',edgecolor='white',zorder=4,linewidth=2)
+''' REV 1
+#Display 2010-2012 high end ice slabs jullien et al., 2023
+iceslabs_20102012_jullienetal2023.plot(ax=ax_north,facecolor='#045a8d',edgecolor='#045a8d'
 iceslabs_20102012_jullienetal2023.plot(ax=ax_SW,facecolor='#045a8d',edgecolor='#045a8d')
 iceslabs_20102012_jullienetal2023.plot(ax=ax_NW,facecolor='#045a8d',edgecolor='#045a8d')
 iceslabs_20102012_jullienetal2023.plot(ax=ax_CW,facecolor='#045a8d',edgecolor='#045a8d')
+'''
+
+### -------------------------- Load and display 2010-2012 AR flightlines --------------------------- ###
+flighlines_2010 = pd.read_csv(path_jullienetal2023+'flightlines/'+'2010_Greenland_P3.csv',usecols=['LAT','LON'])
+flighlines_2011 = pd.read_csv(path_jullienetal2023+'flightlines/'+'2011_Greenland_P3.csv',usecols=['LAT','LON'])
+flighlines_2012 = pd.read_csv(path_jullienetal2023+'flightlines/'+'2012_Greenland_P3.csv',usecols=['LAT','LON'])
+#Transform coordinates from WGS84 to EPSG:3413
+points=transformer.transform(np.asarray(flighlines_2010["LON"]),np.asarray(flighlines_2010["LAT"]))
+flighlines_2010['lon_3413']=points[0]
+flighlines_2010['lat_3413']=points[1]
+
+points=transformer.transform(np.asarray(flighlines_2011["LON"]),np.asarray(flighlines_2011["LAT"]))
+flighlines_2011['lon_3413']=points[0]
+flighlines_2011['lat_3413']=points[1]
+
+points=transformer.transform(np.asarray(flighlines_2012["LON"]),np.asarray(flighlines_2012["LAT"]))
+flighlines_2012['lon_3413']=points[0]
+flighlines_2012['lat_3413']=points[1]
+
+#Make flightlines geopandas dataframes
+gdf_flighlines_2010 = gpd.GeoDataFrame(flighlines_2010, geometry=gpd.points_from_xy(flighlines_2010.lon_3413, flighlines_2010.lat_3413), crs="EPSG:3413")
+gdf_flighlines_2011 = gpd.GeoDataFrame(flighlines_2011, geometry=gpd.points_from_xy(flighlines_2011.lon_3413, flighlines_2011.lat_3413), crs="EPSG:3413")
+gdf_flighlines_2012 = gpd.GeoDataFrame(flighlines_2012, geometry=gpd.points_from_xy(flighlines_2012.lon_3413, flighlines_2012.lat_3413), crs="EPSG:3413")
+
+#Clip flightlines to Greenland mask
+gdf_flighlines_2010_GrIS = gpd.sjoin(gdf_flighlines_2010, GrIS_mask, how='left', predicate='within')
+gdf_flighlines_2011_GrIS = gpd.sjoin(gdf_flighlines_2011, GrIS_mask, how='left', predicate='within')
+gdf_flighlines_2012_GrIS = gpd.sjoin(gdf_flighlines_2012, GrIS_mask, how='left', predicate='within')
+
+#Drop nans to keep only flightlines which intersect with GrIS mask
+gdf_flighlines_2010_GrIS.dropna(inplace=True)
+gdf_flighlines_2011_GrIS.dropna(inplace=True)
+gdf_flighlines_2012_GrIS.dropna(inplace=True)
+
+#Display flightlines
+ax_north.scatter(gdf_flighlines_2010_GrIS.lon_3413,gdf_flighlines_2010_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_north.scatter(gdf_flighlines_2011_GrIS.lon_3413,gdf_flighlines_2011_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_north.scatter(gdf_flighlines_2012_GrIS.lon_3413,gdf_flighlines_2012_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+
+ax_SW.scatter(gdf_flighlines_2010_GrIS.lon_3413,gdf_flighlines_2010_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_SW.scatter(gdf_flighlines_2011_GrIS.lon_3413,gdf_flighlines_2011_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_SW.scatter(gdf_flighlines_2012_GrIS.lon_3413,gdf_flighlines_2012_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+
+ax_NW.scatter(gdf_flighlines_2010_GrIS.lon_3413,gdf_flighlines_2010_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_NW.scatter(gdf_flighlines_2011_GrIS.lon_3413,gdf_flighlines_2011_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_NW.scatter(gdf_flighlines_2012_GrIS.lon_3413,gdf_flighlines_2012_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+
+ax_CW.scatter(gdf_flighlines_2010_GrIS.lon_3413,gdf_flighlines_2010_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_CW.scatter(gdf_flighlines_2011_GrIS.lon_3413,gdf_flighlines_2011_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+ax_CW.scatter(gdf_flighlines_2012_GrIS.lon_3413,gdf_flighlines_2012_GrIS.lat_3413,s=0.1,color='#bdbdbd',edgecolor='none',zorder=3)
+### -------------------------- Load and display 2010-2012 AR flightlines --------------------------- ###
 
 #Treat the follwing boxes together
 list_together_2012=np.array([[4,6],[7,9],[10,13],[14,14],[16,19],[21,21],[22,27],[28,30],[31,31]])
@@ -1063,10 +1160,10 @@ for i in range(0,len(list_together_2012)):
     #Do not loose data! Where NaN due to rolling window at extreme ends, include these data!
     roll_window_2012[roll_window_2012.isna()]=RL_2012_continuum[roll_window_2012.isna()]
     #plot
-    ax_north.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
-    ax_SW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
-    ax_NW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
-    ax_CW.plot(roll_window_2012.x,roll_window_2012.y,zorder=10,color=pal_year[2012])
+    ax_north.plot(roll_window_2012.x,roll_window_2012.y,zorder=5,color=pal_year[2012])
+    ax_SW.plot(roll_window_2012.x,roll_window_2012.y,zorder=5,color=pal_year[2012])
+    ax_NW.plot(roll_window_2012.x,roll_window_2012.y,zorder=5,color=pal_year[2012])
+    ax_CW.plot(roll_window_2012.x,roll_window_2012.y,zorder=5,color=pal_year[2012])
 
 '''
 #Treat the follwing boxes together
@@ -1117,26 +1214,26 @@ for i in range(0,len(list_together_2019)):
 '''
 
 #Display boxes not processed
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color = "white",edgecolor="grey",hatch= "xxxx",zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID.isin(nogo_polygon)].overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color = "white",edgecolor="grey",hatch= "xxxx",zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display exclusion box in box 21
 box_21_inclusion,box_21_exclusion = create_polygon_inclusion_box21(Boxes_Tedstone2022[Boxes_Tedstone2022.FID==21])
-box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+box_21_exclusion.overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display exclusion box 15!
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
-Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color='#d9d9d9',edgecolor='none',zorder=4)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_north,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_SW,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_NW,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
+Boxes_Tedstone2022[Boxes_Tedstone2022.FID==15].overlay(GrIS_mask, how='intersection').plot(ax=ax_CW,color='#d9d9d9',edgecolor='none',zorder=6)#overlay from https://gis.stackexchange.com/questions/230494/intersecting-two-shape-problem-using-geopandas
 #Display Rignot and Mouginot regions edges to make sure projection is correct - it looks correct
-GrIS_drainage_bassins.plot(ax=ax_north,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
-GrIS_drainage_bassins.plot(ax=ax_SW,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
-GrIS_drainage_bassins.plot(ax=ax_NW,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
-GrIS_drainage_bassins.plot(ax=ax_CW,facecolor='none',edgecolor='black',zorder=5,linewidth=0.5)
+GrIS_drainage_bassins.plot(ax=ax_north,facecolor='none',edgecolor='black',zorder=7,linewidth=0.5)
+GrIS_drainage_bassins.plot(ax=ax_SW,facecolor='none',edgecolor='black',zorder=7,linewidth=0.5)
+GrIS_drainage_bassins.plot(ax=ax_NW,facecolor='none',edgecolor='black',zorder=7,linewidth=0.5)
+GrIS_drainage_bassins.plot(ax=ax_CW,facecolor='none',edgecolor='black',zorder=7,linewidth=0.5)
 
 '''
 #Display firn aquifers Miège et al., 2016
@@ -1183,19 +1280,20 @@ gl.right_labels = False
 #gl.bottom_labels = False
 
 #Custom legend myself for ax2 - this is from Fig1.py from paper 'Greenland ice slabs expansion and thickening'        
-legend_elements = [Patch(facecolor='#045a8d',edgecolor='none',label='2010-2012 ice slabs'),
-                   #Patch(facecolor='#ba2b2b',edgecolor='none',label='2017-2018 ice slabs'),
+legend_elements = [#Patch(facecolor='#ba2b2b',edgecolor='none',label='2017-2018 ice slabs'),
                    Line2D([0], [0], color=pal_year[2012], lw=2, label='2012 runoff limit'),
-                   #Line2D([0], [0], color=pal_year[2019], lw=2, label='2019 runoff limit'),
+                   Line2D([0], [0], color='green', lw=2, label='2012 MoA >= 0.7'),
+                   Patch(facecolor='none',edgecolor='white',label='2010-2012 ice slabs',linewidth=2),
+                   Line2D([0], [0], color='#bdbdbd', lw=1, label='OIB AR flight-lines'),
                    Patch(facecolor='white',edgecolor='grey',hatch= "xxxx",label='Ignored areas')]
-ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=0.8, bbox_to_anchor=(0.65, 0)).set_zorder(15)
+ax_north.legend(handles=legend_elements,loc='lower center',fontsize=8,framealpha=0.6, bbox_to_anchor=(0.65, 0)).set_zorder(15)
 plt.show()
 
 # Display scalebar with GeoPandas
 ax_north.add_artist(ScaleBar(1,location='upper left',box_alpha=0)).set_pad(1.5)
 ax_NW.add_artist(ScaleBar(1,location='lower left',box_alpha=0))
-ax_SW.add_artist(ScaleBar(1,location='lower right',box_alpha=1))
-ax_CW.add_artist(ScaleBar(1,location='lower left',box_alpha=1))
+ax_SW.add_artist(ScaleBar(1,location='lower right',box_alpha=0))
+ax_CW.add_artist(ScaleBar(1,location='lower left',box_alpha=0))
 
 #Display boxes zoom
 add_rectangle_zoom(ax_inset_map,ax_north)
@@ -1294,7 +1392,8 @@ df_plot_IceSlabs_RL.reset_index(inplace=True)
 df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL=df_plot_IceSlabs_RL.Signed_dist_IceSlabs_RL/1000
 
 #Display elevation difference
-sns.boxplot(data=df_plot_IceSlabs_RL,x="Elev_diff_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_elev,orient='h',palette=pal_year,fliersize=0)
+pal_year= {2012 : "grey", 2019 : "#fcbba1"}
+sns.boxplot(data=df_plot_IceSlabs_RL,x="Elev_diff_IceSlabs_RL",y="Region",hue='Year',ax=axsummary_elev,orient='h',fliersize=0,palette=pal_year)
 axsummary_elev.set_xlabel('Elevation difference [m]')
 axsummary_elev.set_ylabel('Region',labelpad=10)
 axsummary_elev.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True, left=True, labelleft=True, right=False, labelright=False)
@@ -1309,7 +1408,7 @@ pdb.set_trace()
 
 '''
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig1/v10/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig1/v11/Fig1_cleanedxytpdV3.png',dpi=1000,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 

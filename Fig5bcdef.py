@@ -135,7 +135,7 @@ my_pal = {'2002': '#980043', '2003': '#dd1c77', '2004': '#df65b0',
           '2015': '#006d2c', '2016': '#31a354', '2017': "#74c476", '2018': "#bae4b3", '2019': '#edf8e9',
           '2020': '#993404'}
 '''
-my_pal = {'2005': '#e66101','2010': "#fdb863",'2016': '#b2abd2','2019': '#5e3c99'}
+my_pal = {'2005': '#e66101','2010': "#fdb863",'2012': '#b2abd2','2019': '#5e3c99'}
 
 from matplotlib.colors import  ListedColormap
 #Create a palette for traffic_light display
@@ -337,7 +337,7 @@ elif (investigation_year==CaseStudy2):
     #Fig. 6 paper
     ax2 = plt.subplot(gs[12:16, 0:99])
     ax3 = plt.subplot(gs[16:20, 0:99])
-    ax7 = plt.subplot(gs[20:24, 0:99])
+    ax5 = plt.subplot(gs[20:24, 0:99])
     ax9 = plt.subplot(gs[24:28, 0:99])
     axc = plt.subplot(gs[16:28, 99:101])
     #Display map on the same figure
@@ -654,7 +654,7 @@ lon_transet=[]
 for single_year in investigation_year.keys():
 
     #We do not display the following radargrams
-    if (single_year in list([2002,2011,2012,2013,2017])):
+    if (single_year in list([2002,2011,2013,2014,2017])):
        continue
     
     if (investigation_year[single_year]=='empty'):
@@ -847,7 +847,7 @@ Coordinates_CSFS.to_csv('C:/Users/jullienn/switchdrive/Private/research/RT1/fina
 if (investigation_year==CaseStudy1):
     year_limit=2017
 elif (investigation_year==CaseStudy2):
-    year_limit=2014
+    year_limit=2018
 elif (investigation_year==CaseStudy3):
     year_limit=2017
 elif (investigation_year==CaseStudy4):
@@ -893,7 +893,7 @@ if (desired_map=='NDWI'):
     
 elif (desired_map=='master_map'):
     #Load hydrological master map from Tedstone and Machuguth (2022)
-    path_CumHydroMap='X:/RT3_jullien/TedstoneAndMachguth2022/master_maps/'
+    path_CumHydroMap='C:/Users/jullienn/Documents/working_environment/IceSlabs_SurfaceRunoff/data/master_maps/master_maps/'
     #Load master map
     MapPlot = rxr.open_rasterio(path_CumHydroMap+'master_map_GrIS_mean.vrt',
                                   masked=True).squeeze() #No need to reproject satelite image
@@ -949,10 +949,10 @@ if (display_Emax == "True"):
         if (investigation_year[holding_data]!='empty'):
             list_holding_data=np.append(list_holding_data,holding_data)
     '''
-    list_holding_data = np.array([2003,2010,2014,2018])
+    list_holding_data = np.array([2003,2010,2012,2018])
     
     #Display Emax
-    for single_year in list([2005,2010,2016,2019]):#range(2002,2021):
+    for single_year in list([2005,2010,2012,2019]):#range(2002,2021):
         
         #If no data before this year, continue
         if (single_year<list_holding_data[0]):
@@ -1110,12 +1110,12 @@ if (display_Emax == "True"):
             elif(year_transect==2011):
                 ax4.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2012):
-                ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
+                ax5.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black',label=str(single_year)+' RL')
+                ax5.legend(loc='upper left',bbox_to_anchor=(0.775, 0.475),framealpha=0.5)
             elif(year_transect==2013):
                 ax6.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2014):
-                ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black',label=str(single_year)+' RL')
-                ax7.legend(loc='upper left',bbox_to_anchor=(0.775, 0.475),framealpha=0.5)
+                ax7.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2017):
                 ax8.scatter(coord_Emax[0],np.ones(len(coord_Emax[0]))*2,c=my_pal[str(single_year)],zorder=15,edgecolor='black')
             elif(year_transect==2018):
@@ -1152,7 +1152,7 @@ if (investigation_year==CaseStudy1):
     gl=ax_map.gridlines(draw_labels=True, xlocs=[-47.5,-47,-48], ylocs=[66.05,66.10], x_inline=False, y_inline=False,linewidth=0.5)
     ###################### From Tedstone et al., 2022 #####################
 elif (investigation_year==CaseStudy2):
-    ax7.set_ylabel('                    Depth [m]')
+    ax5.set_ylabel('                    Depth [m]')
     ax9.set_yticklabels(['0','10','20'])
     ticks_through=ax9.get_xticks()
     year_ticks=2018
@@ -1341,14 +1341,14 @@ if (investigation_year==CaseStudy2):
     #Add backgound to display panel label
     ax2.text(0.015, 0.8,' ',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
     ax3.text(0.015, 0.8,' ',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
-    ax7.text(0.015, 0.8,' ',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
+    ax5.text(0.015, 0.8,' ',ha='center', va='center', transform=ax5.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
     ax9.text(0.015, 0.8,' ',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=4,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
     ax_map.text(0.015, 0.9,' ',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=6,bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
 
     #Display panel label
     ax2.text(0.0125, 0.75,'c',ha='center', va='center', transform=ax2.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax3.text(0.0125, 0.75,'d',ha='center', va='center', transform=ax3.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
-    ax7.text(0.0125, 0.75,'e',ha='center', va='center', transform=ax7.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
+    ax5.text(0.0125, 0.75,'e',ha='center', va='center', transform=ax5.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax9.text(0.0125, 0.75,'f',ha='center', va='center', transform=ax9.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     ax_map.text(0.015, 0.90,'b',ha='center', va='center', transform=ax_map.transAxes,weight='bold',fontsize=12,color='black')#This is from https://pretagteam.com/question/putting-text-in-top-left-corner-of-matplotlib-plot
     
@@ -1378,7 +1378,7 @@ for indiv_point in coord_sectors:
     #Display on radargrams
     ax2.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
     ax3.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
-    ax7.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
+    ax5.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
     ax9.axvline(indiv_point[1],linestyle='dashed',color='black',linewidth=1)
 
     #Display on map
@@ -1422,7 +1422,7 @@ plt.show()
 pdb.set_trace()
 
 #Save the figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig6/v7/Fig6bcdef.png',dpi=300)#,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig6/v9/Fig6bcdef.png',dpi=300)#,bbox_inches='tight')
 
 '''
 #Save the figure

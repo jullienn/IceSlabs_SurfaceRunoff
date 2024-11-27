@@ -307,11 +307,15 @@ for indiv_file in list_composite:
     ### ----------------------- Sector identificaton ---------------------- ###
     
     ### -------------- Spatial heterogeneity in ice thickness ------------- ###
+    '''### REV 1
     #We now perform the spatial heterogeneity calculation using data located only in the different zones (from below to above)
     indiv_csv_zones=pd.concat([indiv_upsampled_CumHydro_and_IceSlabs_above,
                                indiv_upsampled_CumHydro_and_IceSlabs_in_between,
                                indiv_upsampled_CumHydro_and_IceSlabs_within,
                                indiv_upsampled_CumHydro_and_IceSlabs_below])
+    ### REV 1'''
+    #We now perform the spatial heterogeneity calculation using data located only in the downstream zone
+    indiv_csv_zones=indiv_upsampled_CumHydro_and_IceSlabs_below.copy()
     
     #If sectorial dataset is not empty, calculate the spatial heterogeneity
     if (len(indiv_csv_zones)>0):
@@ -351,8 +355,14 @@ for indiv_file in list_composite:
 
 ### ------ CumHydro and Ice slabs thickness dataset in sectors only ------- ###
 
+'''### REV 1
 #Append data to each other
 upsampled_CumHydro_and_IceSlabs_OnlySectors=pd.concat([upsampled_CumHydro_and_IceSlabs_above,upsampled_CumHydro_and_IceSlabs_in_between,upsampled_CumHydro_and_IceSlabs_within,upsampled_CumHydro_and_IceSlabs_below])
+### REV1'''
+
+#Select only data in the downstream zone
+upsampled_CumHydro_and_IceSlabs_OnlySectors=upsampled_CumHydro_and_IceSlabs_below.copy()
+
 
 #Reset a new index to this upsampled dataset
 upsampled_CumHydro_and_IceSlabs_OnlySectors["index"]=np.arange(0,len(upsampled_CumHydro_and_IceSlabs_OnlySectors))
@@ -414,7 +424,8 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
     cbar_region = axis_plot.hist2d(data=regional_df,
                                    x="raster_Qnormalised",
                                    y="20m_ice_content_m",cmap='magma_r',
-                                   bins=[np.arange(0,1.05,0.05),np.arange(0,17,1)],norm=mpl.colors.LogNorm())
+                                   bins=[np.arange(0,1.05,0.05),np.arange(0,17,1)],
+                                   norm=mpl.colors.LogNorm())
     
     #Display colorbar
     fig_CumHydro_IceThickness.colorbar(cbar_region[3], ax=axis_plot,label='Count') #this is from https://stackoverflow.com/questions/42387471/how-to-add-a-colorbar-for-a-hist2d-plot
@@ -423,10 +434,10 @@ for indiv_region in list(['SW','CW','NW','NO','NE']):
 
 #Display regional CumHydro distributions
 distribs=sns.histplot(upsampled_CumHydro_and_IceSlabs_ForAnalysis, x="raster_Qnormalised", hue="SUBREGION1",element="poly",
-                      stat="count",log_scale=[False,True],bins=np.arange(0,1.05,0.05),ax=ax_hist)
+                      stat="count",log_scale=[False,False],bins=np.arange(0,1.05,0.05),ax=ax_hist)
+distribs.set_yscale("log")
 sns.move_legend(distribs,"upper right",title="")
 ax_hist.set_xlim(0,1)
-
 
 ### Finalise plot ###
 #Set labels
@@ -462,10 +473,10 @@ fig_CumHydro_IceThickness.tight_layout()
 
 ### ------ CumHydro and Ice slabs thickness dataset in sectors only ------- ###
 
-#pdb.set_trace()
+pdb.set_trace()
 '''
 #Save figure
-plt.savefig(path_switchdrive+'RT3/figures/Fig5/v3/Fig5.png',dpi=300,bbox_inches='tight')
+plt.savefig(path_switchdrive+'RT3/figures/Fig5/v4/Fig5.png',dpi=300,bbox_inches='tight')
 #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
 '''
 ###############################################################################

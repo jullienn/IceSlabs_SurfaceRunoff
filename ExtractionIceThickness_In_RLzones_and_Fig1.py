@@ -10,7 +10,7 @@ def create_buffer_polygon(line_input,radius_around_line,ax_plot):
     #Convert polygon of Emax buffer around connected Emax line into a geopandas dataframe
     line_buffer_polygon = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[buffer_around_line]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Display buffer
-    line_buffer_polygon.plot(ax=ax_plot,zorder=2,color='red',alpha=0.1)#'grey'
+    line_buffer_polygon.plot(ax=ax_plot,zorder=2,color='red',alpha=0.05)#'grey'
     
     return line_buffer_polygon
 
@@ -48,7 +48,7 @@ def create_polygon_above(line_input,radius_around_line,distance_start,distance_e
     #Convert polygon into a geopandas dataframe
     polygon_upper_start_end_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_upper_start_end]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Display polygon
-    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.1)#'grey'
+    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.05)#'grey'
     
     #Plot the above upper boundaries
     ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
@@ -76,7 +76,7 @@ def create_polygon_offset(line_input,radius_around_line,distance_end,type_offset
     #Convert polygon into a geopandas dataframe
     polygon_upper_start_end_gpd = gpd.GeoDataFrame(index=[0], crs='epsg:3413', geometry=[polygon_upper_start_end]) #from https://gis.stackexchange.com/questions/395315/shapely-coordinate-sequence-to-geodataframe
     #Display polygon
-    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.1)#'grey'
+    polygon_upper_start_end_gpd.plot(ax=ax_plot,zorder=2,color=color_plot,alpha=0.05)#'grey'
     #Plot the above upper boundaries
     ax_plot.plot(line_upper_start.xy[0],line_upper_start.xy[1],zorder=5,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
     ax_plot.plot(line_upper_end.xy[0],line_upper_end.xy[1],zorder=6,color=color_plot,linestyle='dashed') #From https://shapely.readthedocs.io/en/stable/code/linestring.py
@@ -606,7 +606,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
         extent_NDWI = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
         
         #Display NDWI image
-        ax_sectors.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=0,vmax=0.3) #NDWI
+        ax_sectors.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='Blues',zorder=0,vmin=0,vmax=0.3,interpolation='none') #NDWI
         
         #plot all the Emax points of the considered indiv_year
         ax_sectors.scatter(Emax_points['x'],Emax_points['y'],color='black',s=5,zorder=6)
@@ -806,8 +806,9 @@ for indiv_index in Boxes_Tedstone2022.FID:
                            Line2D([0], [0], color='green', lw=1, label='5 km downstream limit')]
         
         fig.suptitle('Box '+str(indiv_index)+ ' - '+str(indiv_year)+' - 2 years running slabs - radius '+str(radius)+' m - cleanedxytpd V3')
-        #pdb.set_trace()
-        
+        pdb.set_trace()
+
+    
         '''
         #Save the figure
         plt.savefig(path_save_SAR_IceSlabs+'Emax_IceSlabs_SAR_box'+str(indiv_index)+'_year_'+str(indiv_year)+'_radius_'+str(radius)+'m_cleanedxytpdV3_with0mslabs.png',dpi=500,bbox_inches='tight')
@@ -845,8 +846,10 @@ for indiv_index in Boxes_Tedstone2022.FID:
             CW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1) 
             NW_rignotetal.plot(ax=ax_GrIS,color='white', edgecolor='black',linewidth=0.1)
             ax_GrIS.axis('off')
+            '''
             #Display all the processed polygons
             Boxes_Tedstone2022[~Boxes_Tedstone2022.FID.isin(nogo_polygon)].plot(ax=ax_GrIS,color='none', edgecolor='black',linewidth=0.1)
+            '''
             '''
             #Display polygon
             indiv_polygon.plot(ax=ax_GrIS,color='#faf6c8', edgecolor='black',linewidth=0.5)
@@ -873,6 +876,20 @@ for indiv_index in Boxes_Tedstone2022.FID:
             y_min=np.min(Emax_points['y'])-5e4
             y_max=np.max(Emax_points['y'])+5e4
             
+            
+            #### Improved NDWI by AT ####            
+            #Open and display satelite image behind map - This is from Fig4andS6andS7.py from paper 'Greenland Ice slabs Expansion and Thicknening' 
+            #This section of displaying sat data was coding using tips from
+            #https://www.earthdatascience.org/courses/use-data-open-source-python/intro-raster-data-python/raster-data-processing/reproject-raster/
+            #https://towardsdatascience.com/visualizing-satellite-data-using-matplotlib-and-cartopy-8274acb07b84
+            #Load NDWI data for display
+            NDWI_image_improved = rxr.open_rasterio(path_NDWI+'le7_2012_sw.tif',
+                                          masked=True).squeeze() #No need to reproject satelite image
+            #Extract x and y coordinates of satellite image
+            x_coord_NDWI=np.asarray(NDWI_image_improved.x)
+            y_coord_NDWI=np.asarray(NDWI_image_improved.y)            
+            #### Improved NDWI by AT ####
+            
             #Extract coordinates of NDWI image within Emaxs bounds
             logical_x_coord_within_bounds=np.logical_and(x_coord_NDWI>=x_min,x_coord_NDWI<=x_max)
             x_coord_within_bounds=x_coord_NDWI[logical_x_coord_within_bounds]
@@ -882,7 +899,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             #Define extents based on the bounds
             extent_NDWI = [np.min(x_coord_within_bounds), np.max(x_coord_within_bounds), np.min(y_coord_within_bounds), np.max(y_coord_within_bounds)]#[west limit, east limit., south limit, north limit]
             #Display NDWI image
-            cbar = ax_sectors.imshow(NDWI_image[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='bone_r',zorder=0,vmin=0.0,vmax=0.25)#,vmin=0.05,vmax=0.4) #NDWI
+            cbar = ax_sectors.imshow(NDWI_image_improved[logical_y_coord_within_bounds,logical_x_coord_within_bounds], extent=extent_NDWI, transform=crs, origin='upper', cmap='bone_r',zorder=0,vmin=-0.05,vmax=0.25,interpolation='none')#,vmin=0.05,vmax=0.4) #NDWI
             #Display cbar
             fig.colorbar(cbar, ax=ax_sectors,label='NDWI [ ]',orientation='horizontal',location='bottom',pad=0.01)
             
@@ -993,7 +1010,7 @@ for indiv_index in Boxes_Tedstone2022.FID:
             
             '''
             #Save the figure
-            plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT3/figures/Fig_methods/Fig_methods_v4.png',dpi=500,bbox_inches='tight')
+            plt.savefig('C:/Users/jullienn/switchdrive/Private/research/RT3/figures/Fig_methods/Fig_methods_v5.png',dpi=500,bbox_inches='tight')
             #bbox_inches is from https://stackoverflow.com/questions/32428193/saving-matplotlib-graphs-to-image-as-full-screen
             '''
             #reset plot_method
