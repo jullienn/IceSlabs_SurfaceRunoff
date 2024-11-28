@@ -1096,7 +1096,7 @@ iceslabs_20102012_jullienetal2023.plot(ax=ax_north,facecolor='#045a8d',edgecolor
 iceslabs_20102012_jullienetal2023.plot(ax=ax_SW,facecolor='#045a8d',edgecolor='#045a8d')
 iceslabs_20102012_jullienetal2023.plot(ax=ax_NW,facecolor='#045a8d',edgecolor='#045a8d')
 iceslabs_20102012_jullienetal2023.plot(ax=ax_CW,facecolor='#045a8d',edgecolor='#045a8d')
-'''
+REV1 '''
 
 ### -------------------------- Load and display 2010-2012 AR flightlines --------------------------- ###
 flighlines_2010 = pd.read_csv(path_jullienetal2023+'flightlines/'+'2010_Greenland_P3.csv',usecols=['LAT','LON'])
